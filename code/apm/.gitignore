@@ -1,0 +1,10 @@
+.project
+.cproject
+.settings/
+
+/Debug
+/build
+/bin
+/lib/include/opencv/
+/lib/include/opencv2/
+/test/data/
