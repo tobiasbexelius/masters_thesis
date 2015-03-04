@@ -1,0 +1,17 @@
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+
+.idea/
+/app/obj
+/app/src/main/jni/external
+/app/src/main/obj
+*.iml
+*.gradle
+*.pro
+gradle*
+import-summary.txt
+

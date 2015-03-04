@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Automatic Package Measuring</string>
+    <string name="camera_failed_to_open">Camera failed to open.</string>
+    <string name="fps">FPS: %.1f</string>
+    <string name="processing_time">Processing time: %d ms</string>
+
+</resources>
