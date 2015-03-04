@@ -1,5 +1,5 @@
 #include "com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer.h"
-#include "apm_core/include/PackageMeasurer.h"
+#include "apm_core/lib/include/PackageMeasurer.h"
 #include <opencv2/opencv.hpp>
 #include <vector>
 
