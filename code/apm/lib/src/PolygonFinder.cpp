@@ -11,12 +11,12 @@ PolygonFinder::PolygonFinder(double error_tolerance, bool convex_only,
 PolygonFinder::~PolygonFinder() {
 }
 
-std::vector<std::vector<cv::Point>> PolygonFinder::findPolygons(
-		std::vector<std::vector<cv::Point>> contours) {
+std::vector<std::vector<cv::Point2i>> PolygonFinder::findPolygons(
+		std::vector<std::vector<cv::Point2i>> contours) {
 
-	std::vector<std::vector<cv::Point>> polygons;
+	std::vector<std::vector<cv::Point2i>> polygons;
 	for (auto contour : contours) {
-		std::vector<cv::Point> polygon;
+		std::vector<cv::Point2i> polygon;
 		double curve_length = cv::arcLength(contour, true);
 		cv::approxPolyDP(contour, polygon, curve_length * error_tolerance,
 				true);
@@ -26,7 +26,7 @@ std::vector<std::vector<cv::Point>> PolygonFinder::findPolygons(
 	return polygons;
 }
 
-bool PolygonFinder::isConvex(std::vector<cv::Point> &polygon,
+bool PolygonFinder::isConvex(std::vector<cv::Point2i> &polygon,
 		double curve_length) {
 	std::vector<int> hull;
 	cv::convexHull(polygon, hull);

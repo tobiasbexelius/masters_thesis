@@ -9,7 +9,7 @@ class ContourExtractor {
 public:
 	ContourExtractor(bool external_only = false);
 	virtual ~ContourExtractor();
-	std::vector<std::vector<cv::Point>> extractContours(cv::Mat edges);
+	std::vector<std::vector<cv::Point2i>> extractContours(cv::Mat edges);
 private:
 	bool external_only;
 

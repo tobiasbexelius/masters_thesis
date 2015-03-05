@@ -8,8 +8,8 @@ ContourExtractor::ContourExtractor(bool external_only): external_only(external_o
 ContourExtractor::~ContourExtractor() {
 }
 
-std::vector<std::vector<cv::Point>> ContourExtractor::extractContours(cv::Mat edges) {
-	std::vector<std::vector<cv::Point>> contours;
+std::vector<std::vector<cv::Point2i>> ContourExtractor::extractContours(cv::Mat edges) {
+	std::vector<std::vector<cv::Point2i>> contours;
 	std::vector<cv::Vec4i> hierarchy;
 
 	int mode;

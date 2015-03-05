@@ -9,9 +9,9 @@ class PolygonFinder {
 public:
 	PolygonFinder(double error_tolerance = 0.02, bool convex_only = true, double convexity_defect_tolerance = 0.05);
 	virtual ~PolygonFinder();
-	std::vector<std::vector<cv::Point>> findPolygons(std::vector<std::vector<cv::Point>> contours);
+	std::vector<std::vector<cv::Point2i>> findPolygons(std::vector<std::vector<cv::Point2i>> contours);
 private:
-	bool isConvex(std::vector<cv::Point> &polygon, double curve_length);
+	bool isConvex(std::vector<cv::Point2i> &polygon, double curve_length);
 	const double error_tolerance;
 	const double convex_only;
 	const double convexity_defect_tolerance;

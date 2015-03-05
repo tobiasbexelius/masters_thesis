@@ -6,7 +6,7 @@ namespace automatic_package_measuring {
 
 const int A4PaperFinder::LONG_SIDE = 297;
 const int A4PaperFinder::SHORT_SIDE = 210;
-const double A4PaperFinder::MIN_SIZE = 0.05;
+const double A4PaperFinder::MIN_SIZE = 0.01;
 
 A4PaperFinder::A4PaperFinder() {
 }
@@ -66,11 +66,9 @@ bool A4PaperFinder::isShapeOK(Polygon polygon) {
 		edges.push(euclideanDistance(*previous, *current));
 	}
 	edges.push(euclideanDistance(*previous, first));
-	std::cout << "kanter" << std::endl;
 	double four_edges_length = 0;
 	for (int i = 0; i < 4; ++i) {
 		four_edges_length += edges.top();
-		std::cout << edges.top() << std::endl;
 		edges.pop();
 	}
 
