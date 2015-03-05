@@ -36,7 +36,7 @@ Mat src, src_gray, edges, result;
 std::vector<Curve> contours, polygons;
 CannyEdgeDetector canny;
 Morphology morphology;
-ContourExtractor contour_extractor(true);
+ContourExtractor contour_extractor(false);
 
 int edges_enabled = 0;
 int contours_enabled = 0;
