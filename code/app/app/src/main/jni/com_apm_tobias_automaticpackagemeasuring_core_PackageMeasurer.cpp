@@ -30,17 +30,17 @@ JNIEXPORT void JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_Packag
     cv::cvtColor(tmp, inputBGR, CV_YUV420sp2BGR);
     env->ReleaseByteArrayElements(videoFrame, baseAddress, 0);
 
-  	apm.measurePackage(inputBGR);
+  	apm.analyzeImage(inputBGR);
   }
 
   JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getReferenceObjectCoordinates
   (JNIEnv *env, jobject obj) {
 
-    std::vector<cv::Point> objectCoordinates = apm.getPaperCoordinates();
+    std::vector<cv::Point> objectCoordinates = apm.getReferenceObject();
     ReferenceObject* ref = new ReferenceObject();
 
-    if(objectCoordinates.size() == 4) {
-    ref->isValid = true;
+    if(objectCoordinates.size() == 4) { // TODO 
+    ref->isValid = true;  // TODO change this
         for(int i = 0; i < 4; ++i) {
             Point p;
             p.x = objectCoordinates[i].x;
