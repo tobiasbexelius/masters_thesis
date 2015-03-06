@@ -16,7 +16,20 @@ A4PaperFinder::~A4PaperFinder() {
 
 std::vector<cv::Point> A4PaperFinder::findObject(cv::Mat image,
 		std::vector<Polygon> polygons) {
+	if (image.empty()) {
+#if DEBUG
+		std::cerr << "Error in A4PaperFinder: empty image received." << std::endl;
+#endif
+		return std::vector<cv::Point>();
+	}
+
 	for (std::vector<cv::Point> polygon : polygons) {
+		if (polygon.empty()) {
+#if DEBUG
+			std::cerr << "Error in A4PaperFinder: empty polygon received." << std::endl;
+#endif
+			continue;
+		}
 
 		if (isSizeOK(image, polygon) && isShapeOK(polygon)
 				&& isColorOK(image, polygon))
@@ -51,7 +64,7 @@ bool A4PaperFinder::isColorOK(cv::Mat image, Polygon polygon) {
 			+ histogram.at<float>(bins[0] - 2)
 			+ histogram.at<float>(bins[0] - 3);
 
-	return top_three_bins/((double) (roi.rows*roi.cols));
+	return top_three_bins / ((double) (roi.rows * roi.cols));
 }
 
 bool A4PaperFinder::isShapeOK(Polygon polygon) {
