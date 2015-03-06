@@ -2,8 +2,7 @@
 
 namespace automatic_package_measuring {
 
-PolygonFinder::PolygonFinder(double error_tolerance, bool convex_only,
-		double convexity_defect_tolerance) :
+PolygonFinder::PolygonFinder(double error_tolerance, bool convex_only) :
 		error_tolerance(error_tolerance), convex_only(convex_only) {
 }
 

@@ -14,7 +14,6 @@ private:
 	bool isConvex(std::vector<cv::Point2i> &polygon, double curve_length);
 	const double error_tolerance;
 	const double convex_only;
-	const double convexity_defect_tolerance;
 };
 
 } /* namespace automatic_package_measuring */
