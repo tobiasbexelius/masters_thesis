@@ -4,6 +4,7 @@ cmake_policy(SET CMP0042 NEW) # CMake 3.0
 
 ADD_DEFINITIONS(
     -std=c++11
+    -DDEBUG
 )
 
 project(apm_lib)
