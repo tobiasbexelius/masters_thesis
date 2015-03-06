@@ -14,15 +14,10 @@ public class ReferenceObject {
         this.data = data;
     }
 
-    public boolean isValid() {
-        return data.getInt(0) != 0;
-    }
-
     public List<Edge> getEdges() {
         List<Edge> edges = new ArrayList<>();
         data.rewind();
-        boolean isValid = data.getInt() != 0;
-        if (!isValid)
+        if (!data.hasRemaining())
             return edges;
         Vertex first = new Vertex(data.getInt(), data.getInt());
         Vertex previous = first;

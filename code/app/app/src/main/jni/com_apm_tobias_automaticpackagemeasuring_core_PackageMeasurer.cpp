@@ -8,49 +8,41 @@ using automatic_package_measuring::PackageMeasurer;
 PackageMeasurer apm;
 
 struct Point {
-    int x;
-    int y;
-};
-
-struct ReferenceObject {
-    int isValid = false;
-    Point corners[4];
-
+	int x;
+	int y;
 };
 
 JNIEXPORT void JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_analyzeVideoFrame
-  (JNIEnv *env, jobject obj, jbyteArray videoFrame, jint width, jint height) {
+(JNIEnv *env, jobject obj, jbyteArray videoFrame, jint width, jint height) {
 
-    int frameWidth = static_cast<int>(width);
-    int frameHeight = static_cast<int>(height);
+	int frameWidth = static_cast<int>(width);
+	int frameHeight = static_cast<int>(height);
 
-    cv::Mat inputBGR;
-    jbyte *baseAddress = env->GetByteArrayElements(videoFrame, NULL);
-    cv::Mat tmp(frameHeight + frameHeight / 2, frameWidth, CV_8UC1, baseAddress, frameWidth);
-    cv::cvtColor(tmp, inputBGR, CV_YUV420sp2BGR);
-    env->ReleaseByteArrayElements(videoFrame, baseAddress, 0);
+	cv::Mat inputBGR;
+	jbyte *baseAddress = env->GetByteArrayElements(videoFrame, NULL);
+	cv::Mat tmp(frameHeight + frameHeight / 2, frameWidth, CV_8UC1, baseAddress, frameWidth);
+	cv::cvtColor(tmp, inputBGR, CV_YUV420sp2BGR);
+	env->ReleaseByteArrayElements(videoFrame, baseAddress, 0);
 
-  	apm.analyzeImage(inputBGR);
-  }
+	apm.analyzeImage(inputBGR);
+}
 
-  JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getReferenceObjectCoordinates
-  (JNIEnv *env, jobject obj) {
+JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getReferenceObjectCoordinates(
+		JNIEnv *env, jobject obj) {
 
-    std::vector<cv::Point> objectCoordinates = apm.getReferenceObject();
-    ReferenceObject* ref = new ReferenceObject();
+	std::vector<cv::Point> objectCoordinates = apm.getReferenceObject();
+	Point* ref = new Point[objectCoordinates.size()];
 
-    if(objectCoordinates.size() == 4) { // TODO 
-    ref->isValid = true;  // TODO change this
-        for(int i = 0; i < 4; ++i) {
-            Point p;
-            p.x = objectCoordinates[i].x;
-            p.y = objectCoordinates[i].y;
-            ref->corners[i] = p;
-        }
-    }
+	for (int i = 0; i < objectCoordinates.size(); ++i) {
+		Point p;
+		p.x = objectCoordinates[i].x;
+		p.y = objectCoordinates[i].y;
+		ref[i] = p;
+	}
 
-    jobject bb = (env)->NewDirectByteBuffer((void*) ref, sizeof(ReferenceObject));
+	jobject bb = (env)->NewDirectByteBuffer((void*) ref,
+			sizeof(Point)*objectCoordinates.size());
 
-  	return bb;
+	return bb;
 
-  }
+}
