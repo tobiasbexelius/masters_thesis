@@ -1,4 +1,4 @@
-#include "../include/external/jsoncpp/json/json.h"
+#include "json/json.h"
 #include "../include/APMTestCase.h"
 #include "../include/APMTest.h"
 #include "../include/FileUtil.h"
