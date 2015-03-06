@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <cstdlib>
+#include <iomanip>
 
 namespace apm = automatic_package_measuring;
 
@@ -21,6 +22,7 @@ void runTests(std::vector<Json::Value> test_cases);
 apm::APMTestCase createTestCase(Json::Value root);
 bool endsWith(std::string const &fullString, std::string const &ending);
 void help();
+std::string toStrMaxDecimals(double value, int decimals);
 
 std::string directory;
 std::vector<std::string> files;
@@ -83,6 +85,8 @@ void parseTestCases() {
 }
 
 void runTests(std::vector<Json::Value> test_cases) {
+
+	std::cout << std::endl;
 	int num_tests = 0;
 	int num_passed = 0;
 	int num_failed = 0;
@@ -96,27 +100,21 @@ void runTests(std::vector<Json::Value> test_cases) {
 		std::cout << "########## Test #" << i << " (" << files[i]
 				<< " ) ##########" << std::endl;
 
-		std::cout << "Reference object:" << std::endl;
-		std::cout << "Correct: "
-				<< (test.isReferenceObjectCorrect() ? "True" : "False")
-				<< std::endl;
-		std::cout << "Error: " << test.getReferenceObjectError() << std::endl;
+		std::string ref_object_error = toStrMaxDecimals(test.getReferenceObjectError() * 100.0, 2) + "%";
+		std::string package_error = toStrMaxDecimals(test.getPackageError() * 100.0, 2) + "%";
+		std::string measurement_error = toStrMaxDecimals(test.getMeasurementError()* 100.0, 2) + "%";
 
-		/*
-		 std::cout << "Package:" << std::endl;
-		 std::cout << "Correct: " << (test.isPackageCorrect() ? "True" : "False") << std::endl;
-		 std::cout << "Error: " << test.getPackageError() << std::endl;
+		std::cout << "Reference object: " << (test.isReferenceObjectCorrect() ? "PASS" : "FAIL") << " (error: " << ref_object_error << ")" << std::endl;
+		std::cout << "Package: " << (test.isPackageCorrect() ? "PASS" : "FAIL") << " (error: " << package_error << ")" << std::endl;
+		std::cout << "Measurement: " << (test.isMeasurementCorrect() ? "PASS" : "FAIL") << " (error: " << measurement_error << ")" << std::endl;
 
-		 std::cout << "Measurements:" << std::endl;
-		 std::cout << "Correct: " << (test.isMeasurementCorrect() ? "True" : "False") << std::endl;
-		 std::cout << "Error: " << test.getMeasurementError() << std::endl;
-		 */
-		if (test.isReferenceObjectCorrect()) {
+
+		if (test.success()) {
 			++num_passed;
-			cout << "Test " << num_tests << " passed." << endl;
+			cout << "Test " << num_tests << " PASSED." << endl;
 		} else {
 			++num_failed;
-			cout << "Test " << num_tests << " failed." << endl;
+			cout << "Test " << num_tests << " FAILED." << endl;
 		}
 
 		double success_rate = ((double) num_passed / num_tests);
@@ -128,7 +126,20 @@ void runTests(std::vector<Json::Value> test_cases) {
 		cout << "Fail rate: " << 1.0 - success_rate << " (" << num_failed << ")"
 				<< endl;
 		cout << "Total: " << num_tests << endl;
+
+		std::cout << std::endl;
 	}
+}
+
+std::string toStrMaxDecimals(double value, int decimals)
+{
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(decimals) << value;
+    std::string s = ss.str();
+    if(decimals > 0 && s[s.find_last_not_of('0')] == '.') {
+        s.erase(s.size() - decimals + 1);
+    }
+    return s;
 }
 
 apm::APMTestCase createTestCase(Json::Value root) {

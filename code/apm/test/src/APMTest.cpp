@@ -1,6 +1,7 @@
 #include "../include/APMTest.h"
 
 #include <limits>
+#include <cmath>
 
 namespace automatic_package_measuring {
 
@@ -30,14 +31,16 @@ std::vector<cv::Point2i> APMTest::getExpectedPackage() const {
 }
 
 double APMTest::getPackageError() const {
-	return nearestNeighbourError(test_case.getPackage(), actual_package)
+	double err = nearestNeighbourError(test_case.getPackage(), actual_package)
 			/ getCircumference(test_case.getPackage());
+	return std::fmin(err, 1.0);
 }
 
 double APMTest::getReferenceObjectError() const {
-	return nearestNeighbourError(test_case.getReferenceObject(),
+	double err = nearestNeighbourError(test_case.getReferenceObject(),
 			actual_reference_object)
 			/ getCircumference(test_case.getReferenceObject());
+	return std::fmin(err, 1.0);
 }
 
 std::vector<cv::Point2i> APMTest::getExpectedReferenceObject() const {
