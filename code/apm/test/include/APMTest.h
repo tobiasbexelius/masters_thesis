@@ -1,21 +1,41 @@
 #ifndef TEST_SRC_APMTEST_H_
 #define TEST_SRC_APMTEST_H_
 
+#include <opencv2/opencv.hpp>
+#include "../../lib/include/PackageMeasurer.h"
+
+#include "APMTestCase.h"
+
 namespace automatic_package_measuring {
 
 class APMTest {
 public:
-	APMTest(APMTestCase testCase, double max_error = 0.05);
+	APMTest(APMTestCase testCase, double max_error = 0.05, PackageMeasurer measurer = PackageMeasurer());
 	virtual ~APMTest();
 	void run();
-	double getError();
 	bool success() const;
-	std::vector<cv::Point2i> getExpectedCorners() const;
-	std::vector<cv::Point2i> getActualCorners() const;
+	bool isReferenceObjectCorrect() const;
+	double getReferenceObjectError() const;
+	std::vector<cv::Point2i> getExpectedReferenceObject() const;
+	std::vector<cv::Point2i> getActualReferenceObject() const;
+	bool isPackageCorrect() const;
+	double getPackageError() const;
+	std::vector<cv::Point2i> getExpectedPackage() const;
+	std::vector<cv::Point2i> getActualPackage() const;
+	bool isMeasurementCorrect() const;
+	double getMeasurementError() const;
+	cv::Vec3d getExpectedMeasurement() const;
+	cv::Vec3d getActualMeasurement() const;
+
 private:
-	const APMTestCase testCase;
+	double nearestNeighbourError(std::vector<cv::Point2i> expected, std::vector<cv::Point2i> actual) const;
+	double getCircumference(std::vector<cv::Point2i> points) const;
+	const APMTestCase test_case;
 	const double max_error;
-	std::vector<cv::Point2i> actualCorners;
+	std::vector<cv::Point2i> actual_reference_object;
+	std::vector<cv::Point2i> actual_package;
+	cv::Vec3d actual_measurement;
+	PackageMeasurer measurer;
 };
 
 } /* namespace automatic_package_measuring */

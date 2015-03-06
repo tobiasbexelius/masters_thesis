@@ -1,151 +1,175 @@
-#include "../include/jsoncpp/json/json.h"
+#include "../include/external/jsoncpp/json/json.h"
+#include "../include/APMTestCase.h"
+#include "../include/APMTest.h"
+#include "../include/FileUtil.h"
+#include "../../lib/include/PackageMeasurer.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
-#include <dirent.h>
+#include <stdexcept>
+#include <cstdlib>
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <errno.h>
-#include <vector>
-#include <string>
-#include <iostream>
+namespace apm = automatic_package_measuring;
 
-#ifdef WINDOWS
-#include <direct.h>
-#define GetCurrentDir _getcwd
-#else
-#include <unistd.h>
-#define GetCurrentDir getcwd
-#endif
-
-using std::string;
 using std::cout;
+using std::cerr;
 using std::endl;
-using std::vector;
 
-string getCWD();
-void getFilesInDirectory(std::vector<string> &out, const string &directory);
-bool endsWith (std::string const &fullString, std::string const &ending);
+std::vector<std::string> getJsonFiles();
+void parseTestCases();
+void runTests(std::vector<Json::Value> test_cases);
+apm::APMTestCase createTestCase(Json::Value root);
+bool endsWith(std::string const &fullString, std::string const &ending);
 void help();
+
+std::string directory;
+std::vector<std::string> files;
+std::vector<Json::Value> test_cases;
 
 int main(int argc, char** argv) {
 
-	string dir;
 	if (argc < 2) {
 		std::cout << "No path specified, using current working directory."
 				<< std::endl;
-		dir = getCWD();
+		directory = getCWD();
 	} else {
-		dir = argv[1];
+		directory = argv[1];
 	}
 
-	vector<string> files;
-	getFilesInDirectory(files, dir);
+	if (!endsWith(directory, "/"))
+		directory += "/";
 
-	// remove files that do not end with ".json"
-	files.erase(std::remove_if(files.begin(), files.end(),
-	                       [](string file) { return !endsWith(file, ".json"); }), files.end());
+	files = getJsonFiles();
 
-	if(files.empty()) {
-		cout << "No .json files were found in directory \"" << dir << "\"." << endl;
+	if (files.empty()) {
+		cout << "No .json files were found in directory \"" << directory
+				<< "\"." << endl;
 		help();
 		cout << "Exiting..." << endl;
-		return -1;
+		exit(EXIT_FAILURE);
 	}
 
-
-	return 1;
-
-	Json::Value root;   // will contains the root value after parsing.
-	Json::Reader reader;
-	std::ifstream test("../test/data/box01.json", std::ifstream::binary);
-	bool parsingSuccessful = reader.parse(test, root, false);
-	if (!parsingSuccessful) {
-		// report to the user the failure and their locations in the document.
-		cout << reader.getFormatedErrorMessages() << "\n";
-	}
-
-	string encoding = root.get("fileName", "UTF-8").asString();
-	cout << encoding << endl;
-
+	parseTestCases();
+	runTests(test_cases);
 }
 
-std::string getCWD() {
-	char currentPath[FILENAME_MAX];
-	if (!GetCurrentDir(currentPath, sizeof(currentPath))) {
-		std::cerr
-				<< "An error occurred while getting current working directory."
+std::vector<std::string> getJsonFiles() {
+	std::vector<std::string> files;
+	getFilesInDirectory(files, directory);
+
+	// remove files that do not end with ".json"
+	files.erase(
+			std::remove_if(files.begin(), files.end(),
+					[](std::string file) {return !endsWith(file, ".json");}),
+			files.end());
+	return files;
+}
+
+void parseTestCases() {
+	for (auto it = files.begin(); it != files.end(); ++it) {
+		Json::Value root;
+		Json::Reader reader;
+		std::ifstream input_stream(*it, std::ifstream::binary);
+		bool parsing_successful = reader.parse(input_stream, root, false);
+
+		if (!parsing_successful) {
+			cerr << "An error occurred while parsing " << *it << ":" << endl;
+			cerr << reader.getFormatedErrorMessages() << "\n";
+			cerr << "Exiting...";
+			exit(EXIT_FAILURE);
+		}
+		test_cases.push_back(root);
+	}
+}
+
+void runTests(std::vector<Json::Value> test_cases) {
+	int num_tests = 0;
+	int num_passed = 0;
+	int num_failed = 0;
+	auto it = test_cases.begin();
+	for (int i = 0; it != test_cases.end(); ++it, ++i) {
+		++num_tests;
+		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTest test(test_case);
+		test.run();
+
+		std::cout << "########## Test #" << i << " (" << files[i]
+				<< " ) ##########" << std::endl;
+
+		std::cout << "Reference object:" << std::endl;
+		std::cout << "Correct: "
+				<< (test.isReferenceObjectCorrect() ? "True" : "False")
+				<< std::endl;
+		std::cout << "Error: " << test.getReferenceObjectError() << std::endl;
+
+		/*
+		 std::cout << "Package:" << std::endl;
+		 std::cout << "Correct: " << (test.isPackageCorrect() ? "True" : "False") << std::endl;
+		 std::cout << "Error: " << test.getPackageError() << std::endl;
+
+		 std::cout << "Measurements:" << std::endl;
+		 std::cout << "Correct: " << (test.isMeasurementCorrect() ? "True" : "False") << std::endl;
+		 std::cout << "Error: " << test.getMeasurementError() << std::endl;
+		 */
+		if (test.isReferenceObjectCorrect()) {
+			++num_passed;
+			cout << "Test " << num_tests << " passed." << endl;
+		} else {
+			++num_failed;
+			cout << "Test " << num_tests << " failed." << endl;
+		}
+
+		double success_rate = ((double) num_passed / num_tests);
+
+		cout << "########## All tests finished. ##########" << endl;
+		cout << "Statistics:" << endl;
+		cout << "Success rate: " << success_rate << " (" << num_passed << ")"
+				<< std::endl;
+		cout << "Fail rate: " << 1.0 - success_rate << " (" << num_failed << ")"
 				<< endl;
-		throw errno;
+		cout << "Total: " << num_tests << endl;
 	}
-	currentPath[sizeof(currentPath) - 1] = '\0';
-	return currentPath;
-
 }
 
-bool endsWith (string const &fullString, string const &ending) {
-    if (fullString.length() >= ending.length()) {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-    } else {
-        return false;
-    }
-}
+apm::APMTestCase createTestCase(Json::Value root) {
+	std::string file_name = root["fileName"].asString();
 
-/* Returns a list of files in a directory (except the ones that begin with a dot) */
-void getFilesInDirectory(vector<string> &out, const string &directory) {
-#ifdef WINDOWS
-	HANDLE dir;
-	WIN32_FIND_DATA file_data;
+	cv::Mat image = cv::imread(directory + file_name);
 
-	if ((dir = FindFirstFile((directory + "/*").c_str(), &file_data)) == INVALID_HANDLE_VALUE)
-	return; /* No files found */
-
-	do {
-		const string file_name = file_data.cFileName;
-		const string full_file_name = directory + "/" + file_name;
-		const bool is_directory = (file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-
-		if (file_name[0] == '.')
-		continue;
-
-		if (is_directory)
-		continue;
-
-		out.push_back(full_file_name);
-	}while (FindNextFile(dir, &file_data));
-
-	FindClose(dir);
-#else
-	DIR *dir;
-	class dirent *ent;
-	class stat st;
-
-	dir = opendir(directory.c_str());
-	while ((ent = readdir(dir)) != NULL) {
-		const string file_name = ent->d_name;
-		const string full_file_name = directory + "/" + file_name;
-
-		if (file_name[0] == '.')
-			continue;
-
-		if (stat(full_file_name.c_str(), &st) == -1)
-			continue;
-
-		const bool is_directory = (st.st_mode & S_IFDIR) != 0;
-
-		if (is_directory)
-			continue;
-
-		out.push_back(full_file_name);
+	if (!image.data) {
+		throw std::invalid_argument("Invalid image: " + directory + file_name);
 	}
-	closedir(dir);
-#endif
-} // GetFilesInDirectory
+
+	std::vector<cv::Point2i> reference_object;
+	int num_points = root["referenceObject"].size();
+
+	for (int i = 0; i < num_points; ++i) {
+		int x = (int) root["referenceObject"][i]["x"].asInt();
+		int y = (int) root["referenceObject"][i]["y"].asInt();
+		reference_object.push_back(cv::Point2i(x, y));
+	}
+
+	std::vector<cv::Point2i> package;
+	num_points = root["package"].size();
+
+	for (int i = 0; i < num_points; ++i) {
+		int x = (int) root["package"][i]["x"].asInt();
+		int y = (int) root["package"][i]["y"].asInt();
+		package.push_back(cv::Point2i(x, y));
+	}
+
+	double width = root["dimensions"]["width"].asDouble();
+	double height = root["dimensions"]["height"].asDouble();
+	double depth = root["dimensions"]["depth"].asDouble();
+	cv::Vec3d dimensions = cv::Vec3f(width, height, depth);
+	return apm::APMTestCase(image, reference_object, package, dimensions);
+}
 
 void help() {
 	cout << "Usage: ./apm_test [dir]" << endl;
-	cout << "where dir is the path to a directory with .json files which describe the test data." << endl;
-	cout << "If no path is specified the current working directory is used." << endl;
+	cout
+			<< "where dir is the path to a directory with .json files which describe the test data."
+			<< endl;
+	cout << "If no path is specified the current working directory is used."
+			<< endl;
 }

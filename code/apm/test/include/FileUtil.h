@@ -15,8 +15,19 @@
 #define GetCurrentDir getcwd
 #endif
 
+bool endsWith(std::string const &fullString, std::string const &ending) {
+	if (fullString.length() >= ending.length()) {
+		return (0
+				== fullString.compare(fullString.length() - ending.length(),
+						ending.length(), ending));
+	} else {
+		return false;
+	}
+}
+
 /* Returns a list of files in a directory (except the ones that begin with a dot) */
-void getFilesInDirectory(std::vector<std::string> &out, const std::string &directory) {
+void getFilesInDirectory(std::vector<std::string> &out,
+		const std::string &directory) {
 #ifdef WINDOWS
 	HANDLE dir;
 	WIN32_FIND_DATA file_data;
@@ -47,8 +58,12 @@ void getFilesInDirectory(std::vector<std::string> &out, const std::string &direc
 	dir = opendir(directory.c_str());
 	while ((ent = readdir(dir)) != NULL) {
 		const std::string file_name = ent->d_name;
-		const std::string full_file_name = directory + "/" + file_name;
 
+		std::string separator = "";
+		if (!endsWith(directory, "/"))
+			separator += "/";
+
+		const std::string full_file_name = directory + separator + file_name;
 		if (file_name[0] == '.')
 			continue;
 
@@ -69,7 +84,8 @@ void getFilesInDirectory(std::vector<std::string> &out, const std::string &direc
 std::string getCWD() {
 	char currentPath[FILENAME_MAX];
 	if (!GetCurrentDir(currentPath, sizeof(currentPath))) {
-		std::cerr << "An error occurred while getting current working directory."
+		std::cerr
+				<< "An error occurred while getting current working directory."
 				<< std::endl;
 		throw errno;
 	}

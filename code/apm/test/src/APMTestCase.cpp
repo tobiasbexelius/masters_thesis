@@ -1,41 +1,31 @@
-/*
- * APMTestCase.cpp
- *
- *  Created on: Mar 4, 2015
- *      Author: tobias
- */
-
 #include "../include/APMTestCase.h"
 
 namespace automatic_package_measuring {
 
-APMTestCase::APMTestCase(cv::Mat image, std::vector<cv::Point2i> corners,
-		double width, double height, double depth) :
-		image(image), corners(corners), width(width), height(height), depth(
-				depth) {
+APMTestCase::APMTestCase(cv::Mat image,
+		std::vector<cv::Point2i> reference_object,
+		std::vector<cv::Point2i> package, cv::Vec3d dimensions) :
+		image(image), reference_object(reference_object), package(package), dimensions(
+				dimensions) {
 }
 
 APMTestCase::~APMTestCase() {
 }
 
-const std::vector<cv::Point2i>& APMTestCase::getCorners() const {
-	return corners;
+const std::vector<cv::Point2i>& APMTestCase::getReferenceObject() const {
+	return reference_object;
 }
 
-double APMTestCase::getDepth() const {
-	return depth;
+const std::vector<cv::Point2i>& APMTestCase::getPackage() const {
+	return package;
 }
 
-double APMTestCase::getHeight() const {
-	return height;
-}
-
-const cv::Mat& APMTestCase::getImage() const {
+cv::Mat APMTestCase::getImage() const {
 	return image;
 }
 
-double APMTestCase::getWidth() const {
-	return width;
+const cv::Vec3d APMTestCase::getDimensions() const {
+	return dimensions;
 }
 
 } /* namespace automatic_package_measuring */

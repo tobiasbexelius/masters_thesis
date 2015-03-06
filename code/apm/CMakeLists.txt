@@ -9,6 +9,7 @@ ADD_DEFINITIONS(
 project(apm_lib)
 
 include_directories(lib/include)
+include_directories(lib/include/external)
 
 add_subdirectory(lib)
 
