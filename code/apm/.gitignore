@@ -5,6 +5,5 @@
 /Debug
 /build
 /bin
-/lib/include/opencv/
-/lib/include/opencv2/
+**/external/**
 /test/data/
