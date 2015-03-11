@@ -68,7 +68,7 @@ bool A4PaperFinder::isColorOK(cv::Mat image, Polygon polygon) {
 }
 
 bool A4PaperFinder::isShapeOK(Polygon polygon) {
-	if (polygon.size() < 4)
+	if (polygon.size() < 4) // don't accept triangles, lines or points
 		return false;
 	std::priority_queue<double> edges;
 	auto previous = polygon.begin();
@@ -76,9 +76,9 @@ bool A4PaperFinder::isShapeOK(Polygon polygon) {
 	auto current = ++polygon.begin();
 
 	for (; current != polygon.end(); ++previous, ++current) {
-		edges.push(euclideanDistance(*previous, *current));
+		edges.push(cv::norm(*previous - *current));
 	}
-	edges.push(euclideanDistance(*previous, first));
+	edges.push(cv::norm(*previous - first));
 	double four_edges_length = 0;
 	for (int i = 0; i < 4; ++i) {
 		four_edges_length += edges.top();
@@ -88,10 +88,6 @@ bool A4PaperFinder::isShapeOK(Polygon polygon) {
 	double total_length = cv::arcLength(polygon, true);
 
 	return four_edges_length / total_length >= 0.95;
-}
-
-double A4PaperFinder::euclideanDistance(cv::Point p1, cv::Point p2) {
-	return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
 }
 
 } /* namespace automatic_package_measuring */
