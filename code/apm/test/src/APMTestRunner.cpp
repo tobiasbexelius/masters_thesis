@@ -23,6 +23,7 @@ apm::APMTestCase createTestCase(Json::Value root);
 bool endsWith(std::string const &fullString, std::string const &ending);
 void help();
 std::string toStrMaxDecimals(double value, int decimals);
+void printIntermediateResult(std::string name, bool correct, double error);
 
 std::string directory;
 std::vector<std::string> files;
@@ -100,14 +101,13 @@ void runTests(std::vector<Json::Value> test_cases) {
 		std::cout << "########## Test #" << i << " (" << files[i]
 				<< " ) ##########" << std::endl;
 
-		std::string ref_object_error = toStrMaxDecimals(test.getReferenceObjectError() * 100.0, 2) + "%";
-		std::string package_error = toStrMaxDecimals(test.getPackageError() * 100.0, 2) + "%";
-		std::string measurement_error = toStrMaxDecimals(test.getMeasurementError()* 100.0, 2) + "%";
-
-		std::cout << "Reference object: " << (test.isReferenceObjectCorrect() ? "PASS" : "FAIL") << " (error: " << ref_object_error << ")" << std::endl;
-		std::cout << "Package: " << (test.isPackageCorrect() ? "PASS" : "FAIL") << " (error: " << package_error << ")" << std::endl;
-		std::cout << "Measurement: " << (test.isMeasurementCorrect() ? "PASS" : "FAIL") << " (error: " << measurement_error << ")" << std::endl;
-
+		printIntermediateResult("Reference object:\t",
+				test.isReferenceObjectCorrect(),
+				test.getReferenceObjectError());
+		printIntermediateResult("Package:\t\t", test.isPackageCorrect(),
+				test.getPackageError());
+		printIntermediateResult("Measurement:\t\t", test.isMeasurementCorrect(),
+				test.getMeasurementError());
 
 		if (test.success()) {
 			++num_passed;
@@ -131,15 +131,21 @@ void runTests(std::vector<Json::Value> test_cases) {
 	}
 }
 
-std::string toStrMaxDecimals(double value, int decimals)
-{
-    std::ostringstream ss;
-    ss << std::fixed << std::setprecision(decimals) << value;
-    std::string s = ss.str();
-    if(decimals > 0 && s[s.find_last_not_of('0')] == '.') {
-        s.erase(s.size() - decimals + 1);
-    }
-    return s;
+void printIntermediateResult(std::string name, bool correct, double error) {
+	std::string formatted_error = toStrMaxDecimals(error * 100.0, 2) + "%";
+	std::string formatted_result = (correct ? "PASS" : "FAIL");
+	std::cout << name << formatted_result << "\t"
+			<< " (error: " << formatted_error << ")" << std::endl;
+}
+
+std::string toStrMaxDecimals(double value, int decimals) {
+	std::ostringstream ss;
+	ss << std::fixed << std::setprecision(decimals) << value;
+	std::string s = ss.str();
+	if (decimals > 0 && s[s.find_last_not_of('0')] == '.') {
+		s.erase(s.size() - decimals + 1);
+	}
+	return s;
 }
 
 apm::APMTestCase createTestCase(Json::Value root) {
