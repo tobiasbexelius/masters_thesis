@@ -20,6 +20,7 @@ const std::string WINDOW_NAME = "Automatic Package Measuring";
 const int CANNY_MAX_LOW_THRESHOLD = 100;
 bool simple_mode = false;
 int hough_enabled = 0;
+int external_contours_only = 0;
 int show_image = 1;
 int canny_low_threshold = 30;
 int canny_ratio = 60;
@@ -31,20 +32,23 @@ int hough_theta = 25;
 int hough_threshold = HoughLineTransform::DEFAULT_THRESHOLD;
 int hough_min_length = HoughLineTransform::DEFAULT_MIN_LENGTH;
 int hough_max_gap = HoughLineTransform::DEFAULT_MAX_GAP;
+int min_contour_length = 200;
+int contour_peripheral_constraint = 25;
 
-Mat src, src_gray, edges, result;
-std::vector<Curve> contours, polygons;
+cv::Mat src, src_gray, edges, result, contours_mat;
+std::vector<std::vector<cv::Point>> contours, polygons;
 CannyEdgeDetector canny;
 Morphology morphology;
-ContourExtractor contour_extractor(false);
+ContourExtractor contour_extractor;
 
 int edges_enabled = 0;
-int contours_enabled = 0;
+int contours_enabled = 1;
 int polygons_enabled = 0;
-int paper_enabled = 1;
+int paper_enabled = 0;
 
 void drawCurves(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours,
 		cv::Scalar bgr_colour = cv::Scalar(0, 0, 255)) {
+
 	srand(time(NULL));
 	for (int i = 0; i < contours.size(); ++i) {
 		std::vector<std::vector<cv::Point>> contour;
@@ -84,6 +88,10 @@ void printSettings() {
 	cout << "Morphology" << endl;
 	cout << "\t" << "Element radius: " << morph_ele_radius << endl;
 	cout << "\t" << "Iterations: " << morph_iterations << endl;
+	cout << "Contours" << endl;
+	cout << "\t" << "Min length: " << min_contour_length << endl;
+	cout << "\t" << "Peripheral: " << contour_peripheral_constraint / 100.0
+			<< endl;
 	cout << "Polygon finder" << endl;
 	cout << "\t" << "Error margin: " << getErrorMargin() << endl;
 	cout << "Hough:" << endl;
@@ -92,25 +100,6 @@ void printSettings() {
 	cout << "\t" << "Thresh: " << getHoughThresh() << endl;
 	cout << "\t" << "Min length: " << hough_min_length << endl;
 	cout << "\t" << "Max gap: " << hough_max_gap << endl;
-}
-
-void setLabel(cv::Mat& im, const std::string label, Curve& contour,
-		int x_offset = 0) {
-	int fontface = cv::FONT_HERSHEY_SIMPLEX;
-	double scale = 0.4;
-	int thickness = 1;
-	int baseline = 0;
-
-	cv::Size text = cv::getTextSize(label, fontface, scale, thickness,
-			&baseline);
-	cv::Rect r = cv::boundingRect(contour);
-
-	cv::Point pt(x_offset + r.x + ((r.width - text.width) / 2),
-			r.y + ((r.height + text.height) / 2));
-	cv::rectangle(im, pt + cv::Point(0, baseline),
-			pt + cv::Point(text.width, -text.height), CV_RGB(255, 255, 255),
-			CV_FILLED);
-	cv::putText(im, label, pt, fontface, scale, CV_RGB(0, 0, 0), thickness, 8);
 }
 
 void doCanny() {
@@ -128,42 +117,50 @@ void doMorphology() {
 		edges_colour.copyTo(result, edges);
 	}
 }
+std::vector<cv::Vec4i> lines;
 
 void doHough() {
-	if (!hough_enabled)
-		return;
-#if 0
-	HoughLineTransform hough(getHoughRho(), getHoughTheta(), getHoughThresh(),
-			hough_min_length, hough_max_gap);
-	std::vector<cv::Vec4i> lines = hough.detectLines(edges);
-	for (size_t i = 0; i < lines.size(); i++) {
-		cv::Vec4i l = lines[i];
-		cv::line(result, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]),
-				cv::Scalar(0, 255, 255), 3, CV_AA);
+	if (hough_enabled == 1) { // houghlines P
+		HoughLineTransform hough(getHoughRho(), getHoughTheta(),
+				getHoughThresh(), hough_min_length, hough_max_gap);
+		lines = hough.detectLines(contours_mat);
+		for (size_t i = 0; i < lines.size(); i++) {
+			cv::Vec4i l = lines[i];
+			cv::line(result, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]),
+					cv::Scalar(0, 255, 255), 1, CV_AA);
+		}
+	} else if (hough_enabled == 2) { // houghlines non-p
+		HoughLineTransform hough(getHoughRho(), getHoughTheta(),
+				getHoughThresh(), hough_min_length, hough_max_gap);
+		std::vector<cv::Vec2f> lines = hough.detectLinesNonP(contours_mat);
+		for (size_t i = 0; i < lines.size(); i++) {
+			float rho = lines[i][0], theta = lines[i][1];
+			cv::Point pt1, pt2;
+			double a = cos(theta), b = sin(theta);
+			double x0 = a * rho, y0 = b * rho;
+			pt1.x = cvRound(x0 + 1000 * (-b));
+			pt1.y = cvRound(y0 + 1000 * (a));
+			pt2.x = cvRound(x0 - 1000 * (-b));
+			pt2.y = cvRound(y0 - 1000 * (a));
+			cv::line(result, pt1, pt2, cv::Scalar(0, 255, 255), 1, CV_AA);
+		}
 	}
-#else
-	HoughLineTransform hough(getHoughRho(), getHoughTheta(), getHoughThresh(),
-			hough_min_length, hough_max_gap);
-	std::vector<cv::Vec2f> lines = hough.detectLinesNonP(edges);
-	cout << "HOUGH LINES = " << lines.size() << endl;
-	for (size_t i = 0; i < lines.size(); i++) {
-		float rho = lines[i][0], theta = lines[i][1];
-		cv::Point pt1, pt2;
-		double a = cos(theta), b = sin(theta);
-		double x0 = a * rho, y0 = b * rho;
-		pt1.x = cvRound(x0 + 1000 * (-b));
-		pt1.y = cvRound(y0 + 1000 * (a));
-		pt2.x = cvRound(x0 - 1000 * (-b));
-		pt2.y = cvRound(y0 - 1000 * (a));
-		cv::line(result, pt1, pt2, cv::Scalar(0, 255, 255), 3, CV_AA);
-	}
-#endif
+
 }
 
 void extractCountours() {
 	Mat contours_img = Mat(src.size(), src.type());
 	contours_img = cv::Scalar::all(0);
-	contours = contour_extractor.extractContours(edges);
+
+	contours = contour_extractor.extractContours(edges, external_contours_only);
+	contour_extractor.pruneShortContours(contours, min_contour_length);
+	contour_extractor.prunePeripheralContours(contours, edges,
+			contour_peripheral_constraint / 100.0);
+
+	contours_mat = cv::Mat(src.size(), CV_8UC1);
+	contours_mat = cv::Scalar::all(0);
+
+	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
 
 	if (contours_enabled) {
 		drawCurves(contours_img, contours, cv::Scalar(255, 0, 0));
@@ -174,9 +171,12 @@ void extractCountours() {
 void findPolygons() {
 	PolygonFinder polygon_finder = PolygonFinder(getErrorMargin());
 	polygons = polygon_finder.findPolygons(contours);
-
-	if (polygons_enabled)
+	std::vector<std::vector<cv::Point>> hough_polygons = polygon_finder.findPolygons(lines);
+	if (polygons_enabled) {
 		drawCurves(result, polygons, cv::Scalar(0, 0, 255));
+		//drawCurves(result, hough_polygons, cv::Scalar(0, 0, 255));
+	}
+
 }
 
 void findA4() {
@@ -218,21 +218,28 @@ void createWindow() {
 				processImage);
 		cv::createTrackbar("Polygons:", WINDOW_NAME, &polygons_enabled, 1,
 				processImage);
-		cv::createTrackbar("Paper:", WINDOW_NAME, &paper_enabled, 1,
+//		cv::createTrackbar("Paper:", WINDOW_NAME, &paper_enabled, 1,
+//				processImage);
+		cv::createTrackbar("External:", WINDOW_NAME, &external_contours_only, 1,
 				processImage);
 	}
 	cv::createTrackbar("Canny low threshold:", WINDOW_NAME,
 			&canny_low_threshold, CANNY_MAX_LOW_THRESHOLD, processImage);
 	cv::createTrackbar("Canny ratio:", WINDOW_NAME, &canny_ratio, 100,
 			processImage);
-	cv::createTrackbar("Morph ele radius:", WINDOW_NAME, &morph_ele_radius, 10,
-			processImage);
-	cv::createTrackbar("Morph iters:", WINDOW_NAME, &morph_iterations, 20,
-			processImage);
+//	cv::createTrackbar("Morph ele radius:", WINDOW_NAME, &morph_ele_radius, 10,
+//			processImage);
+//	cv::createTrackbar("Morph iters:", WINDOW_NAME, &morph_iterations, 20,
+//			processImage);
 	cv::createTrackbar("Poly Error margin:", WINDOW_NAME,
 			&poly_approx_error_margin, 500, processImage);
-#if 0
-	cv::createTrackbar("Hough:", WINDOW_NAME, &hough_enabled, 1, processImage);
+
+	cv::createTrackbar("Min contour len:", WINDOW_NAME, &min_contour_length,
+			1000, processImage);
+	cv::createTrackbar("Contour peripheral:", WINDOW_NAME,
+			&contour_peripheral_constraint, 50, processImage);
+#if 1
+	cv::createTrackbar("Hough:", WINDOW_NAME, &hough_enabled, 2, processImage);
 	cv::createTrackbar("Hough rho:", WINDOW_NAME, &hough_rho, 10, processImage);
 	cv::createTrackbar("Hough theta:", WINDOW_NAME, &hough_theta, 100,
 			processImage);
@@ -240,7 +247,7 @@ void createWindow() {
 			processImage);
 	cv::createTrackbar("Hough min len:", WINDOW_NAME, &hough_min_length, 100,
 			processImage);
-	cv::createTrackbar("Hough max gap:", WINDOW_NAME, &hough_max_gap, 30,
+	cv::createTrackbar("Hough max gap:", WINDOW_NAME, &hough_max_gap, 100,
 			processImage);
 #endif
 
