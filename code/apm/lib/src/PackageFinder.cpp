@@ -29,6 +29,8 @@ std::vector<cv::Point> PackageFinder::findObject(cv::Mat image,
 
 	findCorners(lines, corners, MAX_ANGLE_DIFF, avg_dimension * MAX_DIST);
 	std::vector<cv::Point> hull;
+	if(corners.empty())
+		return std::vector<cv::Point>();
 	cv::convexHull(corners, hull);
 	std::vector<std::vector<cv::Point>> poly_vec;
 	poly_vec.push_back(hull);
@@ -81,9 +83,9 @@ void PackageFinder::findCorners(const std::vector<cv::Vec4i>& lines, std::vector
 					double l1_end_dist = std::min(cv::norm(l1_end - l2_start), cv::norm(l1_end - l2_end));
 					double dist = std::min(l1_start_dist, l1_end_dist);
 					if (dist <= max_line_dist) {
-						std::cout << "Intersection between i=" << i << ":" << l1_start << " -> " << l1_end
-								<< " and j=" << j << ":" << l2_start << " -> " << l2_end << " at "
-								<< intersection << " angle is " << (angle * 180 / M_PI)  << " and dist is " << dist << " (max " << max_line_dist << ")"<<  std::endl;
+//						std::cout << "Intersection between i=" << i << ":" << l1_start << " -> " << l1_end
+//								<< " and j=" << j << ":" << l2_start << " -> " << l2_end << " at "
+//								<< intersection << " angle is " << (angle * 180 / M_PI)  << " and dist is " << dist << " (max " << max_line_dist << ")"<<  std::endl;
 						corners.push_back(intersection);
 					}
 
