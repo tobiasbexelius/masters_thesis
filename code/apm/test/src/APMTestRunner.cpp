@@ -23,7 +23,7 @@ apm::APMTestCase createTestCase(Json::Value root);
 bool endsWith(std::string const &fullString, std::string const &ending);
 void help();
 std::string toStrMaxDecimals(double value, int decimals);
-void printIntermediateResult(std::string name, bool correct, double error);
+void printResult(std::string name, bool correct, double error);
 
 std::string directory;
 std::vector<std::string> files;
@@ -87,10 +87,12 @@ void parseTestCases() {
 
 void runTests(std::vector<Json::Value> test_cases) {
 
-	std::cout << std::endl;
 	int num_tests = 0;
 	int num_passed = 0;
 	int num_failed = 0;
+	int num_ref_object_correct = 0;
+	int num_packages_correct = 0;
+
 	auto it = test_cases.begin();
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
 		++num_tests;
@@ -98,40 +100,50 @@ void runTests(std::vector<Json::Value> test_cases) {
 		apm::APMTest test(test_case);
 		test.run();
 
-		std::cout << "########## Test #" << i << " (" << files[i]
-				<< " ) ##########" << std::endl;
+		std::cout << std::endl;
+		std::cout << "Test #" << num_tests << " (" << files[i]
+				<< " ) " << std::endl;
 
-		printIntermediateResult("Reference object:\t",
+		printResult("Reference object:\t",
 				test.isReferenceObjectCorrect(),
 				test.getReferenceObjectError());
-		printIntermediateResult("Package:\t\t", test.isPackageCorrect(),
+		printResult("Package:\t\t", test.isPackageCorrect(),
 				test.getPackageError());
-		printIntermediateResult("Measurement:\t\t", test.isMeasurementCorrect(),
+		printResult("Measurement:\t\t", test.isMeasurementCorrect(),
 				test.getMeasurementError());
 
-		if (test.success()) {
-			++num_passed;
-			cout << "Test " << num_tests << " PASSED." << endl;
-		} else {
-			++num_failed;
-			cout << "Test " << num_tests << " FAILED." << endl;
+		if(test.isReferenceObjectCorrect()) {
+			++num_ref_object_correct;
 		}
 
-		double success_rate = ((double) num_passed / num_tests);
+		if(test.isPackageCorrect()) {
+			++num_packages_correct;
+		}
 
-		cout << "########## All tests finished. ##########" << endl;
-		cout << "Statistics:" << endl;
-		cout << "Success rate: " << success_rate << " (" << num_passed << ")"
-				<< std::endl;
-		cout << "Fail rate: " << 1.0 - success_rate << " (" << num_failed << ")"
-				<< endl;
-		cout << "Total: " << num_tests << endl;
-
-		std::cout << std::endl;
+		if (test.isReferenceObjectCorrect() && test.isPackageCorrect()) {
+			++num_passed;
+			cout << "Test #" << num_tests << " PASSED." << endl;
+		} else {
+			++num_failed;
+			cout << "Test #" << num_tests << " FAILED." << endl;
+		}
 	}
+	double success_rate = ((double) num_passed / num_tests) * 100;
+	double ref_object_rate = ((double) num_ref_object_correct / num_tests) * 100;
+	double package_rate = ((double) num_packages_correct / num_tests) * 100;
+	cout << std::endl;
+	cout << "########## All tests finished. ##########" << endl;
+	cout << "Results:" << endl;
+	cout << "Reference object rate: " << toStrMaxDecimals(ref_object_rate, 2) << "% (" << num_ref_object_correct << ")" << std::endl;
+	cout << "Package rate: " << toStrMaxDecimals(package_rate, 2) << "% (" << num_packages_correct << ")" << std::endl;
+	cout << "Success rate: " << toStrMaxDecimals(success_rate, 2) << "% (" << num_passed << ")"
+			<< std::endl;
+	cout << "Total: " << num_tests << endl;
+
+	std::cout << std::endl;
 }
 
-void printIntermediateResult(std::string name, bool correct, double error) {
+void printResult(std::string name, bool correct, double error) {
 	std::string formatted_error = toStrMaxDecimals(error * 100.0, 2) + "%";
 	std::string formatted_result = (correct ? "PASS" : "FAIL");
 	std::cout << name << formatted_result << "\t"
