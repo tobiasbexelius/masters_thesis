@@ -7,14 +7,21 @@ namespace automatic_package_measuring {
 
 class PackageMeasurer {
 public:
-	PackageMeasurer(int canny_low_threshold = 50, int morph_ele_radius = 1, int morph_iterations = 1,
-			double poly_approx_error_margin = 0.02, double canny_ratio = 3.0);
+	PackageMeasurer();
 	virtual ~PackageMeasurer();
 
 	void analyzeImage(cv::Mat image);
 	std::vector<cv::Point2i>& getReferenceObject();
 	std::vector<cv::Point2i>& getPackage();
 	cv::Vec3d getMeasurements();
+
+	static const int CANNY_LOW_THRESHOLD;
+	static const int MORPH_ELE_RADIUS;
+	static const int MORPH_ITERATIONS;
+	static const double POLY_ERROR_MARGIN;
+	static const double CANNY_RATIO;
+	static const double PACKAGE_CONTOUR_MIN_LENGTH;
+	static const double PACKAGE_CONTOUR_PERIPHERAL_CONSTRAINT;
 private:
 	void findReferenceObject();
 	void findPackage();
@@ -25,12 +32,8 @@ private:
 	std::vector<cv::Point2i> reference_object;
 	std::vector<cv::Point2i> package;
 	cv::Vec3d measurements;
-	int canny_low_threshold;
-	int morph_ele_radius;
-	int morph_iterations;
-	double poly_approx_error_margin;
-	double canny_ratio;
-
+	cv::Mat edges;
+	std::vector<std::vector<cv::Point2i>> contours;
 };
 
 } /* namespace automatic_package_measuring */

@@ -5,6 +5,7 @@
 #include "../lib/include/PolygonFinder.h"
 #include "../lib/include/A4PaperFinder.h"
 #include "../lib/include/HoughLineTransform.h"
+#include "../lib/include/PackageFinder.h"
 #include <iostream>
 #include <string.h>
 #include <cstdlib>
@@ -20,7 +21,7 @@ const std::string WINDOW_NAME = "Automatic Package Measuring";
 const int CANNY_MAX_LOW_THRESHOLD = 100;
 bool simple_mode = false;
 int hough_enabled = 0;
-int external_contours_only = 0;
+int external_contours_only = 1;
 int show_image = 1;
 int canny_low_threshold = 30;
 int canny_ratio = 60;
@@ -42,12 +43,12 @@ Morphology morphology;
 ContourExtractor contour_extractor;
 
 int edges_enabled = 0;
-int contours_enabled = 1;
+int contours_enabled = 0;
 int polygons_enabled = 0;
 int paper_enabled = 0;
 
-void drawCurves(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours,
-		cv::Scalar bgr_colour = cv::Scalar(0, 0, 255)) {
+void drawCurves(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours, cv::Scalar bgr_colour =
+		cv::Scalar(0, 0, 255)) {
 
 	srand(time(NULL));
 	for (int i = 0; i < contours.size(); ++i) {
@@ -90,8 +91,7 @@ void printSettings() {
 	cout << "\t" << "Iterations: " << morph_iterations << endl;
 	cout << "Contours" << endl;
 	cout << "\t" << "Min length: " << min_contour_length << endl;
-	cout << "\t" << "Peripheral: " << contour_peripheral_constraint / 100.0
-			<< endl;
+	cout << "\t" << "Peripheral: " << contour_peripheral_constraint / 100.0 << endl;
 	cout << "Polygon finder" << endl;
 	cout << "\t" << "Error margin: " << getErrorMargin() << endl;
 	cout << "Hough:" << endl;
@@ -103,8 +103,7 @@ void printSettings() {
 }
 
 void doCanny() {
-	canny = CannyEdgeDetector(canny_low_threshold,
-			getCannyRatio() * canny_low_threshold);
+	canny = CannyEdgeDetector(canny_low_threshold, getCannyRatio() * canny_low_threshold);
 	edges = canny.detectEdges(src_gray);
 }
 
@@ -117,21 +116,21 @@ void doMorphology() {
 		edges_colour.copyTo(result, edges);
 	}
 }
-std::vector<cv::Vec4i> lines;
 
 void doHough() {
 	if (hough_enabled == 1) { // houghlines P
-		HoughLineTransform hough(getHoughRho(), getHoughTheta(),
-				getHoughThresh(), hough_min_length, hough_max_gap);
-		lines = hough.detectLines(contours_mat);
+		HoughLineTransform hough;//(getHoughRho(), getHoughTheta(), getHoughThresh(), hough_min_length,
+				//hough_max_gap);
+		std::vector<cv::Vec4i> lines = hough.detectLines(contours_mat);
 		for (size_t i = 0; i < lines.size(); i++) {
 			cv::Vec4i l = lines[i];
-			cv::line(result, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]),
-					cv::Scalar(0, 255, 255), 1, CV_AA);
+			cv::line(result, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0, 255, 255), 1, CV_AA);
+			cv::circle(result, cv::Point(l[0], l[1]), 2, cv::Scalar(255, 0, 0), 2);
+			cv::circle(result, cv::Point(l[2], l[3]), 2, cv::Scalar(255, 0, 0), 2);
 		}
 	} else if (hough_enabled == 2) { // houghlines non-p
-		HoughLineTransform hough(getHoughRho(), getHoughTheta(),
-				getHoughThresh(), hough_min_length, hough_max_gap);
+		HoughLineTransform hough(getHoughRho(), getHoughTheta(), getHoughThresh(), hough_min_length,
+				hough_max_gap);
 		std::vector<cv::Vec2f> lines = hough.detectLinesNonP(contours_mat);
 		for (size_t i = 0; i < lines.size(); i++) {
 			float rho = lines[i][0], theta = lines[i][1];
@@ -151,11 +150,10 @@ void doHough() {
 void extractCountours() {
 	Mat contours_img = Mat(src.size(), src.type());
 	contours_img = cv::Scalar::all(0);
-
+	contours = std::vector<std::vector<cv::Point>>();
 	contours = contour_extractor.extractContours(edges, external_contours_only);
 	contour_extractor.pruneShortContours(contours, min_contour_length);
-	contour_extractor.prunePeripheralContours(contours, edges,
-			contour_peripheral_constraint / 100.0);
+	contour_extractor.prunePeripheralContours(contours, edges, contour_peripheral_constraint / 100.0);
 
 	contours_mat = cv::Mat(src.size(), CV_8UC1);
 	contours_mat = cv::Scalar::all(0);
@@ -171,11 +169,8 @@ void extractCountours() {
 void findPolygons() {
 	PolygonFinder polygon_finder = PolygonFinder(getErrorMargin());
 	polygons = polygon_finder.findPolygons(contours);
-	std::vector<std::vector<cv::Point>> hough_polygons = polygon_finder.findPolygons(lines);
-	if (polygons_enabled) {
+	if (polygons_enabled)
 		drawCurves(result, polygons, cv::Scalar(0, 0, 255));
-		//drawCurves(result, hough_polygons, cv::Scalar(0, 0, 255));
-	}
 
 }
 
@@ -187,6 +182,15 @@ void findA4() {
 		std::vector<std::vector<cv::Point>> paper_vec;
 		paper_vec.push_back(paper);
 		drawCurves(result, paper_vec, cv::Scalar(255, 0, 255));
+	}
+}
+
+void findPackage() {
+	PackageFinder package_finder;
+	std::vector<cv::Point> package = package_finder.findObject(src, contours);
+
+	for (int i = 0; i < package.size(); ++i) {
+		cv::circle(result, package[i], 2, cv::Scalar(0, 0, 255), 3);
 	}
 }
 
@@ -203,54 +207,53 @@ void processImage(int, void*) {
 	extractCountours();
 	findPolygons();
 	findA4();
+	findPackage();
 
 	cv::imshow(WINDOW_NAME, result);
+
 }
 
 void createWindow() {
 	cv::namedWindow(WINDOW_NAME, CV_WINDOW_AUTOSIZE);
 	if (!simple_mode) {
-		cv::createTrackbar("Edges:", WINDOW_NAME, &edges_enabled, 1,
-				processImage);
+		//	cv::createTrackbar("Edges:", WINDOW_NAME, &edges_enabled, 1, processImage);
 		//cv::createTrackbar("Show image:", WINDOW_NAME, &show_image, 1,
 		//		processImage);
-		cv::createTrackbar("Contours:", WINDOW_NAME, &contours_enabled, 1,
-				processImage);
-		cv::createTrackbar("Polygons:", WINDOW_NAME, &polygons_enabled, 1,
-				processImage);
+		cv::createTrackbar("Contours:", WINDOW_NAME, &contours_enabled, 1, processImage);
+		//	cv::createTrackbar("Polygons:", WINDOW_NAME, &polygons_enabled, 1, processImage);
 //		cv::createTrackbar("Paper:", WINDOW_NAME, &paper_enabled, 1,
 //				processImage);
-		cv::createTrackbar("External:", WINDOW_NAME, &external_contours_only, 1,
-				processImage);
+		//	cv::createTrackbar("External:", WINDOW_NAME, &external_contours_only, 1, processImage);
 	}
-	cv::createTrackbar("Canny low threshold:", WINDOW_NAME,
-			&canny_low_threshold, CANNY_MAX_LOW_THRESHOLD, processImage);
-	cv::createTrackbar("Canny ratio:", WINDOW_NAME, &canny_ratio, 100,
+	cv::createTrackbar("Canny low threshold:", WINDOW_NAME, &canny_low_threshold, CANNY_MAX_LOW_THRESHOLD,
 			processImage);
+	//cv::createTrackbar("Canny ratio:", WINDOW_NAME, &canny_ratio, 100, processImage);
 //	cv::createTrackbar("Morph ele radius:", WINDOW_NAME, &morph_ele_radius, 10,
 //			processImage);
 //	cv::createTrackbar("Morph iters:", WINDOW_NAME, &morph_iterations, 20,
 //			processImage);
-	cv::createTrackbar("Poly Error margin:", WINDOW_NAME,
-			&poly_approx_error_margin, 500, processImage);
+	//v::createTrackbar("Poly Error margin:", WINDOW_NAME, &poly_approx_error_margin, 500, processImage);
 
-	cv::createTrackbar("Min contour len:", WINDOW_NAME, &min_contour_length,
-			1000, processImage);
-	cv::createTrackbar("Contour peripheral:", WINDOW_NAME,
-			&contour_peripheral_constraint, 50, processImage);
+	cv::createTrackbar("Min contour len:", WINDOW_NAME, &min_contour_length, 1000, processImage);
+	cv::createTrackbar("Contour peripheral:", WINDOW_NAME, &contour_peripheral_constraint, 50, processImage);
 #if 1
 	cv::createTrackbar("Hough:", WINDOW_NAME, &hough_enabled, 2, processImage);
 	cv::createTrackbar("Hough rho:", WINDOW_NAME, &hough_rho, 10, processImage);
-	cv::createTrackbar("Hough theta:", WINDOW_NAME, &hough_theta, 100,
-			processImage);
-	cv::createTrackbar("Hough thresh", WINDOW_NAME, &hough_threshold, 1000,
-			processImage);
-	cv::createTrackbar("Hough min len:", WINDOW_NAME, &hough_min_length, 100,
-			processImage);
-	cv::createTrackbar("Hough max gap:", WINDOW_NAME, &hough_max_gap, 100,
-			processImage);
+	cv::createTrackbar("Hough theta:", WINDOW_NAME, &hough_theta, 100, processImage);
+	cv::createTrackbar("Hough thresh", WINDOW_NAME, &hough_threshold, 1000, processImage);
+	cv::createTrackbar("Hough min len:", WINDOW_NAME, &hough_min_length, 100, processImage);
+	cv::createTrackbar("Hough max gap:", WINDOW_NAME, &hough_max_gap, 100, processImage);
 #endif
 
+}
+
+void onMouse(int event, int x, int y, int flags, void* param) {
+	char text[100];
+	sprintf(text, "x=%d, y=%d", x, y);
+	cv::Mat img2 =     result.clone();
+
+	cv::putText(img2, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
+	cv::imshow(WINDOW_NAME, img2);
 }
 
 std::vector<int> getPaperCoordinates() {
@@ -282,6 +285,7 @@ int main(int argc, char** argv) {
 	createWindow();
 
 	processImage(0, 0);
+    cv::setMouseCallback(WINDOW_NAME, onMouse, 0);
 
 	int key = 0;
 	while (key != 27) // escape
