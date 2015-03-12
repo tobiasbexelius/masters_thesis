@@ -9,8 +9,7 @@ ContourExtractor::ContourExtractor() {
 ContourExtractor::~ContourExtractor() {
 }
 
-std::vector<std::vector<cv::Point>> ContourExtractor::extractContours(
-		cv::Mat edges, bool external_only) {
+std::vector<std::vector<cv::Point>> ContourExtractor::extractContours(cv::Mat edges, bool external_only) {
 
 	std::vector<std::vector<cv::Point2i>> contours;
 	std::vector<cv::Vec4i> hierarchy;
@@ -29,14 +28,11 @@ std::vector<std::vector<cv::Point>> ContourExtractor::extractContours(
 /**
  * Removes contours shorter than min_length
  */
-void ContourExtractor::pruneShortContours(
-		std::vector<std::vector<cv::Point> >& contours, double min_length) {
+void ContourExtractor::pruneShortContours(std::vector<std::vector<cv::Point> >& contours, double min_length) {
 
 	contours.erase(
-			std::remove_if(contours.begin(), contours.end(),
-					[min_length](std::vector<cv::Point>& contour) {
-						return cv::arcLength(contour, false) < min_length;}),
-			contours.end());
+			std::remove_if(contours.begin(), contours.end(), [min_length](std::vector<cv::Point>& contour) {
+				return cv::arcLength(contour, false) < min_length;}), contours.end());
 }
 
 /**
@@ -48,9 +44,8 @@ void ContourExtractor::pruneShortContours(
  *  A value of 0.25 will prune contours which center is
  *  outside the ranges (0.25, 0.75) times the image dimensions on either axis.
  */
-void ContourExtractor::prunePeripheralContours(
-		std::vector<std::vector<cv::Point> >& contours, const cv::Mat& image,
-		double placement_constraint) {
+void ContourExtractor::prunePeripheralContours(std::vector<std::vector<cv::Point> >& contours,
+		const cv::Mat& image, double placement_constraint) {
 
 	int img_width = image.cols;
 	int img_height = image.rows;
@@ -61,8 +56,8 @@ void ContourExtractor::prunePeripheralContours(
 			contours.end());
 }
 
-bool ContourExtractor::isContourCentered(std::vector<cv::Point>& contour,
-		double placement_constraint, int img_height, int img_width) {
+bool ContourExtractor::isContourCentered(std::vector<cv::Point>& contour, double placement_constraint,
+		int img_height, int img_width) {
 
 	assert(placement_constraint >= 0 && placement_constraint <= 1);
 
@@ -77,8 +72,7 @@ bool ContourExtractor::isContourCentered(std::vector<cv::Point>& contour,
 	int max_x = img_width * (1 - placement_constraint);
 	int max_y = img_height * (1 - placement_constraint);
 
-	return center_x >= min_x && center_y >= min_y && center_x <= max_x
-			&& center_y <= max_y;
+	return center_x >= min_x && center_y >= min_y && center_x <= max_x && center_y <= max_y;
 }
 
 } /* namespace automatic_package_measuring */

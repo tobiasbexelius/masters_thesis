@@ -4,9 +4,9 @@
 #include <opencv2/opencv.hpp>
 #include "ObjectFinder.h"
 
-namespace automatic_package_measuring{
+namespace automatic_package_measuring {
 
-class A4PaperFinder : ObjectFinder{
+class A4PaperFinder: ObjectFinder {
 public:
 	A4PaperFinder();
 	virtual ~A4PaperFinder();

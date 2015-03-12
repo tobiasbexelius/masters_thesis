@@ -26,8 +26,7 @@ void PackageMeasurer::analyzeImage(cv::Mat image) {
 	src = image;
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
-	CannyEdgeDetector canny = CannyEdgeDetector(CANNY_LOW_THRESHOLD,
-			CANNY_RATIO * CANNY_LOW_THRESHOLD);
+	CannyEdgeDetector canny = CannyEdgeDetector(CANNY_LOW_THRESHOLD, CANNY_RATIO * CANNY_LOW_THRESHOLD);
 	edges = canny.detectEdges(src_gray);
 
 	Morphology morphology = Morphology(CANNY_RATIO, MORPH_ITERATIONS);
@@ -55,8 +54,7 @@ std::vector<cv::Point2i>& PackageMeasurer::getPackage() {
 void PackageMeasurer::findReferenceObject() {
 
 	PolygonFinder polygon_finder = PolygonFinder(POLY_ERROR_MARGIN);
-	std::vector<std::vector<cv::Point2i>> polygons =
-			polygon_finder.findPolygons(contours);
+	std::vector<std::vector<cv::Point2i>> polygons = polygon_finder.findPolygons(contours);
 
 	A4PaperFinder paper_finder;
 	reference_object = paper_finder.findObject(src, polygons);

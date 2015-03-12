@@ -14,8 +14,7 @@ A4PaperFinder::A4PaperFinder() {
 A4PaperFinder::~A4PaperFinder() {
 }
 
-std::vector<cv::Point> A4PaperFinder::findObject(cv::Mat image,
-		std::vector<Polygon> polygons) {
+std::vector<cv::Point> A4PaperFinder::findObject(cv::Mat image, std::vector<Polygon> polygons) {
 	if (image.empty()) {
 #if DEBUG
 		std::cerr << "Error in A4PaperFinder: empty image received." << std::endl;
@@ -31,8 +30,7 @@ std::vector<cv::Point> A4PaperFinder::findObject(cv::Mat image,
 			continue;
 		}
 
-		if (isSizeOK(image, polygon) && isShapeOK(polygon)
-				&& isColorOK(image, polygon))
+		if (isSizeOK(image, polygon) && isShapeOK(polygon) && isColorOK(image, polygon))
 			return polygon;
 	}
 
@@ -60,8 +58,7 @@ bool A4PaperFinder::isColorOK(cv::Mat image, Polygon polygon) {
 	ranges[0] = range;
 	cv::calcHist(&roi, 1, channels, cv::Mat(), histogram, 1, bins, ranges);
 
-	double top_three_bins = histogram.at<float>(bins[0] - 1)
-			+ histogram.at<float>(bins[0] - 2)
+	double top_three_bins = histogram.at<float>(bins[0] - 1) + histogram.at<float>(bins[0] - 2)
 			+ histogram.at<float>(bins[0] - 3);
 
 	return top_three_bins / ((double) (roi.rows * roi.cols));

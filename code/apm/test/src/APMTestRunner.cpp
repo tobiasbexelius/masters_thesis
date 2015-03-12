@@ -32,8 +32,7 @@ std::vector<Json::Value> test_cases;
 int main(int argc, char** argv) {
 
 	if (argc < 2) {
-		std::cout << "No path specified, using current working directory."
-				<< std::endl;
+		std::cout << "No path specified, using current working directory." << std::endl;
 		directory = getCWD();
 	} else {
 		directory = argv[1];
@@ -45,8 +44,7 @@ int main(int argc, char** argv) {
 	files = getJsonFiles();
 
 	if (files.empty()) {
-		cout << "No .json files were found in directory \"" << directory
-				<< "\"." << endl;
+		cout << "No .json files were found in directory \"" << directory << "\"." << endl;
 		help();
 		cout << "Exiting..." << endl;
 		exit(EXIT_FAILURE);
@@ -63,8 +61,7 @@ std::vector<std::string> getJsonFiles() {
 	// remove files that do not end with ".json"
 	files.erase(
 			std::remove_if(files.begin(), files.end(),
-					[](std::string file) {return !endsWith(file, ".json");}),
-			files.end());
+					[](std::string file) {return !endsWith(file, ".json");}), files.end());
 	return files;
 }
 
@@ -101,22 +98,17 @@ void runTests(std::vector<Json::Value> test_cases) {
 		test.run();
 
 		std::cout << std::endl;
-		std::cout << "Test #" << num_tests << " (" << files[i]
-				<< " ) " << std::endl;
+		std::cout << "Test #" << num_tests << " (" << files[i] << " ) " << std::endl;
 
-		printResult("Reference object:\t",
-				test.isReferenceObjectCorrect(),
-				test.getReferenceObjectError());
-		printResult("Package:\t\t", test.isPackageCorrect(),
-				test.getPackageError());
-		printResult("Measurement:\t\t", test.isMeasurementCorrect(),
-				test.getMeasurementError());
+		printResult("Reference object:\t", test.isReferenceObjectCorrect(), test.getReferenceObjectError());
+		printResult("Package:\t\t", test.isPackageCorrect(), test.getPackageError());
+		printResult("Measurement:\t\t", test.isMeasurementCorrect(), test.getMeasurementError());
 
-		if(test.isReferenceObjectCorrect()) {
+		if (test.isReferenceObjectCorrect()) {
 			++num_ref_object_correct;
 		}
 
-		if(test.isPackageCorrect()) {
+		if (test.isPackageCorrect()) {
 			++num_packages_correct;
 		}
 
@@ -134,10 +126,11 @@ void runTests(std::vector<Json::Value> test_cases) {
 	cout << std::endl;
 	cout << "########## All tests finished. ##########" << endl;
 	cout << "Results:" << endl;
-	cout << "Reference object rate: " << toStrMaxDecimals(ref_object_rate, 2) << "% (" << num_ref_object_correct << ")" << std::endl;
-	cout << "Package rate: " << toStrMaxDecimals(package_rate, 2) << "% (" << num_packages_correct << ")" << std::endl;
-	cout << "Success rate: " << toStrMaxDecimals(success_rate, 2) << "% (" << num_passed << ")"
+	cout << "Reference object rate: " << toStrMaxDecimals(ref_object_rate, 2) << "% ("
+			<< num_ref_object_correct << ")" << std::endl;
+	cout << "Package rate: " << toStrMaxDecimals(package_rate, 2) << "% (" << num_packages_correct << ")"
 			<< std::endl;
+	cout << "Success rate: " << toStrMaxDecimals(success_rate, 2) << "% (" << num_passed << ")" << std::endl;
 	cout << "Total: " << num_tests << endl;
 
 	std::cout << std::endl;
@@ -146,8 +139,7 @@ void runTests(std::vector<Json::Value> test_cases) {
 void printResult(std::string name, bool correct, double error) {
 	std::string formatted_error = toStrMaxDecimals(error * 100.0, 2) + "%";
 	std::string formatted_result = (correct ? "PASS" : "FAIL");
-	std::cout << name << formatted_result << "\t"
-			<< " (error: " << formatted_error << ")" << std::endl;
+	std::cout << name << formatted_result << "\t" << " (error: " << formatted_error << ")" << std::endl;
 }
 
 std::string toStrMaxDecimals(double value, int decimals) {
@@ -196,9 +188,6 @@ apm::APMTestCase createTestCase(Json::Value root) {
 
 void help() {
 	cout << "Usage: ./apm_test [dir]" << endl;
-	cout
-			<< "where dir is the path to a directory with .json files which describe the test data."
-			<< endl;
-	cout << "If no path is specified the current working directory is used."
-			<< endl;
+	cout << "where dir is the path to a directory with .json files which describe the test data." << endl;
+	cout << "If no path is specified the current working directory is used." << endl;
 }

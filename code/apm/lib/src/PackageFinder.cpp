@@ -29,7 +29,7 @@ std::vector<cv::Point> PackageFinder::findObject(cv::Mat image,
 
 	findCorners(lines, corners, MAX_ANGLE_DIFF, avg_dimension * MAX_DIST);
 	std::vector<cv::Point> hull;
-	if(corners.empty())
+	if (corners.empty())
 		return std::vector<cv::Point>();
 	cv::convexHull(corners, hull);
 	std::vector<std::vector<cv::Point>> poly_vec;

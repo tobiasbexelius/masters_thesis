@@ -2,11 +2,9 @@
 
 namespace automatic_package_measuring {
 
-APMTestCase::APMTestCase(cv::Mat image,
-		std::vector<cv::Point2i> reference_object,
+APMTestCase::APMTestCase(cv::Mat image, std::vector<cv::Point2i> reference_object,
 		std::vector<cv::Point2i> package, cv::Vec3d dimensions) :
-		image(image), reference_object(reference_object), package(package), dimensions(
-				dimensions) {
+		image(image), reference_object(reference_object), package(package), dimensions(dimensions) {
 }
 
 APMTestCase::~APMTestCase() {

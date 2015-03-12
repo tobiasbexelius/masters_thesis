@@ -9,9 +9,12 @@ typedef std::vector<cv::Point> Polygon;
 
 class ObjectFinder {
 public:
-	ObjectFinder() {}
-	virtual ~ObjectFinder(){}
-	virtual std::vector<cv::Point> findObject(cv::Mat image, std::vector<std::vector<cv::Point>> contours) = 0;
+	ObjectFinder() {
+	}
+	virtual ~ObjectFinder() {
+	}
+	virtual std::vector<cv::Point> findObject(cv::Mat image,
+			std::vector<std::vector<cv::Point>> contours) = 0;
 };
 
 } /* namespace automatic_package_measuring */

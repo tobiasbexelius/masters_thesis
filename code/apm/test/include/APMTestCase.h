@@ -8,8 +8,8 @@ namespace automatic_package_measuring {
 
 class APMTestCase {
 public:
-	APMTestCase(cv::Mat image, std::vector<cv::Point2i> reference_object,
-			std::vector<cv::Point2i> package, cv::Vec3d dimensions);
+	APMTestCase(cv::Mat image, std::vector<cv::Point2i> reference_object, std::vector<cv::Point2i> package,
+			cv::Vec3d dimensions);
 	virtual ~APMTestCase();
 	const std::vector<cv::Point2i>& getReferenceObject() const;
 	const std::vector<cv::Point2i>& getPackage() const;

@@ -5,8 +5,7 @@
 
 namespace automatic_package_measuring {
 
-APMTest::APMTest(APMTestCase testCase, double max_error,
-		PackageMeasurer measurer) :
+APMTest::APMTest(APMTestCase testCase, double max_error, PackageMeasurer measurer) :
 		test_case(testCase), max_error(max_error), measurer(measurer) {
 }
 
@@ -22,8 +21,7 @@ void APMTest::run() {
 }
 
 bool APMTest::success() const {
-	return isReferenceObjectCorrect() && isPackageCorrect()
-			&& isMeasurementCorrect();
+	return isReferenceObjectCorrect() && isPackageCorrect() && isMeasurementCorrect();
 }
 
 std::vector<cv::Point2i> APMTest::getExpectedPackage() const {
@@ -37,8 +35,7 @@ double APMTest::getPackageError() const {
 }
 
 double APMTest::getReferenceObjectError() const {
-	double err = nearestNeighbourError(test_case.getReferenceObject(),
-			actual_reference_object)
+	double err = nearestNeighbourError(test_case.getReferenceObject(), actual_reference_object)
 			/ getCircumference(test_case.getReferenceObject());
 	return std::fmin(err, 1.0);
 }
@@ -68,8 +65,7 @@ bool APMTest::isMeasurementCorrect() const {
 }
 
 double APMTest::getMeasurementError() const {
-	return cv::norm(test_case.getDimensions() - actual_measurement)
-			/ cv::norm(test_case.getDimensions());
+	return cv::norm(test_case.getDimensions() - actual_measurement) / cv::norm(test_case.getDimensions());
 }
 
 cv::Vec3d APMTest::getExpectedMeasurement() const {
@@ -108,12 +104,10 @@ double APMTest::nearestNeighbourError(std::vector<cv::Point2i> expected,
 		query[0] = (float) actual[i].x;
 		query[1] = (float) actual[i].y;
 
-		flann_index.knnSearch(query, indices, distances, 1,
-				cv::flann::SearchParams());
+		flann_index.knnSearch(query, indices, distances, 1, cv::flann::SearchParams());
 
 		if (used_indices.count(indices[0]) > 0) { // same corner cannot be used twice
-			std::cerr << "Same point used more than once in nearest neighbour."
-					<< std::endl;
+			std::cerr << "Same point used more than once in nearest neighbour." << std::endl;
 			return std::numeric_limits<int>::max();;
 		}
 		used_indices.insert(indices[0]);

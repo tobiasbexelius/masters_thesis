@@ -16,8 +16,7 @@ TEST(A4PaperFinderTest, EmptyMat) {
 	square.push_back(cv::Point2i(0, 10));
 	polygons.push_back(square);
 
-	ASSERT_EQ(std::vector<cv::Point>(),
-			paper_finder.findObject(image, polygons));
+	ASSERT_EQ(std::vector<cv::Point>(), paper_finder.findObject(image, polygons));
 
 }
 
@@ -27,8 +26,7 @@ TEST(A4PaperFinderTest, EmptyPolygons) {
 	cv::Mat_<int> image(2, 2);
 	std::vector<apm::Polygon> polygons;
 
-	ASSERT_EQ(std::vector<cv::Point>(),
-			paper_finder.findObject(image, polygons));
+	ASSERT_EQ(std::vector<cv::Point>(), paper_finder.findObject(image, polygons));
 }
 
 TEST(A4PaperFinderTest, OneEmptyPolygon) {
@@ -39,8 +37,7 @@ TEST(A4PaperFinderTest, OneEmptyPolygon) {
 	apm::Polygon empty;
 	polygons.push_back(empty);
 
-	ASSERT_EQ(std::vector<cv::Point>(),
-			paper_finder.findObject(image, polygons));
+	ASSERT_EQ(std::vector<cv::Point>(), paper_finder.findObject(image, polygons));
 }
 
 TEST(A4PaperFinderTest, PolygonWithTooFewPoints) {
@@ -52,8 +49,7 @@ TEST(A4PaperFinderTest, PolygonWithTooFewPoints) {
 	poly.push_back(cv::Point2i(0, 0));
 	polygons.push_back(poly);
 
-	ASSERT_EQ(std::vector<cv::Point>(),
-			paper_finder.findObject(image, polygons));
+	ASSERT_EQ(std::vector<cv::Point>(), paper_finder.findObject(image, polygons));
 
 	polygons.clear();
 	poly.push_back(cv::Point2i(10, 10));

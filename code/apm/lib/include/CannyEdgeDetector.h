@@ -7,9 +7,8 @@ namespace automatic_package_measuring {
 
 class CannyEdgeDetector {
 public:
-	CannyEdgeDetector(int low_threshold = DEFAULT_LOW_THRESHOLD,
-			int high_threshold = DEFAULT_HIGH_THRESHOLD, int kernel_size =
-					DEFAULT_KERNEL_SIZE);
+	CannyEdgeDetector(int low_threshold = DEFAULT_LOW_THRESHOLD, int high_threshold = DEFAULT_HIGH_THRESHOLD,
+			int kernel_size = DEFAULT_KERNEL_SIZE);
 	virtual ~CannyEdgeDetector();
 	cv::Mat detectEdges(cv::Mat image);
 private:

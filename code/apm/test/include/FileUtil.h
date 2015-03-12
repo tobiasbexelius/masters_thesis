@@ -17,17 +17,14 @@
 
 bool endsWith(std::string const &fullString, std::string const &ending) {
 	if (fullString.length() >= ending.length()) {
-		return (0
-				== fullString.compare(fullString.length() - ending.length(),
-						ending.length(), ending));
+		return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
 	} else {
 		return false;
 	}
 }
 
 /* Returns a list of files in a directory (except the ones that begin with a dot) */
-void getFilesInDirectory(std::vector<std::string> &out,
-		const std::string &directory) {
+void getFilesInDirectory(std::vector<std::string> &out, const std::string &directory) {
 #ifdef WINDOWS
 	HANDLE dir;
 	WIN32_FIND_DATA file_data;
@@ -84,9 +81,7 @@ void getFilesInDirectory(std::vector<std::string> &out,
 std::string getCWD() {
 	char currentPath[FILENAME_MAX];
 	if (!GetCurrentDir(currentPath, sizeof(currentPath))) {
-		std::cerr
-				<< "An error occurred while getting current working directory."
-				<< std::endl;
+		std::cerr << "An error occurred while getting current working directory." << std::endl;
 		throw errno;
 	}
 	currentPath[sizeof(currentPath) - 1] = '\0';

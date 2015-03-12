@@ -7,9 +7,8 @@ namespace automatic_package_measuring {
 
 class HoughLineTransform {
 public:
-	HoughLineTransform(int rho = DEFAULT_RHO, double theta = DEFAULT_THETA,
-			int threshold = DEFAULT_THRESHOLD, int min_length =
-					DEFAULT_MIN_LENGTH, int max_gap = DEFAULT_MAX_GAP);
+	HoughLineTransform(int rho = DEFAULT_RHO, double theta = DEFAULT_THETA, int threshold = DEFAULT_THRESHOLD,
+			int min_length = DEFAULT_MIN_LENGTH, int max_gap = DEFAULT_MAX_GAP);
 	virtual ~HoughLineTransform();
 	std::vector<cv::Vec4i> detectLines(cv::Mat image);
 

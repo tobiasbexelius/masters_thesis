@@ -7,7 +7,7 @@ namespace automatic_package_measuring {
 
 class Morphology {
 public:
-	Morphology(int element_radius=3, int iterations=6);
+	Morphology(int element_radius = 3, int iterations = 6);
 	virtual ~Morphology();
 	cv::Mat close(cv::Mat image);
 	cv::Mat open(cv::Mat image);
