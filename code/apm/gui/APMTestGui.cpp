@@ -251,7 +251,7 @@ void onMouse(int event, int x, int y, int flags, void* param) {
 	char text[100];
 	sprintf(text, "x=%d, y=%d", x, y);
 	cv::Mat img2 =     result.clone();
-
+	cv::rectangle(img2, cv::Point(0,0), cv::Point(200, 30), cv::Scalar(255,255,255), -1);
 	cv::putText(img2, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
 	cv::imshow(WINDOW_NAME, img2);
 }
