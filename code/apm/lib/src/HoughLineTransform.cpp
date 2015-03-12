@@ -2,11 +2,11 @@
 
 namespace automatic_package_measuring {
 
-const int HoughLineTransform::DEFAULT_RHO = 1;
+const int HoughLineTransform::DEFAULT_RHO = 2;
 const double HoughLineTransform::DEFAULT_THETA = CV_PI / 180;
 const int HoughLineTransform::DEFAULT_THRESHOLD = 50;
-const int HoughLineTransform::DEFAULT_MIN_LENGTH = 50;
-const int HoughLineTransform::DEFAULT_MAX_GAP = 10;
+const int HoughLineTransform::DEFAULT_MIN_LENGTH = 80;
+const int HoughLineTransform::DEFAULT_MAX_GAP = 55;
 
 HoughLineTransform::HoughLineTransform(int rho, double theta, int threshold,
 		int min_length, int max_gap) :
