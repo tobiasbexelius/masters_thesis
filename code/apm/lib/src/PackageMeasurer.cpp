@@ -26,6 +26,9 @@ void PackageMeasurer::analyzeImage(cv::Mat image) {
 	src = image;
 	cv::cvtColor(src, src_gray, CV_BGR2GRAY);
 
+	reference_object = std::vector<cv::Point2i>();
+	package = std::vector<cv::Point2i>();
+
 	CannyEdgeDetector canny = CannyEdgeDetector(CANNY_LOW_THRESHOLD, CANNY_RATIO * CANNY_LOW_THRESHOLD);
 	edges = canny.detectEdges(src_gray);
 
@@ -33,6 +36,9 @@ void PackageMeasurer::analyzeImage(cv::Mat image) {
 	edges = morphology.close(edges);
 	ContourExtractor contour_extractor;
 	contours = contour_extractor.extractContours(edges, false);
+
+	if(contours.empty())
+		return;
 
 	findReferenceObject();
 

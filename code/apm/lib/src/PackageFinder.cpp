@@ -1,6 +1,6 @@
-#include "PackageFinder.h"
-#include "ContourExtractor.h"
-#include "HoughLineTransform.h"
+#include "../include/PackageFinder.h"
+#include "../include/ContourExtractor.h"
+#include "../include/HoughLineTransform.h"
 #include "../include/PolygonFinder.h"
 #include <cmath>
 namespace automatic_package_measuring {
@@ -14,7 +14,6 @@ PackageFinder::~PackageFinder() {
 
 std::vector<cv::Point> PackageFinder::findObject(cv::Mat image,
 		std::vector<std::vector<cv::Point> > contours) {
-
 	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
 	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
 
@@ -22,7 +21,6 @@ std::vector<cv::Point> PackageFinder::findObject(cv::Mat image,
 	std::vector<cv::Vec4i> lines;
 
 	lines = hough.detectLines(contours_mat);
-
 	std::vector<cv::Point2i> corners;
 
 	double avg_dimension = (image.rows + image.cols) / 2;
@@ -36,7 +34,9 @@ std::vector<cv::Point> PackageFinder::findObject(cv::Mat image,
 	poly_vec.push_back(hull);
 	PolygonFinder polygon_finder;
 	std::vector<std::vector<cv::Point>> package = polygon_finder.findPolygons(poly_vec);
+	if(!package.empty())
 	return package[0];
+	return std::vector<cv::Point>();
 }
 
 bool PackageFinder::lineIntersection(cv::Point2f l1_start, cv::Point2f l1_end, cv::Point2f l2_start,
@@ -57,10 +57,8 @@ bool PackageFinder::lineIntersection(cv::Point2f l1_start, cv::Point2f l1_end, c
 
 void PackageFinder::findCorners(const std::vector<cv::Vec4i>& lines, std::vector<cv::Point2i>& corners,
 		double max_angle_diff_in_degrees, double max_line_dist) {
-
-	for (int i = 0; i < lines.size() - 1; ++i) {
+	for (int i = 0; i < lines.size(); ++i) {
 		for (int j = i + 1; j < lines.size(); ++j) {
-
 			cv::Point2f l1_start = cv::Point2f(lines[i][0], lines[i][1]);
 			cv::Point2f l1_end = cv::Point2f(lines[i][2], lines[i][3]);
 
