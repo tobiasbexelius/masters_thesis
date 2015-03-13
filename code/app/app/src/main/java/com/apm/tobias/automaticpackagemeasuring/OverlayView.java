@@ -14,7 +14,8 @@ import java.util.List;
 public class OverlayView extends View {
 
     private Paint mPaint;
-    private List<Edge> edges;
+    private List<Edge> referenceObjectEdges;
+    private List<Edge> packageEdges;
 
     public OverlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -23,25 +24,40 @@ public class OverlayView extends View {
         mPaint.setStrokeWidth(10.0f); // TODO screen size independence
     }
 
-    public void clear() {
-        this.edges = null;
+    public void clearReferenceObject() {
+        this.referenceObjectEdges = null;
     }
 
-    public void updateEdges(List<Edge> edges) {
-        this.edges = edges;
+    public void clearPackage() {
+        this.packageEdges = null;
+    }
+
+    public void updateReferenceObject(List<Edge> edges) {
+        this.referenceObjectEdges = edges;
+
+    }
+
+    public void updatePackage(List<Edge> edges) {
+        this.packageEdges = edges;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (edges != null) {
-            for (Edge edge : edges) {
-                Vertex v1 = transformCoordinates(canvas, edge.getV1());
-                Vertex v2 = transformCoordinates(canvas, edge.getV2());
+        if (referenceObjectEdges != null)
+            drawObject(canvas, referenceObjectEdges);
 
-                canvas.drawLine(v1.getX(), v1.getY(), v2.getX(), v2.getY(), mPaint);
-            }
+        if (packageEdges != null)
+            drawObject(canvas, packageEdges);
+    }
+
+    private void drawObject(Canvas canvas, List<Edge> edges) {
+        for (Edge edge : edges) {
+            Vertex v1 = transformCoordinates(canvas, edge.getV1());
+            Vertex v2 = transformCoordinates(canvas, edge.getV2());
+
+            canvas.drawLine(v1.getX(), v1.getY(), v2.getX(), v2.getY(), mPaint);
         }
     }
 

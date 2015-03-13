@@ -23,6 +23,14 @@ JNIEXPORT void JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_Packag
 JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getReferenceObjectCoordinates(
 		JNIEnv *, jobject);
 
+/*
+ * Class:     com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer
+ * Method:    getPackageCoordinates
+ * Signature: ()Ljava/nio/ByteBuffer;
+ */
+JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getPackageCoordinates(
+		JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

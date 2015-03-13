@@ -11,8 +11,18 @@ public class PackageMeasurer {
 
     private native ByteBuffer getReferenceObjectCoordinates();
 
+    private native ByteBuffer getPackageCoordinates();
+
     public ReferenceObject getReferenceObject() {
         ByteBuffer referenceObject = getReferenceObjectCoordinates();
+        referenceObject.order(ByteOrder.LITTLE_ENDIAN);
+
+        ReferenceObject object = new ReferenceObject(referenceObject);
+        return object;
+    }
+
+    public ReferenceObject getPackage() {
+        ByteBuffer referenceObject = getPackageCoordinates();
         referenceObject.order(ByteOrder.LITTLE_ENDIAN);
 
         ReferenceObject object = new ReferenceObject(referenceObject);

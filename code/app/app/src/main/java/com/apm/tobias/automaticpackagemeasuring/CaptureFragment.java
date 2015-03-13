@@ -2,7 +2,6 @@ package com.apm.tobias.automaticpackagemeasuring;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,7 +23,6 @@ import com.apm.tobias.automaticpackagemeasuring.core.PackageMeasurer;
 import com.apm.tobias.automaticpackagemeasuring.core.ReferenceObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class CaptureFragment extends Fragment implements Camera.PictureCallback, Camera.PreviewCallback {
@@ -171,6 +169,8 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
                 mProcessingTimeView.setText(getString(R.string.processing_time, processingTime));
 
                 drawReferenceObject();
+                drawPackage();
+                mReferenceObjectOverlay.invalidate();
             }
         });
 
@@ -179,16 +179,24 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         }
     }
 
+    private void drawPackage() {
+        ReferenceObject parcel = mPackageMeasurer.getPackage();
+        List<Edge> edges = parcel.getEdges();
+
+        if(edges.isEmpty())
+            mReferenceObjectOverlay.clearPackage();
+        else
+            mReferenceObjectOverlay.updateReferenceObject(edges);
+    }
+
     private void drawReferenceObject() {
         ReferenceObject referenceObject = mPackageMeasurer.getReferenceObject();
         List<Edge> edges = referenceObject.getEdges();
 
         if(edges.isEmpty())
-            mReferenceObjectOverlay.clear();
+            mReferenceObjectOverlay.clearReferenceObject();
         else
-            mReferenceObjectOverlay.updateEdges(edges);
-        
-        mReferenceObjectOverlay.invalidate();
+            mReferenceObjectOverlay.updateReferenceObject(edges);
     }
 
     @Override
