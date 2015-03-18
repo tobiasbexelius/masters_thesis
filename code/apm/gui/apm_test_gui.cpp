@@ -73,6 +73,7 @@ void processImage(int, void*) {
 	if (show_image)
 		image.copyTo(result);
 
+	UpdateConstants();
 	PrintConstants();
 
 	cv::Mat preprocessed_image;
