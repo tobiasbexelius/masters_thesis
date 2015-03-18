@@ -1,5 +1,5 @@
 #include "com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer.h"
-#include "apm_core/lib/include/PackageMeasurer.h"
+#include "apm_core/lib/include/package_measurer.h"
 #include <opencv2/opencv.hpp>
 #include <vector>
 
@@ -24,13 +24,13 @@ JNIEXPORT void JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_Packag
 	cv::cvtColor(tmp, inputBGR, CV_YUV420sp2BGR);
 	env->ReleaseByteArrayElements(videoFrame, baseAddress, 0);
 
-	apm.analyzeImage(inputBGR);
+	apm.AnalyzeImage(inputBGR);
 }
 
 JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getReferenceObjectCoordinates(
 		JNIEnv *env, jobject obj) {
 
-	std::vector<cv::Point2i> objectCoordinates = apm.getReferenceObject();
+	std::vector<cv::Point2i> objectCoordinates = apm.GetReferenceObject();
 	Point* ref = new Point[objectCoordinates.size()];
 
 	for (int i = 0; i < objectCoordinates.size(); ++i) {
@@ -49,7 +49,7 @@ JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_Pac
 JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getPackageCoordinates(
 		JNIEnv *env, jobject obj) {
 
-	std::vector<cv::Point2i> objectCoordinates = apm.getPackage();
+	std::vector<cv::Point2i> objectCoordinates = apm.GetPackage();
 	Point* ref = new Point[objectCoordinates.size()];
 
 	for (int i = 0; i < objectCoordinates.size(); ++i) {

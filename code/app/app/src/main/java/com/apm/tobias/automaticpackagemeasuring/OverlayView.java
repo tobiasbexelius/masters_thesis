@@ -13,15 +13,20 @@ import java.util.List;
 
 public class OverlayView extends View {
 
-    private Paint mPaint;
+    private Paint mReferenceObjectPaint;
+    private Paint mPackagePaint;
     private List<Edge> referenceObjectEdges;
     private List<Edge> packageEdges;
 
     public OverlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mPaint = new Paint();
-        mPaint.setARGB(255, 255, 0, 0);
-        mPaint.setStrokeWidth(10.0f); // TODO screen size independence
+        mReferenceObjectPaint = new Paint();
+        mReferenceObjectPaint.setARGB(255, 255, 0, 0);
+        mReferenceObjectPaint.setStrokeWidth(10.0f); // TODO screen size independence
+
+        mPackagePaint = new Paint();
+        mPackagePaint.setARGB(255, 0, 0, 255);
+        mPackagePaint.setStrokeWidth(10.0f); // TODO screen size independence
     }
 
     public void clearReferenceObject() {
@@ -46,18 +51,17 @@ public class OverlayView extends View {
         super.onDraw(canvas);
 
         if (referenceObjectEdges != null)
-            drawObject(canvas, referenceObjectEdges);
+            drawObject(canvas, referenceObjectEdges, mReferenceObjectPaint);
 
         if (packageEdges != null)
-            drawObject(canvas, packageEdges);
+            drawObject(canvas, packageEdges, mPackagePaint);
     }
 
-    private void drawObject(Canvas canvas, List<Edge> edges) {
+    private void drawObject(Canvas canvas, List<Edge> edges, Paint paint) {
         for (Edge edge : edges) {
             Vertex v1 = transformCoordinates(canvas, edge.getV1());
             Vertex v2 = transformCoordinates(canvas, edge.getV2());
-
-            canvas.drawLine(v1.getX(), v1.getY(), v2.getX(), v2.getY(), mPaint);
+            canvas.drawLine(v1.getX(), v1.getY(), v2.getX(), v2.getY(), paint);
         }
     }
 
