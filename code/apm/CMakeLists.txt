@@ -15,7 +15,7 @@ include_directories(lib/include/external)
 add_subdirectory(lib)
 
 option(GUI "build gui" ON)
-option (TESTS "build tests" ON)
+option(TESTS "build tests" ON)
 
 if (TESTS)
   add_subdirectory(test)

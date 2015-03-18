@@ -1,7 +1,6 @@
-#include "../include/APMTest.h"
-
 #include <limits>
 #include <cmath>
+#include "../include/apm_test.h"
 
 namespace automatic_package_measuring {
 
@@ -13,11 +12,12 @@ APMTest::~APMTest() {
 }
 
 void APMTest::run() {
+	cv::Mat image = test_case.getImage();
 	PackageMeasurer measurer;
-	measurer.analyzeImage(test_case.getImage());
-	actual_reference_object = measurer.getReferenceObject();
-	actual_package = measurer.getPackage();
-	actual_measurement = measurer.getMeasurements();
+	measurer.AnalyzeImage(image);
+	actual_reference_object = measurer.GetReferenceObject();
+	actual_package = measurer.GetPackage();
+	actual_measurement = measurer.GetMeasurements();
 }
 
 bool APMTest::success() const {

@@ -1,4 +1,4 @@
-#include "../include/APMTestCase.h"
+#include "../include/apm_test_case.h"
 
 namespace automatic_package_measuring {
 

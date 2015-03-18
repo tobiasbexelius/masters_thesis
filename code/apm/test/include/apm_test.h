@@ -2,9 +2,9 @@
 #define TEST_SRC_APMTEST_H_
 
 #include <opencv2/opencv.hpp>
-#include "../../lib/include/PackageMeasurer.h"
 
-#include "APMTestCase.h"
+#include "../../lib/include/package_measurer.h"
+#include "apm_test_case.h"
 
 namespace automatic_package_measuring {
 

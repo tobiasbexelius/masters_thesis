@@ -1,14 +1,14 @@
 #include "json/json.h"
-#include "../include/APMTestCase.h"
-#include "../include/APMTest.h"
-#include "../include/FileUtil.h"
-#include "../../lib/include/PackageMeasurer.h"
+#include "../include/file_util.h"
+#include "../../lib/include/package_measurer.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <stdexcept>
 #include <cstdlib>
 #include <iomanip>
+#include "../include/apm_test.h"
+#include "../include/apm_test_case.h"
 
 namespace apm = automatic_package_measuring;
 
