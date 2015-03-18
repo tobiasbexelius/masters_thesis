@@ -107,7 +107,7 @@ double APMTest::nearestNeighbourError(std::vector<cv::Point2i> expected,
 		flann_index.knnSearch(query, indices, distances, 1, cv::flann::SearchParams());
 
 		if (used_indices.count(indices[0]) > 0) { // same corner cannot be used twice
-			std::cerr << "Same point used more than once in nearest neighbour." << std::endl;
+		//	std::cerr << "Same point used more than once in nearest neighbour." << std::endl;
 			return std::numeric_limits<int>::max();;
 		}
 		used_indices.insert(indices[0]);

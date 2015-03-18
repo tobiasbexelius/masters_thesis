@@ -1,6 +1,8 @@
 #include "json/json.h"
 #include "../include/file_util.h"
 #include "../../lib/include/package_measurer.h"
+#include "../../lib/include/image_processing.h"
+#include "../../lib/include/image_processing_internal.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -22,8 +24,12 @@ void runTests(std::vector<Json::Value> test_cases);
 apm::APMTestCase createTestCase(Json::Value root);
 bool endsWith(std::string const &fullString, std::string const &ending);
 void help();
-std::string toStrMaxDecimals(double value, int decimals);
+std::string formatDouble(double value, int decimals);
 void printResult(std::string name, bool correct, double error);
+template< class T >void optimizeConstant(std::vector<Json::Value> test_cases, std::string constant_name, T * constant,
+		T min, T max, T increment);
+void printFinalResult(int num_tests, int num_passed, int num_ref_object_correct, int num_packages_correct,
+		int num_measurements_correct);
 
 std::string directory;
 std::vector<std::string> files;
@@ -51,6 +57,7 @@ int main(int argc, char** argv) {
 	}
 
 	parseTestCases();
+	//optimizeConstant(test_cases, "Blur kernel",&apm::internal::BLUR_KERNEL_SIZE, 1, 12, 1);
 	runTests(test_cases);
 }
 
@@ -82,12 +89,43 @@ void parseTestCases() {
 	}
 }
 
+template< class T >void optimizeConstant(std::vector<Json::Value> test_cases, std::string constant_name, T * constant,
+		T min, T max, T increment) {
+
+	for (T i = min; i <= max; i += increment) {
+		*constant = i;
+
+		int num_passed = 0;
+		int num_ref_correct = 0;
+		int num_package_correct = 0;
+
+		for (auto it = test_cases.begin(); it != test_cases.end(); ++it) {
+			apm::APMTestCase test_case = createTestCase(*it);
+			apm::APMTest test(test_case);
+			test.run();
+
+			if (test.isReferenceObjectCorrect())
+				++num_ref_correct;
+			if (test.isPackageCorrect())
+				++num_package_correct;
+
+			if (test.isReferenceObjectCorrect() && test.isPackageCorrect())
+				++num_passed;
+		}
+
+		std::string pass_rate = formatDouble((double)num_passed/test_cases.size(), 2);
+		std::string ref_rate = formatDouble((double)num_ref_correct / test_cases.size(), 2);
+		std::string package_rate = formatDouble((double)num_package_correct / test_cases.size(), 2);
+		std::cout << constant_name << " = " << i << " PASS RATE: " << pass_rate << " (ref:" << ref_rate << ", package:" << package_rate << ")" << std::endl;
+	}
+
+}
+
 void runTests(std::vector<Json::Value> test_cases) {
 
 	int num_tests = 0;
 	int num_passed = 0;
-	int num_failed = 0;
-	int num_ref_object_correct = 0;
+	int num_ref_objects_correct = 0;
 	int num_packages_correct = 0;
 
 	auto it = test_cases.begin();
@@ -105,7 +143,7 @@ void runTests(std::vector<Json::Value> test_cases) {
 		printResult("Measurement:\t\t", test.isMeasurementCorrect(), test.getMeasurementError());
 
 		if (test.isReferenceObjectCorrect()) {
-			++num_ref_object_correct;
+			++num_ref_objects_correct;
 		}
 
 		if (test.isPackageCorrect()) {
@@ -116,33 +154,41 @@ void runTests(std::vector<Json::Value> test_cases) {
 			++num_passed;
 			cout << "Test #" << num_tests << " PASSED." << endl;
 		} else {
-			++num_failed;
 			cout << "Test #" << num_tests << " FAILED." << endl;
 		}
 	}
+
+	int num_measurements_correct = 0;
+
+	printFinalResult(num_tests, num_passed, num_ref_objects_correct, num_packages_correct,
+			num_measurements_correct);
+}
+
+void printFinalResult(int num_tests, int num_passed, int num_ref_object_correct, int num_packages_correct,
+		int num_measurements_correct) {
 	double success_rate = ((double) num_passed / num_tests) * 100;
 	double ref_object_rate = ((double) num_ref_object_correct / num_tests) * 100;
 	double package_rate = ((double) num_packages_correct / num_tests) * 100;
 	cout << std::endl;
 	cout << "########## All tests finished. ##########" << endl;
 	cout << "Results:" << endl;
-	cout << "Reference object rate: " << toStrMaxDecimals(ref_object_rate, 2) << "% ("
+	cout << "Reference object rate: " << formatDouble(ref_object_rate, 2) << "% ("
 			<< num_ref_object_correct << ")" << std::endl;
-	cout << "Package rate: " << toStrMaxDecimals(package_rate, 2) << "% (" << num_packages_correct << ")"
+	cout << "Package rate: " << formatDouble(package_rate, 2) << "% (" << num_packages_correct << ")"
 			<< std::endl;
-	cout << "Success rate: " << toStrMaxDecimals(success_rate, 2) << "% (" << num_passed << ")" << std::endl;
+	cout << "Success rate: " << formatDouble(success_rate, 2) << "% (" << num_passed << ")" << std::endl;
 	cout << "Total: " << num_tests << endl;
 
 	std::cout << std::endl;
 }
 
 void printResult(std::string name, bool correct, double error) {
-	std::string formatted_error = toStrMaxDecimals(error * 100.0, 2) + "%";
+	std::string formatted_error = formatDouble(error * 100.0, 2) + "%";
 	std::string formatted_result = (correct ? "PASS" : "FAIL");
 	std::cout << name << formatted_result << "\t" << " (error: " << formatted_error << ")" << std::endl;
 }
 
-std::string toStrMaxDecimals(double value, int decimals) {
+std::string formatDouble(double value, int decimals) {
 	std::ostringstream ss;
 	ss << std::fixed << std::setprecision(decimals) << value;
 	std::string s = ss.str();
