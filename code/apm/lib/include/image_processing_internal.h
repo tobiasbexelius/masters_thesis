@@ -9,6 +9,8 @@ namespace internal {
 
 bool IsContourCentered(std::vector<cv::Point>& contour, const cv::Size& img_size);
 
+extern int BLUR_KERNEL_SIZE;
+
 extern int CANNY_LOW_THRESHOLD;
 extern int CANNY_HIGH_THRESHOLD;
 extern double CANNY_RATIO;

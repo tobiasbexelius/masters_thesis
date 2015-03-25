@@ -6,17 +6,27 @@ using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
 
-void PreprocessImage(const cv::Mat& image, cv::Mat& image_out){
+void PreprocessImage(const cv::Mat& image, cv::Mat& image_out) {
+
+#if 0
+	cv::Mat filtered_image;
+	cv::bilateralFilter(image, filtered_image, 5, 50, 50);
+	cv::cvtColor(filtered_image, image_out, CV_BGR2GRAY);
+#endif
+
+#if 1
 	cv::Mat image_gray;
 	cv::cvtColor(image, image_gray, CV_BGR2GRAY);
-	cv::blur(image_gray, image_out, cv::Size(3, 3)); // TODO try cv::GaussianBlur, median blur, bilateral blur
+	cv::medianBlur(image_gray, image_out, BLUR_KERNEL_SIZE);
+#endif
+
 }
 
 void FindEdges(const cv::Mat& image, cv::Mat& edges) {
 	cv::Canny(image, edges, CANNY_LOW_THRESHOLD, CANNY_HIGH_THRESHOLD, CANNY_KERNEL_SIZE);
 }
 
-void CloseEdges(cv::Mat& edges) { // TODO try other operations?
+void CloseEdges(cv::Mat& edges) {
 	cv::Size morph_size = cv::Size(2 * MORPH_RADIUS + 1, 2 * MORPH_RADIUS + 1);
 	cv::Point anchor = cv::Point(MORPH_RADIUS, MORPH_RADIUS);
 	cv::Mat structuring_element = cv::getStructuringElement(cv::MORPH_RECT, morph_size, anchor);
@@ -44,9 +54,8 @@ void PruneShortContours(std::vector<std::vector<cv::Point> >& contours, double m
 void PrunePeripheralContours(std::vector<std::vector<cv::Point> >& contours, const cv::Size& img_size) {
 
 	contours.erase(
-			std::remove_if(contours.begin(), contours.end(),
-					[img_size](std::vector<cv::Point>& contour) {
-						return !IsContourCentered(contour, img_size);}), contours.end());
+			std::remove_if(contours.begin(), contours.end(), [img_size](std::vector<cv::Point>& contour) {
+				return !IsContourCentered(contour, img_size);}), contours.end());
 }
 
 void FindConvexPolygons(const std::vector<std::vector<cv::Point>>& contours,
@@ -59,8 +68,7 @@ void FindConvexPolygons(const std::vector<std::vector<cv::Point>>& contours,
 	}
 }
 
-void FindConvexPolygon(const std::vector<cv::Point>& contour,
-		std::vector<cv::Point>& polygon_out) {
+void FindConvexPolygon(const std::vector<cv::Point>& contour, std::vector<cv::Point>& polygon_out) {
 	double arc_length = cv::arcLength(contour, true);
 	cv::approxPolyDP(contour, polygon_out, arc_length * POLY_ERROR_TOLERANCE, true);
 	if (!cv::isContourConvex(polygon_out))
@@ -92,13 +100,15 @@ bool IsContourCentered(std::vector<cv::Point>& contour, const cv::Size& img_size
 	return center_x >= min_x && center_y >= min_y && center_x <= max_x && center_y <= max_y;
 }
 
-int CANNY_LOW_THRESHOLD = 50;
+int BLUR_KERNEL_SIZE = 9;
+
+int CANNY_LOW_THRESHOLD = 10;
 double CANNY_RATIO = 3.0;
 int CANNY_KERNEL_SIZE = 3;
 int CANNY_HIGH_THRESHOLD = CANNY_LOW_THRESHOLD * CANNY_RATIO;
 
-int MORPH_RADIUS = 1;
-int MORPH_ITERATIONS = 1;
+int MORPH_RADIUS = 2;
+int MORPH_ITERATIONS = 2;
 
 double CENTER_THRESHOLD = 0.25;
 

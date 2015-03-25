@@ -24,16 +24,8 @@ void PackageMeasurer::AnalyzeImage(cv::Mat& image) {
 	FindEdges(preprocessed_image, edges);
 	CloseEdges(edges);
 
-	FindReferenceObject(image, edges);
-	FindPackage(image, edges, package);
-}
-
-void PackageMeasurer::FindReferenceObject(const cv::Mat& image, const cv::Mat& edges) {
-	FindPaper(image, edges, reference_object);
-}
-
-void PackageMeasurer::MeasurePackage() {
-	// TODO
+	reference_object = FindPaper(image, edges);
+	package = FindPackage(image, edges, reference_object);
 }
 
 const std::vector<cv::Point>& PackageMeasurer::GetReferenceObject() {

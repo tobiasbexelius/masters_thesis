@@ -31,8 +31,6 @@ public:
 	static const double CENTER_THRESHOLD;
 
 private:
-	void FindReferenceObject(const cv::Mat& image, const cv::Mat& edges);
-	void MeasurePackage();
 
 	std::vector<cv::Point> reference_object;
 	std::vector<cv::Point> package;

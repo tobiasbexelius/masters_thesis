@@ -5,7 +5,7 @@
 
 namespace automatic_package_measuring {
 
-void FindPaper(const cv::Mat& image, const cv::Mat& edges, std::vector<cv::Point>& paper_out);
+std::vector<cv::Point> FindPaper(const cv::Mat& image, const cv::Mat& edges);
 
 }
 

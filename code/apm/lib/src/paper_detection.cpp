@@ -8,15 +8,15 @@ using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
 
-void FindPaper(const cv::Mat& image, const cv::Mat& edges, std::vector<cv::Point>& paper_out) {
+std::vector<cv::Point> FindPaper(const cv::Mat& image, const cv::Mat& edges) {
 	if (image.empty() || edges.empty()) {
-		return;
+		return std::vector<cv::Point>();
 	}
 	cv::Mat edges_cpy = edges.clone();
 	std::vector<std::vector<cv::Point>> contours;
 	FindContours(edges_cpy, false, contours);
 	if (contours.empty())
-		return;
+		return std::vector<cv::Point>();
 
 	PruneShortContours(contours, MIN_PAPER_CONTOUR_LENGTH);
 	PrunePeripheralContours(contours, image.size());
@@ -28,10 +28,11 @@ void FindPaper(const cv::Mat& image, const cv::Mat& edges, std::vector<cv::Point
 		}
 
 		if (IsSizeOK(image.size(), polygon) && IsShapeOK(polygon) && IsColorOK(image, polygon)) {
-			paper_out = polygon;
-			return;
+			return polygon;
 		}
 	}
+
+	return std::vector<cv::Point>();
 }
 
 namespace internal {

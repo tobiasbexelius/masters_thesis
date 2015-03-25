@@ -36,7 +36,7 @@ int show_edges = 0;
 int show_contours = 0;
 int show_polygons = 0;
 int show_lines = 1;
-int show_paper = 1;
+int show_paper = 0;
 int show_package = 1;
 int external_contours_only = 1;
 
@@ -49,8 +49,9 @@ void DrawPolygons();
 void DrawPaper();
 void DrawPackage();
 
-void DrawContours(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours, cv::Scalar color);
-void DrawContour(cv::Mat canvas, std::vector<cv::Point> contour, cv::Scalar color);
+void DrawContours(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours, cv::Scalar color =
+		cv::Scalar());
+void DrawContour(cv::Mat canvas, std::vector<cv::Point> contour, cv::Scalar color = cv::Scalar());
 
 void UpdateConstants() {
 	CANNY_RATIO = 1.0 + canny_ratio / 10.0;
@@ -82,8 +83,8 @@ void processImage(int, void*) {
 	FindEdges(preprocessed_image, edges);
 	CloseEdges(edges);
 
-	FindPaper(image, edges, paper);
-	FindPackage(image, edges, package);
+	paper = FindPaper(image, edges);
+	package = FindPackage(image, edges, paper);
 
 	DrawOverlay();
 
@@ -119,15 +120,15 @@ void DrawEdges() {
 void DrawContours() {
 	std::vector<std::vector<cv::Point>> contours;
 	FindContours(edges, external_contours_only, contours);
-	PruneShortContours(contours, min_contour_length);
+	PruneShortContours(contours, min_package_contour_length);
 	PrunePeripheralContours(contours, image.size());
-	DrawContours(result, contours, cv::Scalar(255, 0, 0));
+	DrawContours(result, contours);
 }
 
 void DrawLines() {
 	std::vector<std::vector<cv::Point>> contours;
 	FindContours(edges, external_contours_only, contours);
-	PruneShortContours(contours, min_contour_length);
+	PruneShortContours(contours, min_package_contour_length);
 	PrunePeripheralContours(contours, image.size());
 
 	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
@@ -207,17 +208,16 @@ void CreateWindow() {
 
 }
 
-void DrawContours(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours, cv::Scalar color =
-		cv::Scalar()) {
+void DrawContours(cv::Mat canvas, std::vector<std::vector<cv::Point>> contours, cv::Scalar color) {
+	srand(time(NULL));
 	for (int i = 0; i < contours.size(); ++i) {
 		DrawContour(canvas, contours[i], color);
 	}
 }
 
-void DrawContour(cv::Mat canvas, std::vector<cv::Point> contour, cv::Scalar color = cv::Scalar()) {
+void DrawContour(cv::Mat canvas, std::vector<cv::Point> contour, cv::Scalar color) {
 
 	if (color == cv::Scalar()) {
-		srand(time(NULL));
 		int r = rand() % 256;
 		int g = rand() % 256;
 		int b = rand() % 256;
@@ -265,8 +265,6 @@ void PrintConstants() {
 }
 
 int main(int argc, char** argv) {
-	std::cout << "derp" << std::endl;
-
 	if (argc < 2) {
 		cout << "Missing parameter: image path." << endl;
 		return -1;

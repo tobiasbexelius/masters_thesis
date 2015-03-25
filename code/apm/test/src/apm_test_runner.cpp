@@ -26,10 +26,11 @@ bool endsWith(std::string const &fullString, std::string const &ending);
 void help();
 std::string formatDouble(double value, int decimals);
 void printResult(std::string name, bool correct, double error);
-template< class T >void optimizeConstant(std::vector<Json::Value> test_cases, std::string constant_name, T * constant,
-		T min, T max, T increment);
+template<class T> void optimizeConstant(std::vector<Json::Value> test_cases, std::string constant_name,
+		T * constant, T min, T max, T increment);
 void printFinalResult(int num_tests, int num_passed, int num_ref_object_correct, int num_packages_correct,
 		int num_measurements_correct);
+void showAllImages(std::vector<Json::Value> test_cases);
 
 std::string directory;
 std::vector<std::string> files;
@@ -57,8 +58,21 @@ int main(int argc, char** argv) {
 	}
 
 	parseTestCases();
-	//optimizeConstant(test_cases, "Blur kernel",&apm::internal::BLUR_KERNEL_SIZE, 1, 12, 1);
+	//optimizeConstant(test_cases, "Blur kernel",&apm::internal::CANNY_LOW_THRESHOLD, 1, 60, 1);
 	runTests(test_cases);
+	//showAllImages(test_cases);
+}
+
+void showAllImages(std::vector<Json::Value> test_cases) {
+	int i = 0;
+	for (auto it = test_cases.begin(); it != test_cases.end(); ++it, ++i) {
+		apm::APMTestCase test_case = createTestCase(*it);
+		cv::Mat processed_image;
+		apm::PreprocessImage(test_case.getImage(), processed_image);
+		cv::imshow(std::to_string(i), processed_image);
+
+	}
+	cv::waitKey(0);
 }
 
 std::vector<std::string> getJsonFiles() {
@@ -89,8 +103,8 @@ void parseTestCases() {
 	}
 }
 
-template< class T >void optimizeConstant(std::vector<Json::Value> test_cases, std::string constant_name, T * constant,
-		T min, T max, T increment) {
+template<class T> void optimizeConstant(std::vector<Json::Value> test_cases, std::string constant_name,
+		T * constant, T min, T max, T increment) {
 
 	for (T i = min; i <= max; i += increment) {
 		*constant = i;
@@ -113,10 +127,11 @@ template< class T >void optimizeConstant(std::vector<Json::Value> test_cases, st
 				++num_passed;
 		}
 
-		std::string pass_rate = formatDouble((double)num_passed/test_cases.size(), 2);
-		std::string ref_rate = formatDouble((double)num_ref_correct / test_cases.size(), 2);
-		std::string package_rate = formatDouble((double)num_package_correct / test_cases.size(), 2);
-		std::cout << constant_name << " = " << i << " PASS RATE: " << pass_rate << " (ref:" << ref_rate << ", package:" << package_rate << ")" << std::endl;
+		std::string pass_rate = formatDouble((double) num_passed / test_cases.size(), 2);
+		std::string ref_rate = formatDouble((double) num_ref_correct / test_cases.size(), 2);
+		std::string package_rate = formatDouble((double) num_package_correct / test_cases.size(), 2);
+		std::cout << constant_name << " = " << i << " PASS RATE: " << pass_rate << " (ref:" << ref_rate
+				<< ", package:" << package_rate << ")" << std::endl;
 	}
 
 }
@@ -172,8 +187,8 @@ void printFinalResult(int num_tests, int num_passed, int num_ref_object_correct,
 	cout << std::endl;
 	cout << "########## All tests finished. ##########" << endl;
 	cout << "Results:" << endl;
-	cout << "Reference object rate: " << formatDouble(ref_object_rate, 2) << "% ("
-			<< num_ref_object_correct << ")" << std::endl;
+	cout << "Reference object rate: " << formatDouble(ref_object_rate, 2) << "% (" << num_ref_object_correct
+			<< ")" << std::endl;
 	cout << "Package rate: " << formatDouble(package_rate, 2) << "% (" << num_packages_correct << ")"
 			<< std::endl;
 	cout << "Success rate: " << formatDouble(success_rate, 2) << "% (" << num_passed << ")" << std::endl;
