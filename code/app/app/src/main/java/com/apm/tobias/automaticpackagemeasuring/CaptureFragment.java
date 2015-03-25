@@ -186,7 +186,7 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         if(edges.isEmpty())
             mReferenceObjectOverlay.clearPackage();
         else
-            mReferenceObjectOverlay.updateReferenceObject(edges);
+            mReferenceObjectOverlay.updatePackage(edges);
     }
 
     private void drawReferenceObject() {

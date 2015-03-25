@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import com.apm.tobias.automaticpackagemeasuring.core.Edge;
@@ -49,7 +50,6 @@ public class OverlayView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
         if (referenceObjectEdges != null)
             drawObject(canvas, referenceObjectEdges, mReferenceObjectPaint);
 
