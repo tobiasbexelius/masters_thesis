@@ -11,18 +11,16 @@
 using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
-//cv::Mat derp;
 
-std::vector<cv::Point> FindPackage(const cv::Mat& image, const cv::Mat& edges,
-		std::vector<cv::Point>& reference_object) {
+std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
+		std::vector<cv::Point2f>& reference_object) {
 	cv::Mat edges_cpy = edges.clone();
 	std::vector<std::vector<cv::Point>> contours;
 	FindContours(edges_cpy, true, contours);
 	PruneShortContours(contours, MIN_PACKAGE_CONTOUR_LENGTH);
 	PrunePeripheralContours(contours, image.size());
-//	derp = image.clone();
 	if (contours.empty())
-		return std::vector<cv::Point>();
+		return std::vector<cv::Point2f>();
 
 	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
 	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
@@ -30,37 +28,22 @@ std::vector<cv::Point> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	std::vector<cv::Vec4i> lines;
 	DetectLines(contours_mat, lines);
 
-	//std::cout << "lines " << lines.size() << std::endl;
 
 	std::vector<Package> packages = FindPackages(lines, reference_object);
 	int max_score = std::numeric_limits<int>::min();
 	Package max_package;
 
-//	int packages_size = packages.size();
-//	std::cout << "size " << packages.size() << std::endl;
 	for (auto it = packages.begin(); it != packages.end(); ++it) {
-//		if (packages_size > 50)
-//			break;
-//		derp = image.clone();
-//
-//		for (int i = 0; i < it->corners.size(); ++i) {
-//			cv::circle(derp, it->corners[i], 2, cv::Scalar(0, 0, 255), 3);
-//		}
-
 		double score = RatePackage(lines, *it);
 		if (score > max_score) {
 			max_score = score;
 			max_package = *it;
 		}
 
-//		std::cout << "current score: " << score << std::endl;
-//
-//		imshow("derp", derp);
-//		cv::waitKey(0);
 	}
 
 	if (max_score < MIN_ACCEPTED_SCORE)
-		return std::vector<cv::Point>();
+		return std::vector<cv::Point2f>();
 
 	return max_package.corners;
 
@@ -102,26 +85,16 @@ void DrawLine(std::vector<cv::Vec4i>& lines, cv::Mat& canvas, int index, int int
 			cv::Scalar(255, 0, intensity), 3);
 }
 
-std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv::Point>& reference_object) {
+std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& reference_object) {
 	std::vector<Package> packages;
 	std::vector<std::tuple<int, int>> line_pairs;
 	FindParallelLines(lines, line_pairs);
 	if (line_pairs.size() < 3)
 		return packages;
 
-//	for (int i = 0; i < lines.size(); ++i) {
-//		std::cout << "Line: " << lines[i] << "( " << i << ")" << std::endl;
-//	}
-//	std::cout << "Num parallel pairs: " << line_pairs.size() << std::endl;
-//	for (int i = 0; i < line_pairs.size(); ++i) {
-//		DrawLine(lines, derp, std::get<0>(line_pairs[i]), i * 30);
-//		DrawLine(lines, derp, std::get<1>(line_pairs[i]), i * 30);
-//		cv::imshow("derp", derp);
-//		cv::waitKey(0);
-//	}
 	if (line_pairs.size() > 50) {
 		std::cout << "Too many line pairs: " << line_pairs.size() << std::endl;
-		return std::vector<Package>();
+		return std:: vector<Package>();
 	}
 
 	for (int i = 0; i < line_pairs.size(); ++i) {
@@ -186,14 +159,14 @@ bool TryToCreatePackage(std::vector<cv::Vec4i> lines, std::vector<std::tuple<int
 			return false;
 
 	}
-	std::vector<cv::Point> corners;
+	std::vector<cv::Point2f> corners;
 	FindCorners(lines, neighbour_list, corners);
 
 	if (corners.size() != 6)
 		return false;
 
 	std::vector<int> hull;
-	cv::convexHull(corners, hull);
+	cv::convexHull(corners, hull, false); // Y axis points down, this function assumes the opposite. Thus, orientation is reverted.
 
 	if (hull.size() != 6)
 		return false;
@@ -206,11 +179,11 @@ bool TryToCreatePackage(std::vector<cv::Vec4i> lines, std::vector<std::tuple<int
 }
 
 void FindCorners(const std::vector<cv::Vec4i>& lines,
-		const std::unordered_map<int, std::vector<int>>& neighbour_list, std::vector<cv::Point>& corners) { // TODO speed this up
+		const std::unordered_map<int, std::vector<int>>& neighbour_list, std::vector<cv::Point2f>& corners) { // TODO speed this up
 	for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
 		int line = it->first;
 		std::vector<int> neighbours = it->second;
-		cv::Point intersection;
+		cv::Point2f intersection;
 		if (FindIntersection(lines[line], lines[neighbours[0]], intersection)
 				&& std::find(corners.begin(), corners.end(), intersection) == corners.end())
 			corners.push_back(intersection);
@@ -302,7 +275,7 @@ void FindConnectedComponents(const std::vector<std::vector<Intersection>>& inter
 
 }
 
-bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point& intersection) {
+bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection) {
 	cv::Point2f o1 = cv::Point2f(line1[0], line1[1]);
 	cv::Point2f e1 = cv::Point2f(line1[2], line1[3]);
 	cv::Point2f o2 = cv::Point2f(line2[0], line2[1]);
@@ -318,6 +291,8 @@ bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point&
 
 	double t1 = (x.x * d2.y - x.y * d2.x) / cross;
 	intersection = o1 + d1 * t1;
+	intersection.x = std::round(intersection.x);
+	intersection.y = std::round(intersection.y);
 	if (intersection.x >= 0 || intersection.y >= 0)
 		return true;
 

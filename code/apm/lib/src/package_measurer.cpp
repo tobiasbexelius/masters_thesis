@@ -4,6 +4,7 @@
 
 #include "../include/image_processing.h"
 #include "../include/package_measurer.h"
+#include "../include/package_measuring.h"
 
 namespace automatic_package_measuring {
 
@@ -26,17 +27,19 @@ void PackageMeasurer::AnalyzeImage(cv::Mat& image) {
 
 	reference_object = FindPaper(image, edges);
 	package = FindPackage(image, edges, reference_object);
+
+	measurements = MeasurePackage(image.size(), reference_object, cv::Vec2f(297	, 210), package);
 }
 
-const std::vector<cv::Point>& PackageMeasurer::GetReferenceObject() {
+const std::vector<cv::Point2f>& PackageMeasurer::GetReferenceObject() {
 	return reference_object;
 }
 
-const std::vector<cv::Point>& PackageMeasurer::GetPackage() {
+const std::vector<cv::Point2f>& PackageMeasurer::GetPackage() {
 	return package;
 }
 
-const cv::Vec3d& PackageMeasurer::GetMeasurements() {
+const cv::Vec3f& PackageMeasurer::GetMeasurements() {
 	return measurements;
 }
 

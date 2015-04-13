@@ -61,7 +61,7 @@ void PrunePeripheralContours(std::vector<std::vector<cv::Point> >& contours, con
 void FindConvexPolygons(const std::vector<std::vector<cv::Point>>& contours,
 		std::vector<std::vector<cv::Point>>& polygons_out) {
 	for (auto contour : contours) {
-		std::vector<cv::Point2i> polygon;
+		std::vector<cv::Point> polygon;
 		FindConvexPolygon(contour, polygon);
 		if (!polygon.empty())
 			polygons_out.push_back(polygon);
@@ -117,7 +117,7 @@ double POLY_ERROR_TOLERANCE = 0.02;
 int HOUGH_RHO = 2;
 double HOUGH_THETA = CV_PI / 180;
 int HOUGH_THRESHOLD = 50;
-int HOUGH_MIN_LENGTH = 80;
+int HOUGH_MIN_LENGTH = 30;//80;
 int HOUGH_MAX_GAP = 55;
 
 } /* namespace automatic_package_measuring::internal */

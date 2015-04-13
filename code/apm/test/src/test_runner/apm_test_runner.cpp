@@ -1,16 +1,16 @@
 #include "json/json.h"
-#include "../include/file_util.h"
-#include "../../lib/include/package_measurer.h"
-#include "../../lib/include/image_processing.h"
-#include "../../lib/include/image_processing_internal.h"
+#include "../../include/file_util.h"
+#include "../../../lib/include/package_measurer.h"
+#include "../../../lib/include/image_processing.h"
+#include "../../../lib/include/image_processing_internal.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <stdexcept>
 #include <cstdlib>
 #include <iomanip>
-#include "../include/apm_test.h"
-#include "../include/apm_test_case.h"
+#include "../../include/apm_test.h"
+#include "../../include/apm_test_case.h"
 
 namespace apm = automatic_package_measuring;
 
@@ -22,7 +22,7 @@ std::vector<std::string> getJsonFiles();
 void parseTestCases();
 void runTests(std::vector<Json::Value> test_cases);
 apm::APMTestCase createTestCase(Json::Value root);
-bool endsWith(std::string const &fullString, std::string const &ending);
+bool EndsWith(std::string const &fullString, std::string const &ending);
 void help();
 std::string formatDouble(double value, int decimals);
 void printResult(std::string name, bool correct, double error);
@@ -40,12 +40,12 @@ int main(int argc, char** argv) {
 
 	if (argc < 2) {
 		std::cout << "No path specified, using current working directory." << std::endl;
-		directory = getCWD();
+		directory = GetCWD();
 	} else {
 		directory = argv[1];
 	}
 
-	if (!endsWith(directory, "/"))
+	if (!EndsWith(directory, "/"))
 		directory += "/";
 
 	files = getJsonFiles();
@@ -68,7 +68,7 @@ void showAllImages(std::vector<Json::Value> test_cases) {
 	for (auto it = test_cases.begin(); it != test_cases.end(); ++it, ++i) {
 		apm::APMTestCase test_case = createTestCase(*it);
 		cv::Mat processed_image;
-		apm::PreprocessImage(test_case.getImage(), processed_image);
+		apm::PreprocessImage(test_case.GetImage(), processed_image);
 		cv::imshow(std::to_string(i), processed_image);
 
 	}
@@ -77,12 +77,12 @@ void showAllImages(std::vector<Json::Value> test_cases) {
 
 std::vector<std::string> getJsonFiles() {
 	std::vector<std::string> files;
-	getFilesInDirectory(files, directory);
+	GetFilesInDirectory(files, directory);
 
 	// remove files that do not end with ".json"
 	files.erase(
 			std::remove_if(files.begin(), files.end(),
-					[](std::string file) {return !endsWith(file, ".json");}), files.end());
+					[](std::string file) {return !EndsWith(file, ".json");}), files.end());
 	return files;
 }
 
@@ -216,28 +216,28 @@ std::string formatDouble(double value, int decimals) {
 apm::APMTestCase createTestCase(Json::Value root) {
 	std::string file_name = root["fileName"].asString();
 
-	cv::Mat image = cv::imread(directory + file_name);
+	cv::Mat image = cv::imread(file_name);
 
 	if (!image.data) {
-		throw std::invalid_argument("Invalid image: " + directory + file_name);
+		throw std::invalid_argument("Invalid image: " + file_name);
 	}
 
-	std::vector<cv::Point2i> reference_object;
+	std::vector<cv::Point2f> reference_object;
 	int num_points = root["referenceObject"].size();
 
 	for (int i = 0; i < num_points; ++i) {
 		int x = (int) root["referenceObject"][i]["x"].asInt();
 		int y = (int) root["referenceObject"][i]["y"].asInt();
-		reference_object.push_back(cv::Point2i(x, y));
+		reference_object.push_back(cv::Point2f(x, y));
 	}
 
-	std::vector<cv::Point2i> package;
+	std::vector<cv::Point2f> package;
 	num_points = root["package"].size();
 
 	for (int i = 0; i < num_points; ++i) {
 		int x = (int) root["package"][i]["x"].asInt();
 		int y = (int) root["package"][i]["y"].asInt();
-		package.push_back(cv::Point2i(x, y));
+		package.push_back(cv::Point2f(x, y));
 	}
 
 	double width = root["dimensions"]["width"].asDouble();

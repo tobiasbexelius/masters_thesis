@@ -58,10 +58,12 @@ public class OverlayView extends View {
     }
 
     private void drawObject(Canvas canvas, List<Edge> edges, Paint paint) {
+         double yScale = 1;//1920.0/1280;
+         double xScale = 1;//1080.0/720;
         for (Edge edge : edges) {
             Vertex v1 = transformCoordinates(canvas, edge.getV1());
             Vertex v2 = transformCoordinates(canvas, edge.getV2());
-            canvas.drawLine(v1.getX(), v1.getY(), v2.getX(), v2.getY(), paint);
+            canvas.drawLine((int) (v1.getX()*xScale), (int) (v1.getY()*yScale), (int) (v2.getX()*xScale), (int) (v2.getY()*yScale), paint);
         }
     }
 

@@ -5,7 +5,7 @@
 
 namespace automatic_package_measuring {
 
-std::vector<cv::Point> FindPackage(const cv::Mat& image, const cv::Mat& edges, std::vector<cv::Point>& package_out);
+std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges, std::vector<cv::Point2f>& reference_object);
 
 
 } /* namespace automatic_package_measuring */

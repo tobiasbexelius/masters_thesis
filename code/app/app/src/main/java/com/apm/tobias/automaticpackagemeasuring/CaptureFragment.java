@@ -95,6 +95,10 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         mCamera = camera;
         setupCamera();
 
+        /*Camera.Parameters params = mCamera.getParameters();
+        double focalLength = params.getFocalLength();
+        Log.d("test", "FOCAL LENGTH =" + focalLength);*/
+
         try {
             byte[] previewBuffer = new byte[(int) (mPreviewSize.width * mPreviewSize.height * 1.5)];
             mCamera.setPreviewDisplay(mSurfaceViewHolder);
@@ -136,7 +140,6 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
         CameraUtils.setHighestFPSRange(params);
         CameraUtils.selectOptimalPictureSize(params);
-
         CameraUtils.selectFocusMode(params, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 
         mCamera.setDisplayOrientation(90);
@@ -183,7 +186,7 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         ReferenceObject parcel = mPackageMeasurer.getPackage();
         List<Edge> edges = parcel.getEdges();
 
-        if(edges.isEmpty())
+        if (edges.isEmpty())
             mReferenceObjectOverlay.clearPackage();
         else
             mReferenceObjectOverlay.updatePackage(edges);
@@ -193,7 +196,7 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         ReferenceObject referenceObject = mPackageMeasurer.getReferenceObject();
         List<Edge> edges = referenceObject.getEdges();
 
-        if(edges.isEmpty())
+        if (edges.isEmpty())
             mReferenceObjectOverlay.clearReferenceObject();
         else
             mReferenceObjectOverlay.updateReferenceObject(edges);

@@ -1,6 +1,7 @@
 package com.apm.tobias.automaticpackagemeasuring;
 
 import android.app.Activity;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;

@@ -1,19 +1,29 @@
 find_package( OpenCV REQUIRED ts)
-file(GLOB_RECURSE apm_test_source_files src/*)
-file(GLOB_RECURSE apm_unit_test_source_files src_gtest/*)
-add_executable(apm_test ${apm_test_source_files})
-add_executable(apm_unit_test ${apm_unit_test_source_files})
+file(GLOB apm_test_runner_src src/test_runner/*.cpp src/*.cpp)
+add_executable(test_runner ${apm_test_runner_src})
+
+file(GLOB apm_test_creator_src src/test_creator/*.cpp src/*.cpp)
+add_executable(test_creator ${apm_test_creator_src})
+
+file(GLOB_RECURSE apm_gtest_src src/gtest/*.cpp)
+add_executable(apm_gtest ${apm_gtest_src})
 
 add_subdirectory(include/external/jsoncpp)
 add_subdirectory(include/external/gtest-1.7.0)
 include_directories(include/external/gtest-1.7.0/include)
 include_directories(include/external/jsoncpp)
 
-target_link_libraries (apm_test jsoncpp)
-target_link_libraries (apm_test apm_lib)
-target_link_libraries( apm_test ${OpenCV_LIBS} )
+target_link_libraries (test_runner jsoncpp)
+target_link_libraries (test_runner apm_lib)
+target_link_libraries( test_runner ${OpenCV_LIBS} )
 
-target_link_libraries (apm_unit_test jsoncpp)
-target_link_libraries (apm_unit_test gtest)
-target_link_libraries (apm_unit_test apm_lib)
-target_link_libraries (apm_unit_test ${OpenCV_LIBS} )
+target_link_libraries (test_creator jsoncpp)
+target_link_libraries (test_creator apm_lib)
+target_link_libraries( test_creator ${OpenCV_LIBS} )
+
+target_link_libraries (apm_gtest jsoncpp)
+target_link_libraries (apm_gtest gtest)
+target_link_libraries (apm_gtest apm_lib)
+target_link_libraries (apm_gtest ${OpenCV_LIBS} )
+
+

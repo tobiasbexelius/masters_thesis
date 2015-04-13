@@ -4,15 +4,15 @@
 
 namespace automatic_package_measuring {
 
-APMTest::APMTest(APMTestCase testCase, double max_error, PackageMeasurer measurer) :
-		test_case(testCase), max_error(max_error), measurer(measurer) {
+APMTest::APMTest(APMTestCase test_case, double max_error, PackageMeasurer measurer) :
+		test_case(test_case), max_error(max_error), measurer(measurer) {
 }
 
 APMTest::~APMTest() {
 }
 
 void APMTest::run() {
-	cv::Mat image = test_case.getImage();
+	cv::Mat image = test_case.GetImage();
 	PackageMeasurer measurer;
 	measurer.AnalyzeImage(image);
 	actual_reference_object = measurer.GetReferenceObject();
@@ -24,27 +24,27 @@ bool APMTest::success() const {
 	return isReferenceObjectCorrect() && isPackageCorrect() && isMeasurementCorrect();
 }
 
-std::vector<cv::Point2i> APMTest::getExpectedPackage() const {
-	return test_case.getPackage();
+std::vector<cv::Point2f> APMTest::getExpectedPackage() const {
+	return test_case.GetPackage();
 }
 
 double APMTest::getPackageError() const {
-	double err = nearestNeighbourError(test_case.getPackage(), actual_package)
-			/ getCircumference(test_case.getPackage());
+	double err = nearestNeighbourError(test_case.GetPackage(), actual_package)
+			/ getCircumference(test_case.GetPackage());
 	return std::fmin(err, 1.0);
 }
 
 double APMTest::getReferenceObjectError() const {
-	double err = nearestNeighbourError(test_case.getReferenceObject(), actual_reference_object)
-			/ getCircumference(test_case.getReferenceObject());
+	double err = nearestNeighbourError(test_case.GetReferenceObject(), actual_reference_object)
+			/ getCircumference(test_case.GetReferenceObject());
 	return std::fmin(err, 1.0);
 }
 
-std::vector<cv::Point2i> APMTest::getExpectedReferenceObject() const {
-	return test_case.getReferenceObject();
+std::vector<cv::Point2f> APMTest::getExpectedReferenceObject() const {
+	return test_case.GetReferenceObject();
 }
 
-std::vector<cv::Point2i> APMTest::getActualReferenceObject() const {
+std::vector<cv::Point2f> APMTest::getActualReferenceObject() const {
 	return actual_reference_object;
 }
 
@@ -56,7 +56,7 @@ bool APMTest::isPackageCorrect() const {
 	return getPackageError() < max_error;
 }
 
-std::vector<cv::Point2i> APMTest::getActualPackage() const {
+std::vector<cv::Point2f> APMTest::getActualPackage() const {
 	return actual_package;
 }
 
@@ -65,22 +65,22 @@ bool APMTest::isMeasurementCorrect() const {
 }
 
 double APMTest::getMeasurementError() const {
-	return cv::norm(test_case.getDimensions() - actual_measurement) / cv::norm(test_case.getDimensions());
+	return cv::norm(test_case.GetDimensions() - actual_measurement) / cv::norm(test_case.GetDimensions());
 }
 
-cv::Vec3d APMTest::getExpectedMeasurement() const {
-	return test_case.getDimensions();
+cv::Vec3f APMTest::getExpectedMeasurement() const {
+	return test_case.GetDimensions();
 }
 
-cv::Vec3d APMTest::getActualMeasurement() const {
+cv::Vec3f APMTest::getActualMeasurement() const {
 	return actual_measurement;
 }
 
 /*
  * Returns the accumlated error for all points
  * */
-double APMTest::nearestNeighbourError(std::vector<cv::Point2i> expected,
-		std::vector<cv::Point2i> actual) const {
+double APMTest::nearestNeighbourError(std::vector<cv::Point2f> expected,
+		std::vector<cv::Point2f> actual) const {
 
 	if (expected.size() != actual.size())
 		return std::numeric_limits<int>::max();
@@ -120,7 +120,7 @@ double APMTest::nearestNeighbourError(std::vector<cv::Point2i> expected,
 /**
  * Assumes that subsequent points are connected and that the first and last points are connected
  */
-double APMTest::getCircumference(std::vector<cv::Point2i> points) const {
+double APMTest::getCircumference(std::vector<cv::Point2f> points) const {
 	double circumference = 0;
 
 	auto it = points.begin();

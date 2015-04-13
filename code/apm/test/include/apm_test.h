@@ -10,31 +10,31 @@ namespace automatic_package_measuring {
 
 class APMTest {
 public:
-	APMTest(APMTestCase testCase, double max_error = 0.05, PackageMeasurer measurer = PackageMeasurer());
+	APMTest(APMTestCase testCase, double max_error = 0.1, PackageMeasurer measurer = PackageMeasurer());
 	virtual ~APMTest();
 	void run();
 	bool success() const;
 	bool isReferenceObjectCorrect() const;
 	double getReferenceObjectError() const;
-	std::vector<cv::Point2i> getExpectedReferenceObject() const;
-	std::vector<cv::Point2i> getActualReferenceObject() const;
+	std::vector<cv::Point2f> getExpectedReferenceObject() const;
+	std::vector<cv::Point2f> getActualReferenceObject() const;
 	bool isPackageCorrect() const;
 	double getPackageError() const;
-	std::vector<cv::Point2i> getExpectedPackage() const;
-	std::vector<cv::Point2i> getActualPackage() const;
+	std::vector<cv::Point2f> getExpectedPackage() const;
+	std::vector<cv::Point2f> getActualPackage() const;
 	bool isMeasurementCorrect() const;
 	double getMeasurementError() const;
-	cv::Vec3d getExpectedMeasurement() const;
-	cv::Vec3d getActualMeasurement() const;
+	cv::Vec3f getExpectedMeasurement() const;
+	cv::Vec3f getActualMeasurement() const;
 
 private:
-	double nearestNeighbourError(std::vector<cv::Point2i> expected, std::vector<cv::Point2i> actual) const;
-	double getCircumference(std::vector<cv::Point2i> points) const;
+	double nearestNeighbourError(std::vector<cv::Point2f> expected, std::vector<cv::Point2f> actual) const;
+	double getCircumference(std::vector<cv::Point2f> points) const;
 	const APMTestCase test_case;
 	const double max_error;
-	std::vector<cv::Point2i> actual_reference_object;
-	std::vector<cv::Point2i> actual_package;
-	cv::Vec3d actual_measurement;
+	std::vector<cv::Point2f> actual_reference_object;
+	std::vector<cv::Point2f> actual_package;
+	cv::Vec3f actual_measurement;
 	PackageMeasurer measurer;
 };
 

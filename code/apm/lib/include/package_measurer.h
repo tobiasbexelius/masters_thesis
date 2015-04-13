@@ -11,9 +11,9 @@ public:
 	virtual ~PackageMeasurer();
 
 	void AnalyzeImage(cv::Mat& image);
-	const std::vector<cv::Point>& GetReferenceObject();
-	const std::vector<cv::Point>& GetPackage();
-	const cv::Vec3d& GetMeasurements();
+	const std::vector<cv::Point2f>& GetReferenceObject();
+	const std::vector<cv::Point2f>& GetPackage();
+	const cv::Vec3f& GetMeasurements();
 
 	static const double CANNY_RATIO;
 	static const int CANNY_LOW_THRESHOLD;
@@ -32,9 +32,9 @@ public:
 
 private:
 
-	std::vector<cv::Point> reference_object;
-	std::vector<cv::Point> package;
-	cv::Vec3d measurements;
+	std::vector<cv::Point2f> reference_object;
+	std::vector<cv::Point2f> package;
+	cv::Vec3f measurements;
 };
 
 } /* namespace automatic_package_measuring */

@@ -4,6 +4,7 @@
 #include "../lib/include/paper_detection_internal.h"
 #include "../lib/include/package_detection.h"
 #include "../lib/include/package_detection_internal.h"
+#include "../lib/include/package_measuring.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <string.h>
@@ -29,14 +30,14 @@ int min_paper_contour_length = MIN_PAPER_CONTOUR_LENGTH;
 int min_package_contour_length = MIN_PACKAGE_CONTOUR_LENGTH;
 
 cv::Mat image, edges, result;
-std::vector<cv::Point> paper, package;
+std::vector<cv::Point2f> paper, package;
 
 int show_image = 1;
 int show_edges = 0;
 int show_contours = 0;
 int show_polygons = 0;
 int show_lines = 1;
-int show_paper = 0;
+int show_paper = 1;
 int show_package = 1;
 int external_contours_only = 1;
 
@@ -65,7 +66,7 @@ void UpdateConstants() {
 	MIN_PAPER_CONTOUR_LENGTH = min_paper_contour_length;
 }
 
-void processImage(int, void*) {
+void ProcessImage(int, void*) {
 	edges = cv::Scalar::all(0);
 	result = cv::Scalar::all(0);
 	paper.clear();
@@ -79,13 +80,11 @@ void processImage(int, void*) {
 
 	cv::Mat preprocessed_image;
 	PreprocessImage(image, preprocessed_image);
-
 	FindEdges(preprocessed_image, edges);
 	CloseEdges(edges);
-
 	paper = FindPaper(image, edges);
 	package = FindPackage(image, edges, paper);
-
+	cv::Vec3d measurements = MeasurePackage(image.size(), paper, cv::Vec2d(297/2.0, 210), package);
 	DrawOverlay();
 
 	cv::imshow(RESULT_WINDOW, result);
@@ -156,7 +155,11 @@ void DrawPolygons() {
 }
 
 void DrawPaper() {
-	DrawContour(result, paper, cv::Scalar(255, 0, 255));
+	std::vector<cv::Point> int_paper;
+	for(auto point:paper) {
+		int_paper.push_back(cv::Point(point.x,point.y));
+	}
+	DrawContour(result, int_paper, cv::Scalar(255, 0, 255));
 }
 
 void DrawPackage() {
@@ -181,30 +184,30 @@ void CreateWindow() {
 	cv::imshow(HOUGH_WINDOW, width_enforcer);
 	cv::imshow(DETECTION_WINDOW, width_enforcer);
 
-	cv::createTrackbar("Show Edges:", CONTOURS_WINDOW, &show_edges, 1, processImage);
-	cv::createTrackbar("Show Contours:", CONTOURS_WINDOW, &show_contours, 1, processImage);
-	cv::createTrackbar("External contours:", CONTOURS_WINDOW, &external_contours_only, 1, processImage);
-	cv::createTrackbar("Canny low:", CONTOURS_WINDOW, &CANNY_LOW_THRESHOLD, 100, processImage);
-	cv::createTrackbar("Canny ratio:", CONTOURS_WINDOW, &canny_ratio, 50, processImage);
-	cv::createTrackbar("Morph radius:", CONTOURS_WINDOW, &MORPH_RADIUS, 10, processImage);
-	cv::createTrackbar("Morph iters:", CONTOURS_WINDOW, &MORPH_ITERATIONS, 20, processImage);
-	cv::createTrackbar("Min contour len:", CONTOURS_WINDOW, &min_contour_length, 1000, processImage);
-	cv::createTrackbar("Contour peripheral:", CONTOURS_WINDOW, &center_threshold, 100, processImage);
+	cv::createTrackbar("Show Edges:", CONTOURS_WINDOW, &show_edges, 1, ProcessImage);
+	cv::createTrackbar("Show Contours:", CONTOURS_WINDOW, &show_contours, 1, ProcessImage);
+	cv::createTrackbar("External contours:", CONTOURS_WINDOW, &external_contours_only, 1, ProcessImage);
+	cv::createTrackbar("Canny low:", CONTOURS_WINDOW, &CANNY_LOW_THRESHOLD, 100, ProcessImage);
+	cv::createTrackbar("Canny ratio:", CONTOURS_WINDOW, &canny_ratio, 50, ProcessImage);
+	cv::createTrackbar("Morph radius:", CONTOURS_WINDOW, &MORPH_RADIUS, 10, ProcessImage);
+	cv::createTrackbar("Morph iters:", CONTOURS_WINDOW, &MORPH_ITERATIONS, 20, ProcessImage);
+	cv::createTrackbar("Min contour len:", CONTOURS_WINDOW, &min_contour_length, 1000, ProcessImage);
+	cv::createTrackbar("Contour peripheral:", CONTOURS_WINDOW, &center_threshold, 100, ProcessImage);
 
-	cv::createTrackbar("Show Hough lines:", HOUGH_WINDOW, &show_lines, 1, processImage);
-	cv::createTrackbar("Hough rho:", HOUGH_WINDOW, &hough_rho, 10, processImage);
-	cv::createTrackbar("Hough theta:", HOUGH_WINDOW, &hough_theta, 100, processImage);
-	cv::createTrackbar("Hough thresh", HOUGH_WINDOW, &hough_threshold, 1000, processImage);
-	cv::createTrackbar("Hough min len:", HOUGH_WINDOW, &hough_min_length, 100, processImage);
-	cv::createTrackbar("Hough max gap:", HOUGH_WINDOW, &HOUGH_MAX_GAP, 100, processImage);
+	cv::createTrackbar("Show Hough lines:", HOUGH_WINDOW, &show_lines, 1, ProcessImage);
+	cv::createTrackbar("Hough rho:", HOUGH_WINDOW, &hough_rho, 10, ProcessImage);
+	cv::createTrackbar("Hough theta:", HOUGH_WINDOW, &hough_theta, 100, ProcessImage);
+	cv::createTrackbar("Hough thresh", HOUGH_WINDOW, &hough_threshold, 1000, ProcessImage);
+	cv::createTrackbar("Hough min len:", HOUGH_WINDOW, &hough_min_length, 100, ProcessImage);
+	cv::createTrackbar("Hough max gap:", HOUGH_WINDOW, &HOUGH_MAX_GAP, 100, ProcessImage);
 
-	cv::createTrackbar("Show Polygons:", DETECTION_WINDOW, &show_polygons, 1, processImage);
-	cv::createTrackbar("Show Paper:", DETECTION_WINDOW, &show_paper, 1, processImage);
-	cv::createTrackbar("Poly error:", DETECTION_WINDOW, &poly_error_tolerance, 500, processImage);
+	cv::createTrackbar("Show Polygons:", DETECTION_WINDOW, &show_polygons, 1, ProcessImage);
+	cv::createTrackbar("Show Paper:", DETECTION_WINDOW, &show_paper, 1, ProcessImage);
+	cv::createTrackbar("Poly error:", DETECTION_WINDOW, &poly_error_tolerance, 500, ProcessImage);
 	cv::createTrackbar("Package min contour: ", DETECTION_WINDOW, &min_package_contour_length, 500,
-			processImage);
-	cv::createTrackbar("Paper min contour: ", DETECTION_WINDOW, &min_paper_contour_length, 100, processImage);
-	cv::createTrackbar("Show package", DETECTION_WINDOW, &show_package, 1, processImage);
+			ProcessImage);
+	cv::createTrackbar("Paper min contour: ", DETECTION_WINDOW, &min_paper_contour_length, 100, ProcessImage);
+	cv::createTrackbar("Show package", DETECTION_WINDOW, &show_package, 1, ProcessImage);
 
 }
 
@@ -284,7 +287,7 @@ int main(int argc, char** argv) {
 
 	CreateWindow();
 
-	processImage(0, 0);
+	ProcessImage(0, 0);
 	cv::setMouseCallback(RESULT_WINDOW, onMouse, 0);
 
 	int key = 0;

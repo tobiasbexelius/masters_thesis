@@ -14,17 +14,17 @@ struct Intersection {
 };
 
 struct Package {
-	std::vector<cv::Point> corners;
+	std::vector<cv::Point2f> corners;
 	std::unordered_map<int, int> line_to_pair;
 	std::unordered_map<int, std::vector<int>> pair_to_lines;
 };
 
 double RatePackage(std::vector<cv::Vec4i>& lines, Package& package);
-std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv::Point>& reference_object);
+std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& reference_object);
 void FindParallelLines(std::vector<cv::Vec4i>& lines, std::vector<std::tuple<int, int>>& parallel_line_pairs);
 bool LineSegmentAngleComparator(const cv::Vec4i& a, const cv::Vec4i& b);
 double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2);
-bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point& intersection);
+bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection);
 void FindConnectedComponents(const std::vector<std::vector<Intersection>>& intersections,
 		std::vector<std::set<int>>& connected_components);
 void FilterBadComponents(std::vector<std::set<int>>& components);
@@ -33,7 +33,7 @@ void GetPoints(std::vector<cv::Vec4i>& lines, std::vector<int>& points, std::vec
 double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2);
 
 void FindCorners(const std::vector<cv::Vec4i>& lines,
-		const std::unordered_map<int, std::vector<int>>& neighbour_list, std::vector<cv::Point>& corners);
+		const std::unordered_map<int, std::vector<int>>& neighbour_list, std::vector<cv::Point2f>& corners);
 std::unordered_map<int, std::vector<int>> FindNeighbouringLines(const std::vector<cv::Vec4i>& lines,
 		std::unordered_map<int, int> line_to_pair);
 

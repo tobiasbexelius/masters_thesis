@@ -8,31 +8,32 @@ using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
 
-std::vector<cv::Point> FindPaper(const cv::Mat& image, const cv::Mat& edges) {
+std::vector<cv::Point2f> FindPaper(const cv::Mat& image, const cv::Mat& edges) {
 	if (image.empty() || edges.empty()) {
-		return std::vector<cv::Point>();
+		return std::vector<cv::Point2f>();
 	}
 	cv::Mat edges_cpy = edges.clone();
 	std::vector<std::vector<cv::Point>> contours;
 	FindContours(edges_cpy, false, contours);
 	if (contours.empty())
-		return std::vector<cv::Point>();
-
+		return std::vector<cv::Point2f>();
 	PruneShortContours(contours, MIN_PAPER_CONTOUR_LENGTH);
 	PrunePeripheralContours(contours, image.size());
-	std::vector<std::vector<cv::Point2i>> polygons;
+	std::vector<std::vector<cv::Point>> polygons;
 	FindConvexPolygons(contours, polygons);
 	for (std::vector<cv::Point> polygon : polygons) {
 		if (polygon.empty()) {
 			continue;
 		}
-
 		if (IsSizeOK(image.size(), polygon) && IsShapeOK(polygon) && IsColorOK(image, polygon)) {
-			return polygon;
+			std::vector<cv::Point2f> paper;
+			for(auto point : polygon)
+				paper.push_back(cv::Point2f(point.x,point.y));
+			return paper;
 		}
 	}
 
-	return std::vector<cv::Point>();
+	return std::vector<cv::Point2f>();
 }
 
 namespace internal {
@@ -58,10 +59,10 @@ bool IsColorOK(cv::Mat image, std::vector<cv::Point> polygon) {
 	ranges[0] = range;
 	cv::calcHist(&roi, 1, channels, cv::Mat(), histogram, 1, bins, ranges);
 
-	double top_three_bins = histogram.at<float>(bins[0] - 1) + histogram.at<float>(bins[0] - 2)
-			+ histogram.at<float>(bins[0] - 3);
+	double top_bin = histogram.at<float>(bins[0] - 1);//s + histogram.at<float>(bins[0] - 2)
+			;//+ histogram.at<float>(bins[0] - 3);
 
-	return top_three_bins / ((double) (roi.rows * roi.cols));
+	return top_bin / ((double) (roi.rows * roi.cols)) > 0.5;
 }
 
 bool IsShapeOK(std::vector<cv::Point> polygon) {
