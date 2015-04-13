@@ -6,7 +6,7 @@
 namespace apm = automatic_package_measuring;
 // std::unordered_map<int, std::vector<int>> FindNeighbouringLines(const std::vector<cv::Vec4i>& lines,
 //std::unordered_map<int, int> line_to_pair) {
-TEST(NieghbouringLinesTest, BasicTest) {
+/*TEST(NieghbouringLinesTest, BasicTest) {
 	cv::Vec4i l0(0, 5, 0, 15);
 	cv::Vec4i l1(0, 15, 10, 15);
 	cv::Vec4i l2(10, 15, 15, 10);
@@ -46,7 +46,7 @@ TEST(NieghbouringLinesTest, BasicTest) {
 	ASSERT_NE(neighbour_list[5].end(), std::find(neighbour_list[5].begin(), neighbour_list[5].end(), 0));
 	ASSERT_NE(neighbour_list[5].end(), std::find(neighbour_list[5].begin(), neighbour_list[5].end(), 4));
 
-}
+}*/
 
 //TEST(LineIntersectionTest, SegmentIntersection) {
 //	cv::Point2f p1(20, 10);

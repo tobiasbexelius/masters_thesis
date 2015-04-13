@@ -5,7 +5,7 @@ using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
 
-cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f>& areference_object,
+cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f>& reference_object,
 		const cv::Vec2f ref_dimensions, const std::vector<cv::Point2f>& package) {
 
 	//std::vector<cv::Point2f> reference_object = {cv::Point2f(328,387),cv::Point2f(444,308),cv::Point2f(539,353),cv::Point2f(422,441)};

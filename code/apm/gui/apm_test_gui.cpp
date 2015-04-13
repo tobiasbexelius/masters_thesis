@@ -84,7 +84,7 @@ void ProcessImage(int, void*) {
 	CloseEdges(edges);
 	paper = FindPaper(image, edges);
 	package = FindPackage(image, edges, paper);
-	cv::Vec3d measurements = MeasurePackage(image.size(), paper, cv::Vec2d(297/2.0, 210), package);
+	cv::Vec3d measurements = MeasurePackage(image.size(), paper, cv::Vec2d(297, 210), package);
 	DrawOverlay();
 
 	cv::imshow(RESULT_WINDOW, result);
@@ -125,13 +125,20 @@ void DrawContours() {
 }
 
 void DrawLines() {
-	std::vector<std::vector<cv::Point>> contours;
-	FindContours(edges, external_contours_only, contours);
-	PruneShortContours(contours, min_package_contour_length);
-	PrunePeripheralContours(contours, image.size());
+	cv::Mat contours_mat;
+	if(external_contours_only){
+		std::vector<std::vector<cv::Point>> contours;
+			FindContours(edges, false, contours);
+			PruneShortContours(contours, min_package_contour_length);
+			PrunePeripheralContours(contours, image.size());
 
-	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
-	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
+			contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
+			cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
+	} else {
+		contours_mat = edges;
+	}
+
+
 
 	std::vector<cv::Vec4i> lines;
 	DetectLines(contours_mat, lines);

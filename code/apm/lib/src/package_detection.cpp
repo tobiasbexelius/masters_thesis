@@ -11,7 +11,7 @@
 using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
-
+cv::Mat img;
 std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 		std::vector<cv::Point2f>& reference_object) {
 	cv::Mat edges_cpy = edges.clone();
@@ -21,15 +21,14 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	PrunePeripheralContours(contours, image.size());
 	if (contours.empty())
 		return std::vector<cv::Point2f>();
-
+	img = image;
 	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
 	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
 
 	std::vector<cv::Vec4i> lines;
 	DetectLines(contours_mat, lines);
 
-
-	std::vector<Package> packages = FindPackages(lines, reference_object);
+	std::vector<Package> packages = FindPackages(lines, reference_object, image.size());
 	int max_score = std::numeric_limits<int>::min();
 	Package max_package;
 
@@ -80,12 +79,8 @@ double RatePackage(std::vector<cv::Vec4i>& lines, Package& package) {
 	return angle_score * length_score;
 }
 
-void DrawLine(std::vector<cv::Vec4i>& lines, cv::Mat& canvas, int index, int intensity) {
-	cv::line(canvas, cv::Point(lines[index][0], lines[index][1]), cv::Point(lines[index][2], lines[index][3]),
-			cv::Scalar(255, 0, intensity), 3);
-}
-
-std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& reference_object) {
+std::vector<Package> FindPackages(const std::vector<cv::Vec4i>& lines,
+		const std::vector<cv::Point2f>& reference_object, const cv::Size& image_size) {
 	std::vector<Package> packages;
 	std::vector<std::tuple<int, int>> line_pairs;
 	FindParallelLines(lines, line_pairs);
@@ -94,7 +89,7 @@ std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv:
 
 	if (line_pairs.size() > 50) {
 		std::cout << "Too many line pairs: " << line_pairs.size() << std::endl;
-		return std:: vector<Package>();
+		return std::vector<Package>();
 	}
 
 	for (int i = 0; i < line_pairs.size(); ++i) {
@@ -103,7 +98,7 @@ std::vector<Package> FindPackages(std::vector<cv::Vec4i>& lines, std::vector<cv:
 
 				std::vector<int> indices = { i, j, k };
 				Package package;
-				bool isPackageValid = TryToCreatePackage(lines, line_pairs, indices, package);
+				bool isPackageValid = TryToCreatePackage(lines, line_pairs, indices, image_size, package);
 				if (!isPackageValid)
 					continue;
 
@@ -127,12 +122,13 @@ bool EnclosesContour(std::vector<cv::Point>& enclosing_contour, std::vector<cv::
 	return true;
 }
 
-bool TryToCreatePackage(std::vector<cv::Vec4i> lines, std::vector<std::tuple<int, int>> line_pairs,
-		std::vector<int> indices, Package& package) {
+bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines,
+		const std::vector<std::tuple<int, int>>& line_pairs, const std::vector<int>& line_pair_indices,
+		const cv::Size& image_size, Package& package) {
 
-	for (int i = 0; i < indices.size(); ++i) {
-		package.line_to_pair[std::get<0>(line_pairs[indices[i]])] = indices[i];
-		package.line_to_pair[std::get<1>(line_pairs[indices[i]])] = indices[i];
+	for (int i = 0; i < line_pair_indices.size(); ++i) {
+		package.line_to_pair[std::get<0>(line_pairs[line_pair_indices[i]])] = line_pair_indices[i];
+		package.line_to_pair[std::get<1>(line_pairs[line_pair_indices[i]])] = line_pair_indices[i];
 	}
 
 	if (package.line_to_pair.size() != 6) // contains doubles
@@ -145,22 +141,27 @@ bool TryToCreatePackage(std::vector<cv::Vec4i> lines, std::vector<std::tuple<int
 		package.pair_to_lines[it->second].push_back(it->first);
 	}
 
-	std::unordered_map<int, std::vector<int>> neighbour_list = FindNeighbouringLines(lines,
-			package.line_to_pair);
+	// Don't allow adjacent lines to be too parallel
+	/*for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
+	 int line = it->first;
+	 int neighbour = it->second[0];
+	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
+	 return false;
 
-	for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
-		int line = it->first;
-		int neighbour = it->second[0];
-		if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
-			return false;
+	 neighbour = it->second[1];
+	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
+	 return false;
+	 }*/
 
-		neighbour = it->second[1];
-		if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
-			return false;
-
+	std::vector<int> line_indices;
+	for (auto i : line_pair_indices) {
+		line_indices.push_back(std::get<0>(line_pairs[i]));
+		line_indices.push_back(std::get<1>(line_pairs[i]));
 	}
-	std::vector<cv::Point2f> corners;
-	FindCorners(lines, neighbour_list, corners);
+	int min_image_dimension = std::min(image_size.width, image_size.height);
+
+	std::vector<cv::Point2f> corners = FindCorners(lines, line_indices,
+			MIN_CORNER_DIST * min_image_dimension);
 
 	if (corners.size() != 6)
 		return false;
@@ -178,50 +179,68 @@ bool TryToCreatePackage(std::vector<cv::Vec4i> lines, std::vector<std::tuple<int
 	return true;
 }
 
-void FindCorners(const std::vector<cv::Vec4i>& lines,
-		const std::unordered_map<int, std::vector<int>>& neighbour_list, std::vector<cv::Point2f>& corners) { // TODO speed this up
-	for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
-		int line = it->first;
-		std::vector<int> neighbours = it->second;
-		cv::Point2f intersection;
-		if (FindIntersection(lines[line], lines[neighbours[0]], intersection)
-				&& std::find(corners.begin(), corners.end(), intersection) == corners.end())
-			corners.push_back(intersection);
-		if (FindIntersection(lines[line], lines[neighbours[1]], intersection)
-				&& std::find(corners.begin(), corners.end(), intersection) == corners.end())
-			corners.push_back(intersection);
-	}
-}
+std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
+		const std::vector<int>& line_indices, double min_corner_dist) {
+	std::vector<cv::Point2f> intersections;
 
-std::unordered_map<int, std::vector<int>> FindNeighbouringLines(const std::vector<cv::Vec4i>& lines,
-		std::unordered_map<int, int> line_to_pair) {
-	std::unordered_map<int, std::vector<int>> neighbour_list;
+	for (auto l1 = line_indices.begin(); l1 != line_indices.end(); ++l1) {
+		cv::Vec4i line1 = lines[*l1];
+		cv::Point2f p1 = cv::Point2f(line1[0], line1[1]);
+		cv::Point2f p2 = cv::Point2f(line1[2], line1[3]);
+		double p1_min_dist = std::numeric_limits<int>::max();
+		int p1_neighbour = -1;
+		cv::Point2f p1_intersection;
+		double p2_min_dist = std::numeric_limits<int>::max();
+		int p2_neighbour = -1;
+		cv::Point2f p2_intersection;
+		for (auto l2 = line_indices.begin(); l2 != line_indices.end(); ++l2) {
 
-	auto tuple_comp =
-			[]( std::tuple<double,int> a, std::tuple<double,int> b ) {return std::get<0>(a) > std::get<0>(b);};
-
-	for (auto it = line_to_pair.begin(); it != line_to_pair.end(); ++it) {
-
-		std::priority_queue<std::tuple<double, int>, std::vector<std::tuple<double, int>>,
-				decltype( tuple_comp )> distances(tuple_comp);
-
-		int line1 = it->first;
-		for (auto it2 = line_to_pair.begin(); it2 != line_to_pair.end(); ++it2) {
-
-			int line2 = it2->first;
-			if (line_to_pair[line1] == line_to_pair[line2])
+			if (l1 == l2)
 				continue;
 
-			distances.push(std::tuple<double, int>(LineSegmentDistance(lines[line1], lines[line2]), line2));
+			cv::Vec4i line2 = lines[*l2];
+			cv::Point2f intersection;
+
+			if (!FindIntersection(line1, line2, intersection))
+				continue;
+
+			double p1_dist = EuclideanDistance(p1, intersection);
+			double p2_dist = EuclideanDistance(p2, intersection);
+
+			if (p1_dist < p2_dist && p1_dist < p1_min_dist) {
+				p1_min_dist = p1_dist;
+				p1_neighbour = *l2;
+				p1_intersection = intersection;
+			}
+
+			if (p2_dist < p1_dist && p2_dist < p2_min_dist) {
+				p2_min_dist = p2_dist;
+				p2_neighbour = *l2;
+				p2_intersection = intersection;
+			}
 		}
 
-		neighbour_list[it->first] = std::vector<int>();
-		neighbour_list[line1].push_back(std::get<1>(distances.top()));
-		distances.pop();
-		neighbour_list[line1].push_back(std::get<1>(distances.top()));
+		if (p1_neighbour == -1 || p2_neighbour == -1) {
+			return std::vector<cv::Point2f>();
+		}
 
+		bool contains_i1 = false, contains_i2 = false;
+
+		for (auto intersection : intersections) {
+			if (EuclideanDistance(intersection, p1_intersection) < min_corner_dist)
+				contains_i1 = true;
+			else if (EuclideanDistance(intersection, p2_intersection) < min_corner_dist)
+				contains_i2 = true;
+		}
+		if (!contains_i1)
+			intersections.push_back(p1_intersection);
+
+		if (!contains_i2)
+			intersections.push_back(p2_intersection);
 	}
-	return neighbour_list;
+
+	return intersections;
+
 }
 
 double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2) { // TODO comparing end points good enough?
@@ -234,7 +253,7 @@ double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2) { // 
 	return std::min(o1_dist, e1_dist);
 }
 
-void FindParallelLines(std::vector<cv::Vec4i>& lines,
+void FindParallelLines(const std::vector<cv::Vec4i>& lines,
 		std::vector<std::tuple<int, int>>& parallel_line_pairs) {
 	for (int i = 0; i < lines.size(); ++i) {
 		for (int j = i + 1; j < lines.size(); ++j) {
@@ -268,7 +287,7 @@ void FindConnectedComponents(const std::vector<std::vector<Intersection>>& inter
 
 	for (int i = 0; i < intersections.size(); ++i) {
 		for (int j = 0; j < intersections[i].size(); ++j) {
-			ds.Union(intersections[i][j].l1, intersections[i][j].l2);
+			//	ds.Union(intersections[i][j].l1, intersections[i][j].l2);
 		}
 	}
 	connected_components = ds.AsSets();
@@ -309,6 +328,10 @@ void FilterBadComponents(std::vector<std::set<int> >& components) {
 
 }
 
+double EuclideanDistance(cv::Point2f& p1, cv::Point2f& p2) {
+	return cv::norm(p1 - p2);
+}
+double MIN_CORNER_DIST = 0.02; // of smallest image axis
 double MIN_PARALLEL_LINE_DIST = 50.0;
 double MIN_ACCEPTED_SCORE = 0.0;
 double MIN_ADJACENT_LINE_ANGLE = 15.0;
