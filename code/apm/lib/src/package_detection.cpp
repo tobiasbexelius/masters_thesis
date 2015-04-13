@@ -31,9 +31,9 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	std::vector<cv::Vec4i> lines;
 	DetectLines(contours_mat, lines);
 
-	std::vector<Package> packages = FindPackages(lines, reference_object, image.size());
+	std::vector<std::vector<cv::Point2f>> packages = FindPackages(lines, reference_object, image.size());
 	int max_score = std::numeric_limits<int>::min();
-	Package max_package;
+	std::vector<cv::Point2f> max_package;
 
 	for (auto it = packages.begin(); it != packages.end(); ++it) {
 		double score = RatePackage(lines, *it);
@@ -47,22 +47,22 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	if (max_score < MIN_ACCEPTED_SCORE)
 		return std::vector<cv::Point2f>();
 
-	return max_package.corners;
+	return max_package;
 
 }
 
 namespace internal {
 
-double RatePackage(std::vector<cv::Vec4i>& lines, Package& package) {
+double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& package) {
 
 	double angle_score = 1000.0;
 	double length_score = 1000.0;
-	int size = package.corners.size();
-	cv::Point prev = package.corners[0];
+	int size = package.size();
+	cv::Point prev = package[0];
 	for (int i = 1; i < size / 2 + 1; ++i) {
-		cv::Point cur = package.corners[i];
-		cv::Point opp1 = package.corners[(i + 2) % size];
-		cv::Point opp2 = package.corners[(i + 3) % size];
+		cv::Point cur = package[i];
+		cv::Point opp1 = package[(i + 2) % size];
+		cv::Point opp2 = package[(i + 3) % size];
 
 		double length1 = cv::norm(cur - prev);
 		double length2 = cv::norm(opp2 - opp1);
@@ -82,33 +82,38 @@ double RatePackage(std::vector<cv::Vec4i>& lines, Package& package) {
 	return angle_score * length_score;
 }
 
-std::vector<Package> FindPackages(const std::vector<cv::Vec4i>& lines,
+std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>& lines,
 		const std::vector<cv::Point2f>& reference_object, const cv::Size& image_size) {
-	std::vector<Package> packages;
+
 	std::vector<std::tuple<int, int>> line_pairs;
 	int min_image_dimension = std::min(image_size.width, image_size.height);
 	FindParallelLines(lines, MIN_PARALLEL_LINE_DIST * min_image_dimension, line_pairs);
+
+	std::vector<std::vector<cv::Point2f>> packages;
 	if (line_pairs.size() < 3)
 		return packages;
 
-	if (line_pairs.size() > 50) {
+	if (line_pairs.size() > MAX_LINE_PAIRS) {
 		std::cout << "Too many line pairs: " << line_pairs.size() << std::endl;
-		return std::vector<Package>();
+		return std::vector<std::vector<cv::Point2f>>();
 	}
 
 	for (int i = 0; i < line_pairs.size(); ++i) {
 		for (int j = i + 1; j < line_pairs.size(); ++j) {
 			for (int k = j + 1; k < line_pairs.size(); ++k) {
 
-				std::vector<int> indices = { i, j, k };
-				Package package;
-				bool isPackageValid = TryToCreatePackage(lines, line_pairs, indices, image_size, package);
+				std::vector<int> line_indices;
+				for (int index : { i, j, k }) {
+					line_indices.push_back(std::get<0>(line_pairs[index]));
+					line_indices.push_back(std::get<1>(line_pairs[index]));
+				}
+
+				std::vector<cv::Point2f> package;
+				bool isPackageValid = TryToCreatePackage(lines, line_indices, image_size, package);
 				if (!isPackageValid)
 					continue;
-
-				//if (!reference_object.empty() && !EnclosesContour(package.corners, reference_object))
-				//	continue;
-
+				if (!reference_object.empty() && !EnclosesContour(package, reference_object))
+					continue;
 				packages.push_back(package);
 			}
 		}
@@ -117,7 +122,8 @@ std::vector<Package> FindPackages(const std::vector<cv::Vec4i>& lines,
 	return packages;
 }
 
-bool EnclosesContour(std::vector<cv::Point>& enclosing_contour, std::vector<cv::Point>& enclosed_contour) {
+bool EnclosesContour(const std::vector<cv::Point2f>& enclosing_contour,
+		const std::vector<cv::Point2f>& enclosed_contour) {
 	for (auto it = enclosed_contour.begin(); it != enclosed_contour.end(); ++it) {
 		double is_enclosed = cv::pointPolygonTest(enclosing_contour, *it, false);
 		if (is_enclosed < 0)
@@ -126,47 +132,12 @@ bool EnclosesContour(std::vector<cv::Point>& enclosing_contour, std::vector<cv::
 	return true;
 }
 
-bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines,
-		const std::vector<std::tuple<int, int>>& line_pairs, const std::vector<int>& line_pair_indices,
-		const cv::Size& image_size, Package& package) {
+bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines, const std::vector<int> indices,
+		const cv::Size& image_size, std::vector<cv::Point2f>& package) {
 
-	for (int i = 0; i < line_pair_indices.size(); ++i) {
-		package.line_to_pair[std::get<0>(line_pairs[line_pair_indices[i]])] = line_pair_indices[i];
-		package.line_to_pair[std::get<1>(line_pairs[line_pair_indices[i]])] = line_pair_indices[i];
-	}
-
-	if (package.line_to_pair.size() != 6) // contains doubles
-		return false;
-
-// Set unused variable that may be useful for rating packages
-//	for (auto it = package.line_to_pair.begin(); it != package.line_to_pair.end(); ++it) {
-//		if (!package.pair_to_lines.count(it->second))
-//			package.pair_to_lines[it->second] = std::vector<int>();
-//
-//		package.pair_to_lines[it->second].push_back(it->first);
-//	}
-
-// 	Don't allow adjacent lines to be too parallel (probably does more harm than good).
-//	for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
-//	 int line = it->first;
-//	 int neighbour = it->second[0];
-//	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
-//	 return false;
-//
-//	 neighbour = it->second[1];
-//	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
-//	 return false;
-//	 }
-
-	std::vector<int> line_indices;
-	for (auto i : line_pair_indices) {
-		line_indices.push_back(std::get<0>(line_pairs[i]));
-		line_indices.push_back(std::get<1>(line_pairs[i]));
-	}
 	int min_image_dimension = std::min(image_size.width, image_size.height);
 
-	std::vector<cv::Point2f> corners = FindCorners(lines, line_indices,
-			MIN_CORNER_DIST * min_image_dimension);
+	std::vector<cv::Point2f> corners = FindCorners(lines, indices, MIN_CORNER_DIST * min_image_dimension);
 
 	if (corners.size() != 6)
 		return false;
@@ -178,7 +149,7 @@ bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines,
 		return false;
 
 	for (int i = 0; i < hull.size(); ++i) {
-		package.corners.push_back(corners[hull[i]]);
+		package.push_back(corners[hull[i]]);
 	}
 
 	return true;
@@ -307,12 +278,14 @@ bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2
 double EuclideanDistance(cv::Point2f& p1, cv::Point2f& p2) {
 	return cv::norm(p1 - p2);
 }
+
+// TODO make const when tuning is finished
 double MIN_CORNER_DIST = 0.02; // of smallest image axis
 double MIN_PARALLEL_LINE_DIST = 0.02;
 double MIN_ACCEPTED_SCORE = 0.0;
-//double MIN_ADJACENT_LINE_ANGLE = 15.0;
 double MAX_PARALLEL_LINE_ANGLE = 30.0;
 double MIN_PACKAGE_CONTOUR_LENGTH = 0.2;
+int MAX_LINE_PAIRS = 50;
 
 } /* namespace internal */
 
