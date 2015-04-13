@@ -20,11 +20,11 @@ struct Package {
 };
 
 std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
-		const std::vector<int>& line_indices, double min_corner_dist);
+		const std::vector<int>& line_indices, const double min_corner_dist);
 double RatePackage(std::vector<cv::Vec4i>& lines, Package& package);
 std::vector<Package> FindPackages(const std::vector<cv::Vec4i>& lines,
 		const std::vector<cv::Point2f>& reference_object, const cv::Size& image_size);
-void FindParallelLines(const std::vector<cv::Vec4i>& lines,
+void FindParallelLines(const std::vector<cv::Vec4i>& lines, const double min_line_dist,
 		std::vector<std::tuple<int, int>>& parallel_line_pairs);
 bool LineSegmentAngleComparator(const cv::Vec4i& a, const cv::Vec4i& b);
 double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2);
