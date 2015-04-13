@@ -30,7 +30,7 @@ JNIEXPORT void JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_Packag
 JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getReferenceObjectCoordinates(
 		JNIEnv *env, jobject obj) {
 
-	std::vector<cv::Point2i> objectCoordinates = apm.GetReferenceObject();
+	std::vector<cv::Point2f> objectCoordinates = apm.GetReferenceObject();
 	Point* ref = new Point[objectCoordinates.size()];
 
 	for (int i = 0; i < objectCoordinates.size(); ++i) {
@@ -49,7 +49,7 @@ JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_Pac
 JNIEXPORT jobject JNICALL Java_com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer_getPackageCoordinates(
 		JNIEnv *env, jobject obj) {
 
-	std::vector<cv::Point2i> objectCoordinates = apm.GetPackage();
+	std::vector<cv::Point2f> objectCoordinates = apm.GetPackage();
 	Point* ref = new Point[objectCoordinates.size()];
 
 	for (int i = 0; i < objectCoordinates.size(); ++i) {

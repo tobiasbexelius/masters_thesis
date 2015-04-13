@@ -174,6 +174,7 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
                 drawReferenceObject();
                 drawPackage();
                 mReferenceObjectOverlay.invalidate();
+
             }
         });
 
