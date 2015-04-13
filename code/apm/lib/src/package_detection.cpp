@@ -17,7 +17,10 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	cv::Mat edges_cpy = edges.clone();
 	std::vector<std::vector<cv::Point>> contours;
 	FindContours(edges_cpy, true, contours);
-	PruneShortContours(contours, MIN_PACKAGE_CONTOUR_LENGTH);
+
+	double min_image_dimension = std::min(image.size().width, image.size().height);
+	PruneShortContours(contours, min_image_dimension * MIN_PACKAGE_CONTOUR_LENGTH);
+
 	PrunePeripheralContours(contours, image.size());
 	if (contours.empty())
 		return std::vector<cv::Point2f>();
@@ -83,7 +86,8 @@ std::vector<Package> FindPackages(const std::vector<cv::Vec4i>& lines,
 		const std::vector<cv::Point2f>& reference_object, const cv::Size& image_size) {
 	std::vector<Package> packages;
 	std::vector<std::tuple<int, int>> line_pairs;
-	FindParallelLines(lines, line_pairs);
+	int min_image_dimension = std::min(image_size.width, image_size.height);
+	FindParallelLines(lines, MIN_PARALLEL_LINE_DIST * min_image_dimension, line_pairs);
 	if (line_pairs.size() < 3)
 		return packages;
 
@@ -134,24 +138,25 @@ bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines,
 	if (package.line_to_pair.size() != 6) // contains doubles
 		return false;
 
-	for (auto it = package.line_to_pair.begin(); it != package.line_to_pair.end(); ++it) {
-		if (!package.pair_to_lines.count(it->second))
-			package.pair_to_lines[it->second] = std::vector<int>();
+// Set unused variable that may be useful for rating packages
+//	for (auto it = package.line_to_pair.begin(); it != package.line_to_pair.end(); ++it) {
+//		if (!package.pair_to_lines.count(it->second))
+//			package.pair_to_lines[it->second] = std::vector<int>();
+//
+//		package.pair_to_lines[it->second].push_back(it->first);
+//	}
 
-		package.pair_to_lines[it->second].push_back(it->first);
-	}
-
-	// Don't allow adjacent lines to be too parallel
-	/*for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
-	 int line = it->first;
-	 int neighbour = it->second[0];
-	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
-	 return false;
-
-	 neighbour = it->second[1];
-	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
-	 return false;
-	 }*/
+// 	Don't allow adjacent lines to be too parallel (probably does more harm than good).
+//	for (auto it = neighbour_list.begin(); it != neighbour_list.end(); ++it) {
+//	 int line = it->first;
+//	 int neighbour = it->second[0];
+//	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
+//	 return false;
+//
+//	 neighbour = it->second[1];
+//	 if (LineSegmentAngle(lines[line], lines[neighbour]) < MIN_ADJACENT_LINE_ANGLE)
+//	 return false;
+//	 }
 
 	std::vector<int> line_indices;
 	for (auto i : line_pair_indices) {
@@ -180,7 +185,7 @@ bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines,
 }
 
 std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
-		const std::vector<int>& line_indices, double min_corner_dist) {
+		const std::vector<int>& line_indices, const double min_corner_dist) {
 	std::vector<cv::Point2f> intersections;
 
 	for (auto l1 = line_indices.begin(); l1 != line_indices.end(); ++l1) {
@@ -253,21 +258,16 @@ double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2) { // 
 	return std::min(o1_dist, e1_dist);
 }
 
-void FindParallelLines(const std::vector<cv::Vec4i>& lines,
+void FindParallelLines(const std::vector<cv::Vec4i>& lines, const double min_line_dist,
 		std::vector<std::tuple<int, int>>& parallel_line_pairs) {
 	for (int i = 0; i < lines.size(); ++i) {
 		for (int j = i + 1; j < lines.size(); ++j) {
 			if (LineSegmentAngle(lines[i], lines[j]) < MAX_PARALLEL_LINE_ANGLE
-					&& LineSegmentDistance(lines[i], lines[j]) > MIN_PARALLEL_LINE_DIST) {
+					&& LineSegmentDistance(lines[i], lines[j]) > min_line_dist) {
 				parallel_line_pairs.push_back(std::tuple<int, int>(i, j));
 			}
 		}
 	}
-}
-
-bool HasDuplicates(std::vector<int>& vec) {
-	std::set<int> duplicate_check(vec.begin(), vec.end());
-	return (duplicate_check.size() != vec.size());
 }
 
 double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2) {
@@ -277,20 +277,6 @@ double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2) {
 	if (angle > 90.0)
 		angle = 180.0 - angle;
 	return angle;
-
-}
-
-void FindConnectedComponents(const std::vector<std::vector<Intersection>>& intersections,
-		std::vector<std::set<int>>& connected_components) {
-
-	DisjointSet ds(intersections.size());
-
-	for (int i = 0; i < intersections.size(); ++i) {
-		for (int j = 0; j < intersections[i].size(); ++j) {
-			//	ds.Union(intersections[i][j].l1, intersections[i][j].l2);
-		}
-	}
-	connected_components = ds.AsSets();
 
 }
 
@@ -318,27 +304,15 @@ bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2
 	return false;
 }
 
-void FilterBadComponents(std::vector<std::set<int> >& components) {
-	int min_number_of_members = 6;
-
-	components.erase(
-			std::remove_if(components.begin(), components.end(),
-					[min_number_of_members](std::set<int> component) {
-						return component.size() < min_number_of_members;}), components.end());
-
-}
-
 double EuclideanDistance(cv::Point2f& p1, cv::Point2f& p2) {
 	return cv::norm(p1 - p2);
 }
 double MIN_CORNER_DIST = 0.02; // of smallest image axis
-double MIN_PARALLEL_LINE_DIST = 50.0;
+double MIN_PARALLEL_LINE_DIST = 0.02;
 double MIN_ACCEPTED_SCORE = 0.0;
-double MIN_ADJACENT_LINE_ANGLE = 15.0;
+//double MIN_ADJACENT_LINE_ANGLE = 15.0;
 double MAX_PARALLEL_LINE_ANGLE = 30.0;
-double MAX_ANGLE_DIFF = 75.0;
-double MAX_LINE_DIST = 0.05;
-double MIN_PACKAGE_CONTOUR_LENGTH = 200.0;
+double MIN_PACKAGE_CONTOUR_LENGTH = 0.2;
 
 } /* namespace internal */
 
