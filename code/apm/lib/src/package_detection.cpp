@@ -8,10 +8,15 @@
 #include <algorithm>
 #include <queue>
 
+//#include <android/log.h>
+//#define LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+//#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+//#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+//#define LOG_TAG "APM DEBUG"
+
 using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
-cv::Mat img;
 std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 		std::vector<cv::Point2f>& reference_object) {
 	cv::Mat edges_cpy = edges.clone();
@@ -24,7 +29,6 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	PrunePeripheralContours(contours, image.size());
 	if (contours.empty())
 		return std::vector<cv::Point2f>();
-	img = image;
 	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
 	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
 
@@ -32,9 +36,8 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	DetectLines(contours_mat, lines);
 
 	std::vector<std::vector<cv::Point2f>> packages = FindPackages(lines, reference_object, image.size());
-	int max_score = std::numeric_limits<int>::min();
+	double max_score = -std::numeric_limits<double>::max();
 	std::vector<cv::Point2f> max_package;
-
 	for (auto it = packages.begin(); it != packages.end(); ++it) {
 		double score = RatePackage(lines, *it);
 		if (score > max_score) {
@@ -46,6 +49,12 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 
 	if (max_score < MIN_ACCEPTED_SCORE)
 		return std::vector<cv::Point2f>();
+//	LOGD("PACKAGE=");
+//	for(auto p : max_package){
+//		LOGD("[%f, %f]", p.x, p.y);
+//	}
+
+	std::cout << "MAX SCORE " << max_score << std::endl;
 
 	return max_package;
 
@@ -55,8 +64,8 @@ namespace internal {
 
 double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& package) {
 
-	double angle_score = 1000.0;
-	double length_score = 1000.0;
+	double angle_score = 100.0;
+	double length_score = 100.0;
 	int size = package.size();
 	cv::Point prev = package[0];
 	for (int i = 1; i < size / 2 + 1; ++i) {
@@ -78,8 +87,10 @@ double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& pack
 
 		prev = cur;
 	}
+	if (angle_score < MIN_ACCEPTED_SUBSCORE || length_score < MIN_ACCEPTED_SUBSCORE)
+		return 0;
 
-	return angle_score * length_score;
+	return (angle_score + length_score) / 2;
 }
 
 std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>& lines,
@@ -102,24 +113,42 @@ std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>&
 		for (int j = i + 1; j < line_pairs.size(); ++j) {
 			for (int k = j + 1; k < line_pairs.size(); ++k) {
 
-				std::vector<int> line_indices;
-				for (int index : { i, j, k }) {
-					line_indices.push_back(std::get<0>(line_pairs[index]));
-					line_indices.push_back(std::get<1>(line_pairs[index]));
-				}
+				std::vector<int> line_indices = GetLinesInPairs(line_pairs, { i, j, k });
+				if (line_indices.empty())
+					continue;
 
 				std::vector<cv::Point2f> package;
 				bool isPackageValid = TryToCreatePackage(lines, line_indices, image_size, package);
 				if (!isPackageValid)
 					continue;
-				if (!reference_object.empty() && !EnclosesContour(package, reference_object))
-					continue;
+//				if (!reference_object.empty() && !EnclosesContour(package, reference_object))
+//					continue;
 				packages.push_back(package);
 			}
 		}
 	}
-
 	return packages;
+}
+
+std::vector<int> GetLinesInPairs(const std::vector<std::tuple<int, int>>& line_pairs, std::vector<int> indices) {
+	std::vector<int> lines;
+	for (int i : indices) {
+		int line = std::get<0>(line_pairs[i]);
+
+		if (std::find(lines.begin(), lines.end(), line) == lines.end())
+			lines.push_back(line);
+		else
+			return std::vector<int>();
+
+		line = std::get<1>(line_pairs[i]);
+
+		if (std::find(lines.begin(), lines.end(), line) == lines.end())
+			lines.push_back(line);
+		else
+			return std::vector<int>();
+
+	}
+	return lines;
 }
 
 bool EnclosesContour(const std::vector<cv::Point2f>& enclosing_contour,
@@ -200,6 +229,12 @@ std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
 			return std::vector<cv::Point2f>();
 		}
 
+		int l1_pair  = (find(line_indices.begin(), line_indices.end(), *l1) - line_indices.begin())/2;
+		int n1_pair = (find(line_indices.begin(), line_indices.end(), p1_neighbour) - line_indices.begin())/2;
+		int n2_pair = (find(line_indices.begin(), line_indices.end(), p2_neighbour) - line_indices.begin())/2;
+		if(l1_pair == n1_pair || l1_pair == n2_pair || n1_pair == n2_pair)
+			return std::vector<cv::Point2f>();
+
 		bool contains_i1 = false, contains_i2 = false;
 
 		for (auto intersection : intersections) {
@@ -267,8 +302,8 @@ bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2
 
 	double t1 = (x.x * d2.y - x.y * d2.x) / cross;
 	intersection = o1 + d1 * t1;
-	intersection.x = std::round(intersection.x);
-	intersection.y = std::round(intersection.y);
+	intersection.x = intersection.x + 0.5;
+	intersection.y = intersection.y + 0.5;
 	if (intersection.x >= 0 || intersection.y >= 0)
 		return true;
 
@@ -282,10 +317,11 @@ double EuclideanDistance(cv::Point2f& p1, cv::Point2f& p2) {
 // TODO make const when tuning is finished
 double MIN_CORNER_DIST = 0.02; // of smallest image axis
 double MIN_PARALLEL_LINE_DIST = 0.02;
-double MIN_ACCEPTED_SCORE = 0.0;
+double MIN_ACCEPTED_SCORE = 50.0;
 double MAX_PARALLEL_LINE_ANGLE = 30.0;
 double MIN_PACKAGE_CONTOUR_LENGTH = 0.2;
 int MAX_LINE_PAIRS = 50;
+double MIN_ACCEPTED_SUBSCORE = 20.0;
 
 } /* namespace internal */
 

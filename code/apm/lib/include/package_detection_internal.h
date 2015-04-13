@@ -8,6 +8,7 @@ namespace automatic_package_measuring {
 
 namespace internal {
 
+std::vector<int> GetLinesInPairs(const std::vector<std::tuple<int, int>>& line_pairs, std::vector<int> indices);
 std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
 		const std::vector<int>& line_indices, const double min_corner_dist);
 double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& package);
@@ -31,6 +32,7 @@ extern double MIN_PACKAGE_CONTOUR_LENGTH;
 extern double MAX_PARALLEL_LINE_ANGLE;
 extern double MIN_CORNER_DIST;
 extern int MAX_LINE_PAIRS;
+extern double MIN_ACCEPTED_SUBSCORE;
 
 } /* namespace automatic_package_measuring::internal */
 
