@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 	}
 
 	parseTestCases();
-	//optimizeConstant(test_cases, "Blur kernel",&apm::internal::CANNY_LOW_THRESHOLD, 1, 60, 1);
+	//optimizeConstant(test_cases, "Blur kernel",&apm::internal::BLUR_KERNEL_SIZE, 1, 21, 2);
 	runTests(test_cases);
 	//showAllImages(test_cases);
 }

@@ -27,7 +27,7 @@ int hough_threshold = HOUGH_THRESHOLD - 1;
 int min_contour_length = 20;
 int center_threshold = CENTER_THRESHOLD * 200;
 int min_paper_contour_length = MIN_PAPER_CONTOUR_LENGTH;
-int min_package_contour_length = MIN_PACKAGE_CONTOUR_LENGTH;
+int min_package_contour_length = MIN_PACKAGE_CONTOUR_LENGTH*100;
 
 cv::Mat image, edges, result;
 std::vector<cv::Point2f> paper, package;
@@ -62,7 +62,7 @@ void UpdateConstants() {
 	HOUGH_MIN_LENGTH = hough_min_length + 1;
 	HOUGH_THRESHOLD = hough_threshold + 1;
 	CENTER_THRESHOLD = center_threshold / 200.0;
-	MIN_PACKAGE_CONTOUR_LENGTH = min_package_contour_length;
+	MIN_PACKAGE_CONTOUR_LENGTH = min_package_contour_length / 100;
 	MIN_PAPER_CONTOUR_LENGTH = min_paper_contour_length;
 }
 
@@ -82,9 +82,9 @@ void ProcessImage(int, void*) {
 	PreprocessImage(image, preprocessed_image);
 	FindEdges(preprocessed_image, edges);
 	CloseEdges(edges);
-	paper = FindPaper(image, edges);
-	package = FindPackage(image, edges, paper);
-	cv::Vec3d measurements = MeasurePackage(image.size(), paper, cv::Vec2d(297, 210), package);
+	paper = FindPaper(preprocessed_image, edges);
+	package = FindPackage(preprocessed_image, edges, paper);
+	cv::Vec3d measurements = MeasurePackage(image.size(), paper, cv::Vec2d(297/2.0, 210), package);
 	DrawOverlay();
 
 	cv::imshow(RESULT_WINDOW, result);
@@ -125,23 +125,29 @@ void DrawContours() {
 }
 
 void DrawLines() {
-	cv::Mat contours_mat;
-	if(external_contours_only){
-		std::vector<std::vector<cv::Point>> contours;
-			FindContours(edges, false, contours);
-			PruneShortContours(contours, min_package_contour_length);
-			PrunePeripheralContours(contours, image.size());
-
-			contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
-			cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
-	} else {
-		contours_mat = edges;
-	}
+	std::vector<std::vector<cv::Point>> contours;
+	FindContours(edges, external_contours_only, contours);
+	PruneShortContours(contours, min_package_contour_length);
+	PrunePeripheralContours(contours, image.size());
+	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
+	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
 
 
+//	cv::Mat contours_mat;
+//	if(external_contours_only) {
+//		std::vector<std::vector<cv::Point>> contours;
+//		FindContours(edges, external_contours_only, contours);
+//		PruneShortContours(contours, min_package_contour_length);
+//		PrunePeripheralContours(contours, image.size());
+//		contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
+//		cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
+//	} else
+//	{
+//		contours_mat = edges;
+//	}
 
-	std::vector<cv::Vec4i> lines;
-	DetectLines(contours_mat, lines);
+		std::vector<cv::Vec4i> lines;
+		DetectLines(contours_mat, lines);
 
 	for (size_t i = 0; i < lines.size(); i++) {
 		cv::Vec4i l = lines[i];
@@ -163,8 +169,8 @@ void DrawPolygons() {
 
 void DrawPaper() {
 	std::vector<cv::Point> int_paper;
-	for(auto point:paper) {
-		int_paper.push_back(cv::Point(point.x,point.y));
+	for (auto point : paper) {
+		int_paper.push_back(cv::Point(point.x, point.y));
 	}
 	DrawContour(result, int_paper, cv::Scalar(255, 0, 255));
 }

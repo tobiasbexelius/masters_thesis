@@ -19,7 +19,6 @@ void PreprocessImage(const cv::Mat& image, cv::Mat& image_out) {
 	cv::cvtColor(image, image_gray, CV_BGR2GRAY);
 	cv::medianBlur(image_gray, image_out, BLUR_KERNEL_SIZE);
 #endif
-
 }
 
 void FindEdges(const cv::Mat& image, cv::Mat& edges) {
@@ -45,7 +44,6 @@ void FindContours(cv::Mat& edges, bool external_only, std::vector<std::vector<cv
 }
 
 void PruneShortContours(std::vector<std::vector<cv::Point> >& contours, double min_length) {
-
 	contours.erase(
 			std::remove_if(contours.begin(), contours.end(), [min_length](std::vector<cv::Point>& contour) {
 				return cv::arcLength(contour, false) < min_length;}), contours.end());
@@ -78,6 +76,12 @@ void FindConvexPolygon(const std::vector<cv::Point>& contour, std::vector<cv::Po
 void DetectLines(const cv::Mat& image, std::vector<cv::Vec4i>& lines_out) {
 	cv::HoughLinesP(image, lines_out, HOUGH_RHO, HOUGH_THETA, HOUGH_THRESHOLD, HOUGH_MIN_LENGTH,
 			HOUGH_MAX_GAP);
+}
+
+void PruneSimilarLines(std::vector<cv::Vec4i>& lines) {
+	for (auto it = lines.begin(); it != lines.end(); ++it) {
+
+	}
 }
 
 namespace internal {
@@ -114,11 +118,11 @@ double CENTER_THRESHOLD = 0.25;
 
 double POLY_ERROR_TOLERANCE = 0.02;
 
-int HOUGH_RHO = 2;
+int HOUGH_RHO = 1; // TODO in pixels. make resolution independent
 double HOUGH_THETA = CV_PI / 180;
 int HOUGH_THRESHOLD = 50;
-int HOUGH_MIN_LENGTH = 30;//80;
-int HOUGH_MAX_GAP = 55;
+int HOUGH_MIN_LENGTH = 30; //80; // TODO pixels
+int HOUGH_MAX_GAP = 30; // TODO pixels
 
 } /* namespace automatic_package_measuring::internal */
 

@@ -24,6 +24,8 @@ void FindConvexPolygon(const std::vector<cv::Point>& contour, std::vector<cv::Po
 
 void DetectLines(const cv::Mat& image, std::vector<cv::Vec4i>& lines_out);
 
+void PruneSimilarLines(std::vector<cv::Vec4i> lines);
+
 } /* namespace automatic_package_measuring */
 
 #endif /* SRC_CONTOUREXTRACTOR_H_ */

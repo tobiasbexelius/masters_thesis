@@ -25,10 +25,10 @@ void PackageMeasurer::AnalyzeImage(cv::Mat& image) {
 	FindEdges(preprocessed_image, edges);
 	CloseEdges(edges);
 
-	reference_object = FindPaper(image, edges);
-	package = FindPackage(image, edges, reference_object);
+	reference_object = FindPaper(preprocessed_image, edges);
+	package = FindPackage(preprocessed_image, edges, reference_object);
 
-	measurements = MeasurePackage(image.size(), reference_object, cv::Vec2f(297	, 210), package);
+	measurements = MeasurePackage(image.size(), reference_object, cv::Vec2f(297 / 2.0, 210), package);
 }
 
 const std::vector<cv::Point2f>& PackageMeasurer::GetReferenceObject() {

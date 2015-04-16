@@ -10,7 +10,7 @@ namespace internal {
 
 std::vector<int> GetLinesInPairs(const std::vector<std::tuple<int, int>>& line_pairs, std::vector<int> indices);
 std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
-		const std::vector<int>& line_indices, const double min_corner_dist);
+		const std::vector<int>& line_indices, const cv::Size& image_size, const double min_corner_dist);
 double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& package);
 std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>& lines,
 		const std::vector<cv::Point2f>& reference_object, const cv::Size& image_size);
@@ -20,7 +20,7 @@ bool LineSegmentAngleComparator(const cv::Vec4i& a, const cv::Vec4i& b);
 double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2);
 bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection);
 double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2);
-bool TryToCreatePackage(const std::vector<cv::Vec4i>& lines, const std::vector<int> indices,
+bool TryToCreatePolygon(const std::vector<cv::Vec4i>& lines, const std::vector<int> indices,
 		const cv::Size& image_size, std::vector<cv::Point2f>& package);
 bool EnclosesContour(const std::vector<cv::Point2f>& enclosing_contour, const std::vector<cv::Point2f>& enclosed_contour);
 

@@ -1,14 +1,12 @@
 #include "../include/package_measuring.h"
 #include "../include/package_measuring_internal.h"
-
+#include <cmath>
 using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
 
 cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f>& reference_object,
 		const cv::Vec2f ref_dimensions, const std::vector<cv::Point2f>& package) {
-
-	//std::vector<cv::Point2f> reference_object = {cv::Point2f(328,387),cv::Point2f(444,308),cv::Point2f(539,353),cv::Point2f(422,441)};
 
 	if (reference_object.size() != 4 || package.size() != 6)
 		return cv::Vec3d();
@@ -34,27 +32,6 @@ cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f
 	cv::Point3f top_center_3d = ProjectPlanarImagePointTo3D(package[top_center], homography);
 	cv::Point3f top_right_3d = ProjectPlanarImagePointTo3D(package[top_right], homography);
 
-	std::cout << "Ref 2d" << std::endl;
-	std::cout << reference_object[0] << std::endl;
-	std::cout << reference_object[1] << std::endl;
-	std::cout << reference_object[2] << std::endl;
-	std::cout << reference_object[3] << std::endl;
-
-	std::cout << "Ref 3d" << std::endl;
-	std::cout << ref_obj_world_2d[0] << std::endl;
-	std::cout << ref_obj_world_2d[1] << std::endl;
-	std::cout << ref_obj_world_2d[2] << std::endl;
-	std::cout << ref_obj_world_2d[3] << std::endl;
-
-	std::cout << "3D top" << std::endl;
-	std::cout << top_left_3d << std::endl;
-	std::cout << top_center_3d << std::endl;
-	std::cout << top_right_3d << std::endl;
-
-	std::cout << "Dims" << std::endl;
-	std::cout << cv::norm(top_left_3d - top_center_3d) << std::endl;
-	std::cout << cv::norm(top_center_3d - top_right_3d) << std::endl;
-
 	std::vector<cv::Point3f> ref_obj_world_3d;
 	for (auto point : ref_obj_world_2d)
 		ref_obj_world_3d.push_back(cv::Point3f(point.x, point.y, 0));
@@ -71,21 +48,34 @@ cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f
 	cv::hconcat(rotation_mat, translation, extrinsic);
 	cv::Mat_<double> camera_matrix = intrinsic_parameters * extrinsic;
 
-	cv::Vec3f bottom_right_world_3d = FindBottomCornerWorldCoordinates(camera_matrix, package[bottom_left],
-			top_left_3d.x, top_left_3d.y);
-	cv::Vec3f bottom_left_world_3d = FindBottomCornerWorldCoordinates(camera_matrix, package[bottom_right],
-			top_right_3d.x, top_right_3d.y);
+	double left_error;
+	double left_height = CalculateHeight(camera_matrix, package[bottom_left],
+			top_left_3d.x, top_left_3d.y, left_error);
+	double right_error;
+	double right_height = CalculateHeight(camera_matrix, package[bottom_right],
+			top_right_3d.x, top_right_3d.y, right_error);
 
-	std::cout << "Bottom right = " << bottom_right_world_3d << std::endl;
-	std::cout << "Bottom left = " << bottom_left_world_3d << std::endl;
+//	std::cout << "Bottom left = " << left_height << std::endl;
+//	std::cout << "Bottom right = " << right_height << std::endl;
+	cv::Vec3f result;
 
-	return cv::Vec3f();
+	result[0] = cv::norm(top_left_3d-top_center_3d);
+	result[1] = cv::norm(top_center_3d-top_right_3d);
+
+	if (left_error < right_error)
+		result[2] = std::abs(left_height);
+	else
+		result[2] = std::abs(right_height);
+
+
+	std::cout << "RES=" << result << std::endl;
+	return result;
 }
 
 namespace internal {
 
-cv::Point3f FindBottomCornerWorldCoordinates(const cv::Mat_<double>& camera_matrix,
-		const cv::Point2f& image_point, const float& world_x, const float& world_y) {
+double CalculateHeight(const cv::Mat_<double>& camera_matrix,
+		const cv::Point2f& image_point, const float& world_x, const float& world_y, double& error_out) {
 
 	const cv::Mat_<double>& C = camera_matrix;
 	double a1 = C[0][3] + C[0][0] * world_x + C[0][1] * world_y;
@@ -100,11 +90,12 @@ cv::Point3f FindBottomCornerWorldCoordinates(const cv::Mat_<double>& camera_matr
 	cv::Mat_<double> b = (cv::Mat_<double>(3, 1) << a1, a2, a3);
 	cv::Mat_<double> x;
 	cv::solve(A, b, x, cv::DECOMP_SVD);
+	cv::Mat_<double> diff = (A * x) - b;
+	error_out = std::pow(diff[0][0], 2) + std::pow(diff[1][0], 2) + std::pow(diff[2][0], 2);
 
 	//double Z1 = (a3 * image_point.x - a1) / (b1 - b3 * image_point.x);
 	//double Z2 = (a3 * image_point.y - a2) / (b2 - b3 * image_point.y);
-
-	return cv::Point3f(world_x, world_y, x[1][0]);
+	return x[1][0];
 }
 
 void IdentifyPackageCorners(const std::vector<cv::Point2f>& corners, int& top_left, int& top_center,

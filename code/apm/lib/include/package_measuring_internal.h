@@ -15,8 +15,8 @@ cv::Mat_<double> GetHomography(const cv::Mat_<double>& rotation, const cv::Mat_<
 cv::Point3f ProjectPlanarImagePointTo3D(const cv::Point2f& image_point, const cv::Mat_<double>& homography);
 void IdentifyPackageCorners(const std::vector<cv::Point2f>& package, int& top_left, int& top_center, int& top_right,
 		int& bottom_left, int& bottom_center, int& bottom_right);
-cv::Point3f FindBottomCornerWorldCoordinates(const cv::Mat_<double>& camera_matrix, const cv::Point2f& image_point,
-		const float& world_x, const float& world_y);
+double CalculateHeight(const cv::Mat_<double>& camera_matrix, const cv::Point2f& image_point,
+		const float& world_x, const float& world_y, double& error_out);
 extern const int calib_width;
 extern const int calib_height;
 extern const cv::Mat intrinsic_parameters;
