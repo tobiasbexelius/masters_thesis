@@ -11,8 +11,8 @@ class APMTestCase {
 public:
 	APMTestCase();
 	APMTestCase(std::string file_name, int package_id, std::string reference_object_type,
-			cv::Vec3f dimensions, double distance);
-	APMTestCase(cv::Mat image, std::vector<cv::Point2f> reference_object, std::vector<cv::Point2f> package, cv::Vec3f dimensions);
+			cv::Vec3f dimensions, double distance, cv::Vec2f reference_object_size, int rotation);
+	APMTestCase(cv::Mat image, std::vector<cv::Point2f> reference_object, std::vector<cv::Point2f> package, cv::Vec3f dimensions, cv::Vec2f reference_object_size, int rotation);
 	virtual ~APMTestCase();
 	const std::vector<cv::Point2f>& GetReferenceObject() const;
 	const std::vector<cv::Point2f>& GetPackage() const;
@@ -31,6 +31,8 @@ private:
 	std::vector<cv::Point2f> reference_object;
 	std::vector<cv::Point2f> package;
 	cv::Vec3f dimensions; // [w, h, d]
+	cv::Vec2f reference_object_size;
+	int rotation;
 };
 
 } /* namespace automatic_package_measuring */

@@ -4,17 +4,17 @@
 
 namespace automatic_package_measuring {
 
-APMTest::APMTest(APMTestCase test_case, double max_error, PackageMeasurer measurer) :
-		test_case(test_case), max_error(max_error), measurer(measurer) {
+APMTest::APMTest(APMTestCase test_case, double max_error, PackageMeasurer measurer, cv::Vec2f reference_object_size, int rotation) :
+		test_case(test_case), max_error(max_error), measurer(measurer), reference_object_size(reference_object_size), rotation(rotation){
 }
 
 APMTest::~APMTest() {
 }
 
 void APMTest::run() {
+	measurer.SetReferenceObjectSize(reference_object_size);
 	cv::Mat image = test_case.GetImage();
-	PackageMeasurer measurer;
-	measurer.AnalyzeImage(image);
+	measurer.AnalyzeImage(image, rotation);
 	actual_reference_object = measurer.GetReferenceObject();
 	actual_package = measurer.GetPackage();
 	actual_measurement = measurer.GetMeasurements();

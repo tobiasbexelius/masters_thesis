@@ -147,7 +147,7 @@ void runTests(std::vector<Json::Value> test_cases) {
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
 		++num_tests;
 		apm::APMTestCase test_case = createTestCase(*it);
-		apm::APMTest test(test_case);
+		apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 		test.run();
 
 		std::cout << std::endl;
@@ -244,7 +244,11 @@ apm::APMTestCase createTestCase(Json::Value root) {
 	double height = root["dimensions"]["height"].asDouble();
 	double depth = root["dimensions"]["depth"].asDouble();
 	cv::Vec3d dimensions = cv::Vec3f(width, height, depth);
-	return apm::APMTestCase(image, reference_object, package, dimensions);
+
+	cv::Vec2f reference_object_size = cv::Vec2f(root["referenceObjectSize"][0].asFloat(), root["referenceObjectSize"][0].asFloat());
+	int rotation = root["rotation"].asInt();
+
+	return apm::APMTestCase(image, reference_object, package, dimensions, reference_object_size, rotation);
 }
 
 void help() {

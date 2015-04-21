@@ -10,7 +10,7 @@ namespace automatic_package_measuring {
 
 class APMTest {
 public:
-	APMTest(APMTestCase testCase, double max_error = 0.1, PackageMeasurer measurer = PackageMeasurer());
+	APMTest(APMTestCase testCase, double max_error = 0.1, PackageMeasurer measurer = PackageMeasurer(), cv::Vec2f reference_object_size = cv::Vec2f(297,210), int rotation = 0);
 	virtual ~APMTest();
 	void run();
 	bool success() const;
@@ -36,6 +36,8 @@ private:
 	std::vector<cv::Point2f> actual_package;
 	cv::Vec3f actual_measurement;
 	PackageMeasurer measurer;
+	cv::Vec2f reference_object_size;
+	int rotation;
 };
 
 } /* namespace automatic_package_measuring */

@@ -6,20 +6,24 @@ APMTestCase::APMTestCase() {
 }
 
 APMTestCase::APMTestCase(std::string file_name, int package_id, std::string reference_object_type,
-		cv::Vec3f dimensions, double distance) :
+		cv::Vec3f dimensions, double distance, cv::Vec2f reference_object_size, int rotation) :
 		file_name(file_name),
 		package_id(package_id),
 		reference_object_type(reference_object_type),
 		distance(distance),
-		dimensions(dimensions) {
+		dimensions(dimensions),
+		reference_object_size(reference_object_size),
+		rotation(rotation) {
 }
 
 APMTestCase::APMTestCase(cv::Mat image, std::vector<cv::Point2f> reference_object,
-		std::vector<cv::Point2f> package, cv::Vec3f dimensions) :
+		std::vector<cv::Point2f> package, cv::Vec3f dimensions, cv::Vec2f reference_object_size, int rotation) :
 		image(image),
 		reference_object(reference_object),
 		package(package),
-		dimensions(dimensions) {
+		dimensions(dimensions) ,
+		reference_object_size(reference_object_size),
+		rotation(rotation){
 }
 
 APMTestCase::~APMTestCase() {
@@ -69,6 +73,11 @@ Json::Value APMTestCase::AsJson() {
 		root["package"][i]["x"] = package[i].x;
 		root["package"][i]["y"] = package[i].y;
 	}
+
+	root["referenceObjectSize"][0] = reference_object_size[0];
+	root["referenceObjectSize"][1] = reference_object_size[1];
+
+	root["rotation"] = rotation;
 
 	return root;
 }
