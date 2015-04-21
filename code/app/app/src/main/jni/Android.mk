@@ -10,7 +10,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE    := com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer
 LOCAL_SRC_FILES := $(wildcard $(LOCAL_PATH)/apm_core/lib/src/*.cpp)
-LOCAL_SRC_FILES += com_apm_tobias_automaticpackagemeasuring_core_PackageMeasurer.cpp
+LOCAL_SRC_FILES += apm_jni.cpp
 LOCAL_CFLAGS := -std=gnu++11
 LOCAL_C_INCLUDES += $(LOCAL_PATH)
 LOCAL_LDLIBS     += -llog -ldl

@@ -2,10 +2,16 @@ package com.apm.tobias.automaticpackagemeasuring;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
-import android.os.Looper;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
@@ -13,35 +19,47 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.apm.tobias.automaticpackagemeasuring.core.Edge;
-import com.apm.tobias.automaticpackagemeasuring.core.PackageMeasurer;
-import com.apm.tobias.automaticpackagemeasuring.core.ReferenceObject;
-
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
 
-public class CaptureFragment extends Fragment implements Camera.PictureCallback, Camera.PreviewCallback {
+public class CaptureFragment extends Fragment implements Camera.PictureCallback, Camera.PreviewCallback, Handler.Callback {
+
+    public static boolean doNothing = false;
+
     private static final String TAG = "CaptureFragment";
+    private static final int MSG_CREATE_CAMERA = 0x01;
+    private static final int MSG_DESTROY_CAMERA = 0x02;
 
     private final PackageMeasurer mPackageMeasurer = new PackageMeasurer();
     private final Handler mHandler = new Handler();
-    private CameraThread mCameraThread;
+    private final HandlerThread mCameraThread = new HandlerThread("CameraHandler");
+    private Handler mCameraHandler;
     private Camera mCamera;
     private SurfaceView mSurfaceView;
     private Camera.Size mPreviewSize;
     private SurfaceHolder mSurfaceViewHolder;
     private View mView;
 
-    private OverlayView mReferenceObjectOverlay;
+    private OverlayView mOverlayView;
     private TextView mFPSView;
     private TextView mProcessingTimeView;
     private long mLastFrame = 0;
     private ToggleButton mTorchButton;
+    private int mRotation;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mCameraThread.start();
+        mCameraHandler = new Handler(mCameraThread.getLooper(), this);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,10 +71,29 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
 
         mSurfaceView = (SurfaceView) mView.findViewById(R.id.preview);
         if (mSurfaceView != null) {
-            mSurfaceViewHolder = mSurfaceView.getHolder();
+            SurfaceHolder surfaceViewHolder = mSurfaceView.getHolder();
+            surfaceViewHolder.addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    mSurfaceViewHolder = holder;
+                    if (isResumed()) {
+                        mCameraHandler.sendEmptyMessage(MSG_CREATE_CAMERA);
+                    }
+                }
+
+                @Override
+                public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+                }
+
+                @Override
+                public void surfaceDestroyed(SurfaceHolder holder) {
+                    mSurfaceViewHolder = null;
+                }
+            });
         }
 
-        mReferenceObjectOverlay = (OverlayView) mView.findViewById(R.id.reference_object_overlay);
+        mOverlayView = (OverlayView) mView.findViewById(R.id.reference_object_overlay);
         mFPSView = (TextView) mView.findViewById(R.id.fps);
         mProcessingTimeView = (TextView) mView.findViewById(R.id.processing_Time);
 
@@ -64,7 +101,7 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         mTorchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(final CompoundButton buttonView, final boolean isChecked) {
-                toggleTorch(isChecked);
+                setTorchEnabled(isChecked);
             }
         });
         mTorchButton.setChecked(false);
@@ -75,30 +112,34 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
     @Override
     public void onResume() {
         super.onResume();
-        mCameraThread = new CameraThread();
-        mCameraThread.start();
+        if (mSurfaceViewHolder != null) {
+            mCameraHandler.sendEmptyMessage(MSG_CREATE_CAMERA);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        mCameraHandler.sendEmptyMessage(MSG_DESTROY_CAMERA);
+    }
 
-        if (mCameraThread == null) {
-            return;
-        }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mSurfaceViewHolder = null;
+    }
 
-        mCameraThread.shutdown();
-        mCameraThread = null;
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mCameraThread.quit();
     }
 
     private void cameraCreated(Camera camera) {
         mCamera = camera;
         setupCamera();
 
-        /*Camera.Parameters params = mCamera.getParameters();
-        double focalLength = params.getFocalLength();
-        Log.d("test", "FOCAL LENGTH =" + focalLength);*/
-
+        Log.d(TAG, "Camera created");
         try {
             byte[] previewBuffer = new byte[(int) (mPreviewSize.width * mPreviewSize.height * 1.5)];
             mCamera.setPreviewDisplay(mSurfaceViewHolder);
@@ -114,11 +155,12 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         Camera.Parameters params = mCamera.getParameters();
         // We invert the width and height since we rotate the preview
         final Camera.Size size = mPreviewSize = CameraUtils.getOptimalPreviewSize(params, mView.getHeight(), mView.getWidth());
-
+        Log.d(TAG, "CAMERA SIZE= " + size.width + ", " + size.height);
+        Log.d(TAG, "VIEW SIZE= " + mView.getWidth() + ", " + mView.getHeight());
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) mSurfaceView.getLayoutParams();
+                ViewGroup.LayoutParams lp = mSurfaceView.getLayoutParams();
                 if (lp != null) {
                     lp.width = mView.getWidth();
                     lp.height = (int) (lp.width * (float) size.width / size.height);
@@ -141,15 +183,34 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         CameraUtils.setHighestFPSRange(params);
         CameraUtils.selectOptimalPictureSize(params);
         CameraUtils.selectFocusMode(params, Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        mCamera.getCameraInfo(0, info);
 
-        mCamera.setDisplayOrientation(90);
+        mOverlayView.setRotation(info.orientation);
+        mRotation = info.orientation;
+        mOverlayView.setPreviewSize(size.height, size.width);
+        mCamera.setDisplayOrientation(info.orientation);
+
+
         mCamera.setParameters(params);
     }
 
     @Override
     public void onPreviewFrame(final byte[] data, Camera camera) {
+        YuvImage image = new YuvImage(data, mCamera.getParameters().getPreviewFormat(), mPreviewSize.width, mPreviewSize.height, null);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        image.compressToJpeg(new Rect(0, 0, mPreviewSize.width, mPreviewSize.height), 90, byteArrayOutputStream);
+        byte[] bytes = byteArrayOutputStream.toByteArray();
+        final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+        if (doNothing) {
+            mCamera.addCallbackBuffer(data);
+            return;
+        }
+
         long start = System.currentTimeMillis();
-        mPackageMeasurer.analyzeVideoFrame(data, mPreviewSize.width, mPreviewSize.height);
+
+        mPackageMeasurer.analyzeVideoFrame(data, mPreviewSize.width, mPreviewSize.height, mRotation);
         long now = System.currentTimeMillis();
         final long processingTime = now - start;
 
@@ -171,9 +232,34 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
                 mFPSView.setText(getString(R.string.fps, 1000.0f / sinceLastFrame));
                 mProcessingTimeView.setText(getString(R.string.processing_time, processingTime));
 
-                drawReferenceObject();
-                drawPackage();
-                mReferenceObjectOverlay.invalidate();
+                mOverlayView.setReferenceObject(mPackageMeasurer.getReferenceObject());
+                mOverlayView.setPackage(mPackageMeasurer.getPackage());
+                mOverlayView.setDimensions(mPackageMeasurer.getDimensions());
+                mOverlayView.setMeasuredEdges(mPackageMeasurer.getMeasuredEdges());
+                mOverlayView.invalidate();
+                if (mPackageMeasurer.getDimensions().get(0) != 0 && mPackageMeasurer.getDimensions().get(1) != 0)
+                    CaptureFragment.doNothing = true;
+
+
+//                if (doNothing) {
+//
+//                    File mypath = new File(Environment.getExternalStorageDirectory(), "testImage.jpg");
+//
+//                    FileOutputStream fos = null;
+//                    try {
+//
+//                        fos = new FileOutputStream(mypath);
+//
+//                        // Use the compress method on the BitMap object to write image to the OutputStream
+//                        boolean s = bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+//                        fos.close();
+//                        Log.d("APM", "TRIED TO SAVE IMAGE: " + s + " (" + mypath.toString() + ")");
+//
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+
 
             }
         });
@@ -183,40 +269,26 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         }
     }
 
-    private void drawPackage() {
-        ReferenceObject parcel = mPackageMeasurer.getPackage();
-        List<Edge> edges = parcel.getEdges();
-
-        if (edges.isEmpty())
-            mReferenceObjectOverlay.clearPackage();
-        else
-            mReferenceObjectOverlay.updatePackage(edges);
-    }
-
-    private void drawReferenceObject() {
-        ReferenceObject referenceObject = mPackageMeasurer.getReferenceObject();
-        List<Edge> edges = referenceObject.getEdges();
-
-        if (edges.isEmpty())
-            mReferenceObjectOverlay.clearReferenceObject();
-        else
-            mReferenceObjectOverlay.updateReferenceObject(edges);
-    }
-
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
     }
 
-    private void toggleTorch(final boolean isChecked) {
-        if (mCamera != null) {
-            Camera.Parameters params = mCamera.getParameters();
-            if (isChecked) {
-                params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-            } else {
-                params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+    private void setTorchEnabled(final boolean isChecked) {
+        mCameraHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (mCamera == null) {
+                    return;
+                }
+                Camera.Parameters params = mCamera.getParameters();
+                if (isChecked) {
+                    params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                } else {
+                    params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                }
+                mCamera.setParameters(params);
             }
-            mCamera.setParameters(params);
-        }
+        });
     }
 
     private void cameraFailedToOpen() {
@@ -232,53 +304,41 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         });
     }
 
-    private class CameraThread extends Thread {
-        public Handler mHandler;
-        private boolean mShutdown = false;
-        private Camera mCamera;
+    @Override
+    public boolean handleMessage(Message msg) {
+        switch (msg.what) {
+            case MSG_CREATE_CAMERA:
+                createCamera();
+                return true;
 
-        @Override
-        public void run() {
-            Looper.prepare();
-            if (mShutdown) {
-                return;
-            }
-            synchronized (this) {
-                mHandler = new Handler();
-            }
-            createCamera();
-            Looper.loop();
-        }
+            case MSG_DESTROY_CAMERA:
+                destroyCamera();
+                return true;
 
-        public void shutdown() {
-            mShutdown = true;
-            synchronized (this) {
-                if (mHandler != null) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (mCamera != null) {
-                                mCamera.stopPreview();
-                                mCamera.release();
-                                mCamera = null;
-                                Looper.myLooper().quitSafely();
-                            }
-                        }
-                    });
-                }
-            }
-        }
-
-        private void createCamera() {
-            try {
-                mCamera = Camera.open();
-                cameraCreated(mCamera);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                cameraFailedToOpen();
-            }
+            default:
+                return false;
         }
     }
 
+    private void createCamera() {
+        if (mCamera != null) {
+            return;
+        }
+        try {
+            mCamera = Camera.open();
+            cameraCreated(mCamera);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            cameraFailedToOpen();
+        }
+    }
+
+    private void destroyCamera() {
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            mCamera.release();
+            mCamera = null;
+        }
+    }
 }

@@ -41,9 +41,7 @@ public class CameraUtils {
         double targetRatio = (double) w / h;
         Camera.Size optimalSize = null;
         for (Camera.Size size : sizes) {
-            if(size.height == 720 && size.width==1280)
-                return size;
-
+            Log.d("APM", "PREVIEW SIZES: " + size.width + ", " + size.height);
             double ratio = (double) size.width / size.height;
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) {
                 continue;

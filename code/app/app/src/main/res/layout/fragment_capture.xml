@@ -6,11 +6,15 @@
     android:layout_height="match_parent"
     android:background="@color/black">
 
-    <SurfaceView
-        android:id="@+id/preview"
-        android:layout_centerInParent="true"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent">
+        <SurfaceView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </FrameLayout>
 
     <com.apm.tobias.automaticpackagemeasuring.OverlayView
         android:id="@+id/reference_object_overlay"

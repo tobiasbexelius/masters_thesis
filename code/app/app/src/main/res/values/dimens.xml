@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="measurement_text_size">20dp</dimen>
+    <dimen name="measurement_text_offset">5dp</dimen>
+</resources>
