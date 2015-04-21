@@ -28,9 +28,12 @@ int min_contour_length = 20;
 int center_threshold = CENTER_THRESHOLD * 200;
 int min_paper_contour_length = MIN_PAPER_CONTOUR_LENGTH;
 int min_package_contour_length = MIN_PACKAGE_CONTOUR_LENGTH*100;
+cv::Vec2f paper_size = cv::Vec2f(297.0,210.0);
 
 cv::Mat image, edges, result;
 std::vector<cv::Point2f> paper, package;
+cv::Vec3f measurements;
+cv::Vec3i measured_edges;
 
 int show_image = 1;
 int show_edges = 0;
@@ -40,6 +43,7 @@ int show_lines = 1;
 int show_paper = 1;
 int show_package = 1;
 int external_contours_only = 1;
+int reference_object = 1;
 
 void PrintConstants();
 void DrawOverlay();
@@ -64,6 +68,7 @@ void UpdateConstants() {
 	CENTER_THRESHOLD = center_threshold / 200.0;
 	MIN_PACKAGE_CONTOUR_LENGTH = min_package_contour_length / 100;
 	MIN_PAPER_CONTOUR_LENGTH = min_paper_contour_length;
+	paper_size = reference_object ? cv::Vec2f(297.0,210.0) : cv::Vec2f(297.0/2, 210.0);
 }
 
 void ProcessImage(int, void*) {
@@ -84,7 +89,7 @@ void ProcessImage(int, void*) {
 	CloseEdges(edges);
 	paper = FindPaper(preprocessed_image, edges);
 	package = FindPackage(preprocessed_image, edges, paper);
-	cv::Vec3d measurements = MeasurePackage(image.size(), paper, cv::Vec2d(297/2.0, 210), package);
+	measurements = MeasurePackage(image.size(), paper, paper_size, package, measured_edges);
 	DrawOverlay();
 
 	cv::imshow(RESULT_WINDOW, result);
@@ -221,6 +226,7 @@ void CreateWindow() {
 			ProcessImage);
 	cv::createTrackbar("Paper min contour: ", DETECTION_WINDOW, &min_paper_contour_length, 100, ProcessImage);
 	cv::createTrackbar("Show package", DETECTION_WINDOW, &show_package, 1, ProcessImage);
+	cv::createTrackbar("Reference_object", DETECTION_WINDOW, &reference_object, 1, ProcessImage);
 
 }
 
@@ -248,11 +254,17 @@ void DrawContour(cv::Mat canvas, std::vector<cv::Point> contour, cv::Scalar colo
 
 void onMouse(int event, int x, int y, int flags, void* param) {
 	char text[100];
-	sprintf(text, "x=%d, y=%d", x, y);
-	cv::Mat img2 = result.clone();
-	cv::rectangle(img2, cv::Point(0, 0), cv::Point(200, 30), cv::Scalar(255, 255, 255), -1);
-	cv::putText(img2, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
-	cv::imshow(RESULT_WINDOW, img2);
+	sprintf(text, "Mouse: x=%d, y=%d", x, y);
+	cv::Mat overlay = result.clone();
+
+	char size[100];
+	sprintf(size, "Size: x=%.2f,y=%.2f,z=%.2f", measurements[0],measurements[1],measurements[2]);
+
+	cv::rectangle(overlay, cv::Point(0, 0), cv::Point(1000, 50), cv::Scalar(255, 255, 255), -1);
+		cv::putText(overlay, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
+		cv::putText(overlay, size, cv::Point(5, 35), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
+
+	cv::imshow(RESULT_WINDOW, overlay);
 }
 
 void PrintConstants() {
