@@ -65,7 +65,9 @@ bool APMTest::isMeasurementCorrect() const {
 }
 
 double APMTest::getMeasurementError() const {
-	return cv::norm(test_case.GetDimensions() - actual_measurement) / cv::norm(test_case.GetDimensions());
+	double min = std::min(cv::norm(test_case.GetDimensions()), cv::norm(actual_measurement));
+	double max = std::max(cv::norm(test_case.GetDimensions()), cv::norm(actual_measurement));
+	return min/max;
 }
 
 cv::Vec3f APMTest::getExpectedMeasurement() const {

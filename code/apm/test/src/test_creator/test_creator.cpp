@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 
 	if (argc < 12) {
 		std::cout
-				<< "Usage: ./test_creator input_dir output_dir [ref_type] [ref_width] [ref_height] [package_id] [width] [height] [depth] [dist] [img_rotation"
+				<< "Usage: ./test_creator input_dir output_dir [ref_type] [ref_width] [ref_height] [package_id] [width] [height] [depth] [dist] [img_rotation]"
 				<< std::endl;
 		exit(EXIT_FAILURE);
 	}

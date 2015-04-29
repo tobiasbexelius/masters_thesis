@@ -46,6 +46,25 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 
 }
 
+bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection) {
+	cv::Point2f o1 = cv::Point2f(line1[0], line1[1]);
+	cv::Point2f e1 = cv::Point2f(line1[2], line1[3]);
+	cv::Point2f o2 = cv::Point2f(line2[0], line2[1]);
+	cv::Point2f e2 = cv::Point2f(line2[2], line2[3]);
+
+	cv::Point2f x = o2 - o1;
+	cv::Point2f d1 = e1 - o1;
+	cv::Point2f d2 = e2 - o2;
+
+	double cross = d1.x * d2.y - d1.y * d2.x;
+	if (std::abs(cross) < 1e-8)
+		return false;
+
+	double t1 = (x.x * d2.y - x.y * d2.x) / cross;
+	intersection = o1 + d1 * t1;
+	return true;
+}
+
 namespace internal {
 
 double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& package) {
@@ -195,6 +214,8 @@ std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
 
 			if (!FindIntersection(line1, line2, intersection))
 				continue;
+			intersection.x = intersection.x + 0.5;
+			intersection.y = intersection.y + 0.5;
 
 			if (intersection.x < 0 || intersection.y < 0 || intersection.x > image_size.width
 					|| intersection.y > image_size.height)
@@ -279,27 +300,6 @@ double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2) {
 		angle = 180.0 - angle;
 	return angle;
 
-}
-
-bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection) {
-	cv::Point2f o1 = cv::Point2f(line1[0], line1[1]);
-	cv::Point2f e1 = cv::Point2f(line1[2], line1[3]);
-	cv::Point2f o2 = cv::Point2f(line2[0], line2[1]);
-	cv::Point2f e2 = cv::Point2f(line2[2], line2[3]);
-
-	cv::Point2f x = o2 - o1;
-	cv::Point2f d1 = e1 - o1;
-	cv::Point2f d2 = e2 - o2;
-
-	double cross = d1.x * d2.y - d1.y * d2.x;
-	if (std::abs(cross) < 1e-8)
-		return false;
-
-	double t1 = (x.x * d2.y - x.y * d2.x) / cross;
-	intersection = o1 + d1 * t1;
-	intersection.x = intersection.x + 0.5;
-	intersection.y = intersection.y + 0.5;
-	return true;
 }
 
 double EuclideanDistance(cv::Point2f& p1, cv::Point2f& p2) {

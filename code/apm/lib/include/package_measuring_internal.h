@@ -17,6 +17,19 @@ void IdentifyPackageCorners(const std::vector<cv::Point2f>& package, int& top_le
 		int& bottom_left, int& bottom_center, int& bottom_right);
 double CalculateHeight(const cv::Mat_<double>& camera_matrix, const cv::Point2f& image_point,
 		const float& world_x, const float& world_y, double& error_out);
+
+
+
+void IdentifyPackageCornersHeadOn(const std::vector<cv::Point2f>& corners, int& top_left, int& top_right,
+		int& mid_left, int& mid_right, int& bottom_left, int& bottom_right);
+
+
+std::vector<cv::Point2f> FindVanishingPoints(std::vector<cv::Point2f>& package);
+
+
+
+
+
 extern const int calib_width;
 extern const int calib_height;
 extern const cv::Mat intrinsic_parameters;

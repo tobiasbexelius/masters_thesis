@@ -7,3 +7,5 @@
 /bin
 **/external/**
 /test/data/
+
+calib_camera/calibrate/*/*.jpg

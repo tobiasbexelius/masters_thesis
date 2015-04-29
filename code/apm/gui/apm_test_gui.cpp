@@ -305,9 +305,6 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	//if (argc > 2 && (strcmp(argv[2], "-p") == 0 || strcmp(argv[2], "-P") == 0))
-	//	simple_mode = true;
-
 	result.create(image.size(), CV_8UC3);
 
 	CreateWindow();

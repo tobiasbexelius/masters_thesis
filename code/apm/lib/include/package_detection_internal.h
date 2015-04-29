@@ -18,7 +18,6 @@ void FindParallelLines(const std::vector<cv::Vec4i>& lines, const double min_lin
 		std::vector<std::tuple<int, int>>& parallel_line_pairs);
 bool LineSegmentAngleComparator(const cv::Vec4i& a, const cv::Vec4i& b);
 double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2);
-bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection);
 double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2);
 bool TryToCreatePolygon(const std::vector<cv::Vec4i>& lines, const std::vector<int> indices,
 		const cv::Size& image_size, std::vector<cv::Point2f>& package);
