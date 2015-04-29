@@ -1,0 +1,1 @@
+~/masters_thesis/code/apm/build/calib_camera/calibration -w 6 -h 9 -pt chessboard -s 25 -o galaxy_s6_169_calib.xml galaxy_s6_169_images.xml

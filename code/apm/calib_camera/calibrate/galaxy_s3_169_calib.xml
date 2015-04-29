@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<calibration_time>"Wed Apr 22 10:09:18 2015"</calibration_time>
+<image_width>1280</image_width>
+<image_height>720</image_height>
+<board_width>6</board_width>
+<board_height>9</board_height>
+<square_size>25.</square_size>
+<flags>0</flags>
+<camera_matrix type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>3</cols>
+  <dt>d</dt>
+  <data>
+    1.0383022526373247e+03 0. 6.4815656332212768e+02 0.
+    1.0312714841510390e+03 3.3912005664156112e+02 0. 0. 1.</data></camera_matrix>
+<distortion_coefficients type_id="opencv-matrix">
+  <rows>5</rows>
+  <cols>1</cols>
+  <dt>d</dt>
+  <data>
+    -5.6081669213434132e-02 1.9348361811630961e+00
+    -1.6428716030314656e-03 -8.5823452014998358e-03
+    -7.6018511226007863e+00</data></distortion_coefficients>
+<avg_reprojection_error>2.3420956227199258e-01</avg_reprojection_error>
+</opencv_storage>
