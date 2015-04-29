@@ -37,15 +37,18 @@ public class CameraUtils {
             return null;
         }
 
-        final double ASPECT_TOLERANCE = 0.2;
+        final double ASPECT_TOLERANCE = 0;//0.2;
         double targetRatio = (double) w / h;
         Camera.Size optimalSize = null;
         for (Camera.Size size : sizes) {
             Log.d("APM", "PREVIEW SIZES: " + size.width + ", " + size.height);
+            if (size.width == 1280 && size.height == 720)
+                return size;
             double ratio = (double) size.width / size.height;
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) {
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE || size.width < 400 || size.height < 400) {
                 continue;
             }
+
             if (isSizeBetter(size, optimalSize)) {
                 optimalSize = size;
             }
@@ -64,7 +67,8 @@ public class CameraUtils {
     }
 
     private static boolean isSizeBetter(Camera.Size contender, Camera.Size best) {
-        return best == null || contender.height * contender.width > best.height * best.width;
+        return best == null || contender.height * contender.width < best.height * best.width;
+        //return best == null || contender.height * contender.width > best.height * best.width;
     }
 
     public static void setHighestFPSRange(Camera.Parameters params) {

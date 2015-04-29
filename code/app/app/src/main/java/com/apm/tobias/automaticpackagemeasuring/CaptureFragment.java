@@ -8,7 +8,6 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -24,13 +23,9 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class CaptureFragment extends Fragment implements Camera.PictureCallback, Camera.PreviewCallback, Handler.Callback {
-
-    public static boolean doNothing = false;
 
     private static final String TAG = "CaptureFragment";
     private static final int MSG_CREATE_CAMERA = 0x01;
@@ -203,11 +198,6 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
         byte[] bytes = byteArrayOutputStream.toByteArray();
         final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
-        if (doNothing) {
-            mCamera.addCallbackBuffer(data);
-            return;
-        }
-
         long start = System.currentTimeMillis();
 
         mPackageMeasurer.analyzeVideoFrame(data, mPreviewSize.width, mPreviewSize.height, mRotation);
@@ -237,30 +227,6 @@ public class CaptureFragment extends Fragment implements Camera.PictureCallback,
                 mOverlayView.setDimensions(mPackageMeasurer.getDimensions());
                 mOverlayView.setMeasuredEdges(mPackageMeasurer.getMeasuredEdges());
                 mOverlayView.invalidate();
-                if (mPackageMeasurer.getDimensions().get(0) != 0 && mPackageMeasurer.getDimensions().get(1) != 0)
-                    CaptureFragment.doNothing = true;
-
-
-//                if (doNothing) {
-//
-//                    File mypath = new File(Environment.getExternalStorageDirectory(), "testImage.jpg");
-//
-//                    FileOutputStream fos = null;
-//                    try {
-//
-//                        fos = new FileOutputStream(mypath);
-//
-//                        // Use the compress method on the BitMap object to write image to the OutputStream
-//                        boolean s = bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-//                        fos.close();
-//                        Log.d("APM", "TRIED TO SAVE IMAGE: " + s + " (" + mypath.toString() + ")");
-//
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-
-
             }
         });
 
