@@ -107,7 +107,7 @@ double RatePaper(const cv::Mat& image, const std::vector<cv::Vec4i>& lines,
 
 	cv::Mat histogram;
 	int channels[] = { 0 };
-	int bins[] = { 30 };
+	int bins[] = { 35 };
 	const float *ranges[1];
 	float range[] = { 0.0f, 255.0f };
 	ranges[0] = range;

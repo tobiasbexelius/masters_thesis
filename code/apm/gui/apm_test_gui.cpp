@@ -27,13 +27,14 @@ int hough_threshold = HOUGH_THRESHOLD - 1;
 int min_contour_length = 20;
 int center_threshold = CENTER_THRESHOLD * 200;
 int min_paper_contour_length = MIN_PAPER_CONTOUR_LENGTH;
-int min_package_contour_length = MIN_PACKAGE_CONTOUR_LENGTH*100;
-cv::Vec2f paper_size = cv::Vec2f(297.0,210.0);
+int min_package_contour_length = MIN_PACKAGE_CONTOUR_LENGTH * 100;
+cv::Vec2f paper_size = cv::Vec2f(297.0, 210.0);
 
 cv::Mat image, edges, result;
 std::vector<cv::Point2f> paper, package;
 cv::Vec3f measurements;
 cv::Vec3i measured_edges;
+double calib_height;
 
 int show_image = 1;
 int show_edges = 0;
@@ -68,7 +69,7 @@ void UpdateConstants() {
 	CENTER_THRESHOLD = center_threshold / 200.0;
 	MIN_PACKAGE_CONTOUR_LENGTH = min_package_contour_length / 100;
 	MIN_PAPER_CONTOUR_LENGTH = min_paper_contour_length;
-	paper_size = reference_object ? cv::Vec2f(297.0,210.0) : cv::Vec2f(297.0/2, 210.0);
+	paper_size = reference_object ? cv::Vec2f(297.0, 210.0) : cv::Vec2f(297.0 / 2, 210.0);
 }
 
 void ProcessImage(int, void*) {
@@ -90,6 +91,8 @@ void ProcessImage(int, void*) {
 	paper = FindPaper(preprocessed_image, edges);
 	package = FindPackage(preprocessed_image, edges, paper);
 	measurements = MeasurePackage(image.size(), paper, paper_size, package, measured_edges);
+	cv::Vec3i tmp_edges;
+	calib_height = MeasurePackage(image.size(), paper, paper_size, package, tmp_edges, false)[2];
 	DrawOverlay();
 
 	cv::imshow(RESULT_WINDOW, result);
@@ -137,7 +140,6 @@ void DrawLines() {
 	cv::Mat contours_mat = cv::Mat(image.size(), CV_8UC1, cv::Scalar(0));
 	cv::drawContours(contours_mat, contours, -1, cv::Scalar(255));
 
-
 //	cv::Mat contours_mat;
 //	if(external_contours_only) {
 //		std::vector<std::vector<cv::Point>> contours;
@@ -151,8 +153,8 @@ void DrawLines() {
 //		contours_mat = edges;
 //	}
 
-		std::vector<cv::Vec4i> lines;
-		DetectLines(contours_mat, lines);
+	std::vector<cv::Vec4i> lines;
+	DetectLines(contours_mat, lines);
 
 	for (size_t i = 0; i < lines.size(); i++) {
 		cv::Vec4i l = lines[i];
@@ -258,12 +260,11 @@ void onMouse(int event, int x, int y, int flags, void* param) {
 	cv::Mat overlay = result.clone();
 
 	char size[100];
-	sprintf(size, "Size: x=%.2f,y=%.2f,z=%.2f", measurements[0],measurements[1],measurements[2]);
+	sprintf(size, "Size: x=%.2f,y=%.2f,z=%.2f                                 Calib z=%.2f", measurements[0], measurements[1], measurements[2], calib_height);
 
 	cv::rectangle(overlay, cv::Point(0, 0), cv::Point(1000, 50), cv::Scalar(255, 255, 255), -1);
-		cv::putText(overlay, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
-		cv::putText(overlay, size, cv::Point(5, 35), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
-
+	cv::putText(overlay, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
+	cv::putText(overlay, size, cv::Point(5, 35), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));
 	cv::imshow(RESULT_WINDOW, overlay);
 }
 
