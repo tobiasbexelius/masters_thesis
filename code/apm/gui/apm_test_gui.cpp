@@ -43,7 +43,7 @@ int show_lines = 1;
 int show_paper = 1;
 int show_package = 1;
 int external_contours_only = 1;
-int reference_object = 1;
+int reference_object = 0;
 
 void PrintConstants();
 void DrawOverlay();

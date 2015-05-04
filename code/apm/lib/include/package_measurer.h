@@ -16,6 +16,7 @@ public:
 	const std::vector<cv::Point2f>& GetPackage() const;
 	const cv::Vec3f& GetMeasurements() const;
 	const cv::Vec3i& GetMeasuredEdges() const;
+	double GetCalibHeight() const;
 
 	static const double CANNY_RATIO;
 	static const int CANNY_LOW_THRESHOLD;
@@ -40,6 +41,7 @@ private:
 	std::vector<cv::Point2f> package;
 	cv::Vec3f measurements;
 	cv::Vec3i measured_edges;
+	cv::Size rotated_size;
 };
 
 } /* namespace automatic_package_measuring */

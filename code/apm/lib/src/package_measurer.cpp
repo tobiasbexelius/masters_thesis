@@ -24,6 +24,7 @@ PackageMeasurer::~PackageMeasurer() {
 void PackageMeasurer::AnalyzeImage(cv::Mat& image, int rotation) {
 
 	cv::Mat rotated_image = RotateImage(image, rotation);
+	rotated_size = rotated_image.size();
 
 	cv::Mat preprocessed_image;
 	PreprocessImage(rotated_image, preprocessed_image);
@@ -46,6 +47,12 @@ void PackageMeasurer::AnalyzeImage(cv::Mat& image, int rotation) {
 void PackageMeasurer::SetReferenceObjectSize(cv::Vec2f dimensions) {
 	reference_object_size = dimensions;
 
+}
+
+double PackageMeasurer::GetCalibHeight() const {
+	cv::Vec3i edges_tmp;
+	cv::Vec3f res = MeasurePackage(rotated_size, reference_object, reference_object_size, package, edges_tmp, false);
+	return res[2];
 }
 
 cv::Mat PackageMeasurer::RotateImage(const cv::Mat& image, const int rotation) {

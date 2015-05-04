@@ -114,7 +114,7 @@ double RatePaper(const cv::Mat& image, const std::vector<cv::Vec4i>& lines,
 	cv::calcHist(&roi, 1, channels, cv::Mat(), histogram, 1, bins, ranges);
 
 	double top_bin = histogram.at<float>(bins[0] - 1) / ((double) (cv::contourArea(roi_paper)));
-	double color_score = 400.0 * top_bin;
+	double color_score = 4000000.0 * top_bin;
 
 	if (angle_score < MIN_PAPER_ACCEPTED_SUBSCORE || length_score < MIN_PAPER_ACCEPTED_SUBSCORE
 			|| color_score < MIN_PAPER_ACCEPTED_SUBSCORE || ratio_score < MIN_PAPER_ACCEPTED_SUBSCORE)
