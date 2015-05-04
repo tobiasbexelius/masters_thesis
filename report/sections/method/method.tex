@@ -1,8 +1,7 @@
-In this chapter the methods used to implement and evaluate the product will be described.
+This chapter will describe the methods used to implement and evaluate the outcome of this thesis. % TODO rephrase
 
-\section{OpenCV}
-
-OpenCV is an open source library for computer vision. 
+\section{Camera calibration}
+Checkerboard and vanishing points. % TODO write
 
 \section{Preprocessing}
 
@@ -12,18 +11,9 @@ This is accomplished by converting the colour image to a grayscale image.
 Followed by applying a median filter. 
 A median filter was chosen because it reduces noise effectively, while also removing small, unwanted features from the image, such as small labels and marks on the package or the rest of the scene. 
 At the same time well defined edges are preserved.
-
-\section{Edge detection}
-
+\section{Line detection} % TODO write
 The next step is to detect edges in the image. This is done using Canny's edge detection algorithm. As it is often a good pr
-
-
-\section{Contour extraction}
-
 To reduce amount of data contours are pruned by removing peripheral contours and short ones.
-
-\section{Line detection}
-
 Lines are detected by using the Hough Line Transform.
 
 \section{Package Detection}
@@ -61,51 +51,24 @@ Since the reference object is a quadrilateral two pairs of parallel line segment
 The ranking algorithm also uses some additional criteria, since the reference object is a white ISO 216 A-series  paper, the score is also based on how bright the area within the polygon is, and how well the aspect ratio between the two sides matches that of a ISO 216 A-series paper.
 
 \section{Measuring}
+% TODO mention we only consider cases where three sides of the box is seen?
+The measuring is carried out in two steps, first the width and depth of the package are measured, followed by the height. 
+This order is chosen because the reference object is placed on top of the package, which means that there is some special information about the top plane, and top corners, of the package.
 
-% TODO we only consider cases where three sides of the box is seen
+As described in \ref{planar-homographies} the world coordinate system can be defined to have its origin in one of the corners of the reference object.
+Since the physical size of the reference object is known, the position of all corners is known in both image, and world coordinates.
+With the four point correspondences, a planar homography is obtained, which can be used to map any point in the image to any point in the plane.
+The position of the four top corners of the package can now be calculated, along with the width and depth, by calculating the euclidean distance between the world coordinates of the corners.
 
-The measuring is carried out in two steps, first the width and depth of the package are measured, followed by the height. The reason is that the top corners of the package are in the same plane as the reference object, of which we know the location in 3D-space.
+A homography cannot be created in the same way between the image plane and the side planes of the package, since the world coordinates of only two points is known in either of the side planes.
+This is why the camera calibration is useful. 
+Since the intrinsic parameters of the camera is known, along with some image-world point correspondences for the corners of the reference object, the pose of the camera can be estimated as described in <section>. % TODO insert section
 
-Since the coordinates of the corners of the reference object is known in both image coordinates and world coordinates, a homography between the image plane and the top plane of the package (where the reference object is placed) can be calculated.
-
-Using the homography, the top corners of the package, which are in the same plane as the reference object, can be projected into 3D space in the following fashion:
-
-<Insert equation> % TODO
-
-Now the width and depth of the package can be calculated by calculating the euclidean distance between the projected points.
-
-A homography cannot be created in the same way between the image plane and one of the side planes of the package since, only two points are known in either of the side planes, in both image and world coordinates, i.e. the corners that lie in both the top, and side planes.
-
-This is where the camera calibration is useful. 
-Since the intrinsic parameters of the camera is known, along with some image-world point correspondences for the corners of the reference object, the pose of the camera can be estimated. 
-
-TODO how is camera pose found?% TODO how is camera pose found?
-
-Once the camera pose is known, the full camera matrix $P$ can be retrieved by multiplying the intrinsic and extrinsic matrices: $P = K[R|t]$ \cite[156]{hartley-zisserman}. 
-As mentioned earlier mapping between 2D and 3D points can be done using the equation $x = PX$.
-This equation can be expanded to the following form:
-$$\begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} = \lambda
-\begin{pmatrix} p_{11} & p_{12} & p_{13} & p_{14} \\
- 				p_{21} & p_{22} & p_{23} & p_{24} \\
-				p_{31} & p_{32} & p_{33} & p_{34} \end{pmatrix}
-\begin{pmatrix}X \\Y \\Z \\1\end{pmatrix}$$
-where $ \tilde{u}$, $\tilde{v}$, and $\tilde{w}$ are in homogeneous coordinates, and $\lambda$ is an arbitrary scale factor.
-The scale factor is arbitrary because homogeneous coordinates are used.
-$\tilde{u}$, $\tilde{v}$, and $\tilde{w}$ are all scaled by $\lambda$, and the cartesian image coordinates,  $u$ and $v$, are obtained by dividing by $\tilde{w}$:
-
-$$u = \frac{\tilde{u}}{\tilde{w}}, v = \frac{\tilde{v}}{\tilde{w}}$$
-
-And hence the scale factor disappears. By convention $\lambda = \frac{1}{p_{34}}$ which results in:
-
-$$\begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} =
-\begin{pmatrix} p_{11} & p_{12} & p_{13} & p_{14} \\
- 				p_{21} & p_{22} & p_{23} & p_{24} \\
-				p_{31} & p_{32} & p_{33} & 1 \end{pmatrix}
-\begin{pmatrix}X \\Y \\Z \\1\end{pmatrix}$$
-For convenience the scaling of the elements in $P$ is implicit.
-This equation is useful because two of the lower corners of the package share $X$, and $Y$ coordinates with a top corner, which position in world coordinates is already known.
-The image coordinates $(u,v)$ of one of the lower corners, and the world coordinates $(X,Y)$ of the corresponding upper corner can then be used to solve for $Z$. 
-The above equation can be transformed to the following over-defined system:
+Once the camera pose is known, the camera matrix $P$ is known, which means that any point in the world can be mapped to an image coordinate using the equation $x=PX$, as described in \ref{camera-model}.
+However, what is sought is the position in the world of the image coordinates of the bottom corners of the package, i.e. the reverse mapping.
+Luckily, it is known that the lower corners share $X$, and $Y$ coordinates with a top corner, which position in world coordinates is already known.
+The image coordinates $(u,v)$ of a lower corner, and the world coordinates $(X,Y)$ of the corresponding upper corner can then be used to solve for the $Z$ coordinate of the lower corner. 
+The equation $x=PX$ can be transformed to the following over-defined system:
 $$
 \begin{pmatrix} up_{33}-p_{13} \\ vp_{33}-p_{23} \end{pmatrix} Z = 
 \begin{pmatrix}
@@ -113,23 +76,26 @@ X(p_{11}-up_{31}) + Y(p_{12}-up_{32})+p_{14}-u \\
 X(p_{21}-vp_{31}) + Y(p_{22}-vp_{32})+p_{24}-v
 \end{pmatrix}
 $$
-This least-squares problem is solved using SVD-decomposition. % Try QR decomposition
+This least-squares problem is solved using Single Value Decomposition (SVD).
 Since two pairs of upper-lower corners which share $X$ and $Y$ coordinates are known, two least-squares solutions of $Z$ can be obtained.
 The solution with the smallest error is chosen as $Z$.
 
+\section{Technology used}
 
+The most important piece of software used is the library OpenCV.
+OpenCV is an open source library for computer vision, which is used extensively in this thesis. 
+It contains functions for many things that one needs when working with computer vision-related fields, from low-level processing such as filters, to high-level functions for feature detection and machine learning.
 
+The hardware used to capture test pictures and run the test app, is an Android mobile phone, more specifically the Samsung Galaxy S6 Edge.
+The S6 Edge was chosen because it currently tops benchmarks and tests, both regarding processing power and photo quality \cite{phone_performance_benchmark}\cite{phone_camera_benchmark}.
 
-
-
-
-
-
-
-
-
-
-
+\section{Android Application}
+A simple proof of concept android application was made for online testing on the phone, to test the speed of the measuring algorithm.
+The app simply displays the camera feed and continuously feeds new frames to the measuring algorithm.
+When the package or reference object is successfully detected, an overlay is drawn to outline their position on the screen.
+If both the package and reference are found in the same frame, the measurements are also drawn next to the appropriate edge.
+The processing time for each frame is also displayed.
+% TODO Add figure!
 
 
 

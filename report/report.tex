@@ -10,7 +10,7 @@
 \usepackage[swedish,english]{babel}
 \usepackage{modifications}
 \usepackage{mathtools} 
-
+\DeclareUnicodeCharacter{00A0}{ }
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
@@ -56,11 +56,17 @@
 \chapter{Theoretical Background}
 \input{sections/background/background}
 
+\chapter{Related Work}
+\input{sections/related_work/related_work}
+
 \chapter{Method}
 \input{sections/method/method}
 
 \chapter{Results}
+\input{sections/results/results}
+
 \chapter{Discussion}
+\input{sections/discussion/discussion}
 
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
