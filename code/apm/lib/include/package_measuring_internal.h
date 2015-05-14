@@ -22,13 +22,21 @@ void IdentifyPackageCornersHeadOn(const std::vector<cv::Point2f>& corners, int& 
 		int& mid_left, int& mid_right, int& bottom_left, int& bottom_right);
 
 std::vector<cv::Point2f> FindVanishingPoints(const std::vector<cv::Point2f>& package);
-cv::Mat_<float> AutoCalibrate(const cv::Mat_<double>& homography, const std::vector<cv::Point2f>& package);
+std::vector<cv::Point2f> FindVanishingPointsHeadOn(const std::vector<cv::Point2f>& package, int top_left,
+		int top_right, int mid_left, int mid_right, int bottom_left, int bottom_right);
+cv::Mat_<float> AutoCalibrate(const cv::Mat_<double>& homography, const std::vector<cv::Point2f>& vanishing_points);
 cv::Mat_<double> CreateConstraint(const cv::Vec3f& u, const cv::Vec3f& v);
 cv::Mat CholeskyDecomposition(cv::Mat mat);
 
 cv::Mat_<float> FindCameraPose(const std::vector<cv::Point2f>& reference_object,
 		const std::vector<cv::Point2f>& ref_obj_world, const cv::Mat_<float>& intrinsic_matrix,
 		const cv::Mat_<float>& distortion_coeffs);
+
+bool CouldBeStraight(const std::vector<cv::Point2f>& package, int top_left, int top_right, int mid_left,
+		int mid_right, int bottom_left, int bottom_right);
+
+extern bool angle;
+
 extern const int calib_width;
 extern const int calib_height;
 extern const cv::Mat calib_intrinsic;

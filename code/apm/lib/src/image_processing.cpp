@@ -10,14 +10,13 @@ void PreprocessImage(const cv::Mat& image, cv::Mat& image_out) {
 
 #if 0
 	cv::Mat filtered_image;
-	cv::bilateralFilter(image, filtered_image, 5, 50, 50);
+	cv::bilateralFilter(image, filtered_image, 5, 150, 150);
 	cv::cvtColor(filtered_image, image_out, CV_BGR2GRAY);
-#endif
-
-#if 1
+#else
 	cv::Mat image_gray;
 	cv::cvtColor(image, image_gray, CV_BGR2GRAY);
 	cv::medianBlur(image_gray, image_out, BLUR_KERNEL_SIZE);
+
 #endif
 }
 
@@ -104,9 +103,9 @@ bool IsContourCentered(std::vector<cv::Point>& contour, const cv::Size& img_size
 	return center_x >= min_x && center_y >= min_y && center_x <= max_x && center_y <= max_y;
 }
 
-int BLUR_KERNEL_SIZE = 9;
+int BLUR_KERNEL_SIZE = 5;
 
-int CANNY_LOW_THRESHOLD = 10;
+int CANNY_LOW_THRESHOLD = 22;
 double CANNY_RATIO = 3.0;
 int CANNY_KERNEL_SIZE = 3;
 int CANNY_HIGH_THRESHOLD = CANNY_LOW_THRESHOLD * CANNY_RATIO;
@@ -114,13 +113,13 @@ int CANNY_HIGH_THRESHOLD = CANNY_LOW_THRESHOLD * CANNY_RATIO;
 int MORPH_RADIUS = 2;
 int MORPH_ITERATIONS = 2;
 
-double CENTER_THRESHOLD = 0.25;
+double CENTER_THRESHOLD = 0.2;
 
 double POLY_ERROR_TOLERANCE = 0.02;
 
 int HOUGH_RHO = 1; // TODO in pixels. make resolution independent
-double HOUGH_THETA = CV_PI / 180;
-int HOUGH_THRESHOLD = 50;
+double HOUGH_THETA = 0.02;//CV_PI / 180;
+int HOUGH_THRESHOLD = 27;
 int HOUGH_MIN_LENGTH = 30; //80; // TODO pixels
 int HOUGH_MAX_GAP = 30; // TODO pixels
 

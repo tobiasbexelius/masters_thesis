@@ -1,23 +1,28 @@
 #include <limits>
 #include <cmath>
 #include "../include/apm_test.h"
+#include "../../lib/include/package_measuring.h"
 
 namespace automatic_package_measuring {
 
-APMTest::APMTest(APMTestCase test_case, double max_error, PackageMeasurer measurer, cv::Vec2f reference_object_size, int rotation) :
-		test_case(test_case), max_error(max_error), measurer(measurer), reference_object_size(reference_object_size), rotation(rotation){
+APMTest::APMTest(APMTestCase test_case, double max_error, PackageMeasurer measurer, int rotation) :
+		test_case(test_case),
+		max_error(max_error),
+		measurer(measurer),
+		rotation(rotation) {
 }
 
 APMTest::~APMTest() {
 }
 
 void APMTest::run() {
-	measurer.SetReferenceObjectSize(reference_object_size);
+	measurer.SetReferenceObjectSize(test_case.GetReferenceObjectSize());
 	cv::Mat image = test_case.GetImage();
 	measurer.AnalyzeImage(image, rotation);
 	actual_reference_object = measurer.GetReferenceObject();
 	actual_package = measurer.GetPackage();
 	actual_measurement = measurer.GetMeasurements();
+
 }
 
 bool APMTest::success() const {
@@ -29,12 +34,18 @@ std::vector<cv::Point2f> APMTest::getExpectedPackage() const {
 }
 
 double APMTest::getPackageError() const {
+	if (test_case.GetPackage().empty())
+		return 1;
+
 	double err = nearestNeighbourError(test_case.GetPackage(), actual_package)
 			/ getCircumference(test_case.GetPackage());
 	return std::fmin(err, 1.0);
 }
 
 double APMTest::getReferenceObjectError() const {
+	if (test_case.GetReferenceObject().empty())
+		return 1;
+
 	double err = nearestNeighbourError(test_case.GetReferenceObject(), actual_reference_object)
 			/ getCircumference(test_case.GetReferenceObject());
 	return std::fmin(err, 1.0);
@@ -61,13 +72,46 @@ std::vector<cv::Point2f> APMTest::getActualPackage() const {
 }
 
 bool APMTest::isMeasurementCorrect() const {
-	return getMeasurementError() < max_error;
+	return testMeasurementCorrect(actual_measurement);
+}
+
+bool APMTest::testMeasurementCorrect(cv::Vec3f measurement) const {
+	if(measurement[0] ==0||measurement[1] == 0 || measurement[2]==0)
+				return false;
+
+		cv::Vec3f expected = test_case.GetDimensions();
+		std::vector<double> a_vec = { measurement[0], measurement[1], measurement[2] };
+		std::vector<double> e_vec = { expected[0], expected[1], expected[2] };
+		std::sort(a_vec.begin(), a_vec.end());
+		std::sort(e_vec.begin(), e_vec.end());
+
+		double err1 = std::abs(1 - a_vec[0] / e_vec[0]);
+		double err2 = std::abs(1 - a_vec[1] / e_vec[1]);
+		double err3 = std::abs(1 - a_vec[2] / e_vec[2]);
+
+		return err1 < max_error && err2 < max_error && err3 < max_error;
+}
+
+double APMTest:: calcMeasurementError(cv::Vec3f measurement) const {
+	if(measurement[0] ==0||measurement[1] == 0 || measurement[2]==0)
+				return 1;
+
+		cv::Vec3f expected = test_case.GetDimensions();
+		std::vector<double> a_vec = { measurement[0], measurement[1], measurement[2] };
+		std::vector<double> e_vec = { expected[0], expected[1], expected[2] };
+		std::sort(a_vec.begin(), a_vec.end());
+		std::sort(e_vec.begin(), e_vec.end());
+
+		double err1 = std::abs(1 - a_vec[0] / e_vec[0]);
+		double err2 = std::abs(1 - a_vec[1] / e_vec[1]);
+		double err3 = std::abs(1 - a_vec[2] / e_vec[2]);
+
+		return err1 + err2 + err3;
+
 }
 
 double APMTest::getMeasurementError() const {
-	double min = std::min(cv::norm(test_case.GetDimensions()), cv::norm(actual_measurement));
-	double max = std::max(cv::norm(test_case.GetDimensions()), cv::norm(actual_measurement));
-	return min/max;
+return calcMeasurementError(actual_measurement);
 }
 
 cv::Vec3f APMTest::getExpectedMeasurement() const {
@@ -83,7 +127,6 @@ cv::Vec3f APMTest::getActualMeasurement() const {
  * */
 double APMTest::nearestNeighbourError(std::vector<cv::Point2f> expected,
 		std::vector<cv::Point2f> actual) const {
-
 	if (expected.size() != actual.size())
 		return std::numeric_limits<int>::max();
 
@@ -109,7 +152,7 @@ double APMTest::nearestNeighbourError(std::vector<cv::Point2f> expected,
 		flann_index.knnSearch(query, indices, distances, 1, cv::flann::SearchParams());
 
 		if (used_indices.count(indices[0]) > 0) { // same corner cannot be used twice
-		//	std::cerr << "Same point used more than once in nearest neighbour." << std::endl;
+			//	std::cerr << "Same point used more than once in nearest neighbour." << std::endl;
 			return std::numeric_limits<int>::max();;
 		}
 		used_indices.insert(indices[0]);
@@ -117,6 +160,30 @@ double APMTest::nearestNeighbourError(std::vector<cv::Point2f> expected,
 	}
 
 	return error;
+}
+
+bool APMTest::isKeyMeasurementCorrect() const {
+	return testMeasurementCorrect(key_measurement);
+}
+
+bool APMTest::isCalibKeyMeasurementCorrect() const {
+	return testMeasurementCorrect(calib_key_measurement);
+}
+
+bool APMTest::isCalibMeasurementCorrect() const {
+	return testMeasurementCorrect(calib_measurement);
+}
+
+double APMTest::getKeyMeasurementError() const {
+return calcMeasurementError(key_measurement);
+}
+
+double APMTest::getCalibKeyMeasurementError() const {
+	return calcMeasurementError(calib_key_measurement);
+}
+
+double APMTest::getCalibMeasurementError() const {
+	return calcMeasurementError(calib_measurement);
 }
 
 /**
@@ -136,5 +203,26 @@ double APMTest::getCircumference(std::vector<cv::Point2f> points) const {
 	circumference += cv::norm(first - previous);
 	return circumference;
 }
+
+void APMTest::MeasureWithKey() {
+	std::vector<cv::Point2f> reference_object = test_case.GetReferenceObject();
+	std::vector<cv::Point2f> package = test_case.GetPackage();
+	cv::Vec3i edges;
+	cv::Vec3f measurement = MeasurePackage(test_case.GetImage().size(), reference_object, test_case.GetReferenceObjectSize(), package, edges, true);
+
+}
+
+void APMTest::MeasureWithKeyCalib() {
+	std::vector<cv::Point2f> reference_object = test_case.GetReferenceObject();
+	std::vector<cv::Point2f> package = test_case.GetPackage();
+	cv::Vec3i edges;
+	cv::Vec3f measurement = MeasurePackage(test_case.GetImage().size(), reference_object, test_case.GetReferenceObjectSize(), package, edges, false);
+}
+
+void APMTest::MeasureCalib(){
+	cv::Vec3i edges;
+	MeasurePackage(test_case.GetImage().size(), actual_reference_object, test_case.GetReferenceObjectSize(), actual_package, edges, false);
+}
+
 
 } /* namespace automatic_package_measuring */

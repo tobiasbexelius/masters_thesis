@@ -20,7 +20,8 @@ extern double MIN_PAPER_CONTOUR_LENGTH;
 extern int MAX_PAPER_LINE_PAIRS;
 extern double MIN_PAPER_ACCEPTED_SCORE;
 extern double MIN_PAPER_ACCEPTED_SUBSCORE;
-
+extern double MAX_PAPER_PARALLEL_ANGLE;
+extern int NUM_BINS;
 } /* namespace automatic_package_measuring::internal */
 
 } /* namespace automatic_package_measuring */

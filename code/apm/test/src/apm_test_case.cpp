@@ -41,6 +41,10 @@ cv::Mat APMTestCase::GetImage() const {
 	return image;
 }
 
+std::string APMTestCase::GetFileName() const {
+	return file_name;
+}
+
 const cv::Vec3f APMTestCase::GetDimensions() const {
 	return dimensions;
 }
@@ -80,6 +84,14 @@ Json::Value APMTestCase::AsJson() {
 	root["rotation"] = rotation;
 
 	return root;
+}
+
+void APMTestCase::SetFileName(std::string name) {
+	file_name = name;
+}
+
+cv::Vec2f APMTestCase::GetReferenceObjectSize() const {
+	return reference_object_size;
 }
 
 } /* namespace automatic_package_measuring */

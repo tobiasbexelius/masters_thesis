@@ -38,10 +38,10 @@ void PackageMeasurer::AnalyzeImage(cv::Mat& image, int rotation) {
 	package = FindPackage(preprocessed_image, edges, reference_object);
 	measured_edges = cv::Vec3i();
 
-	measurements = MeasurePackage(preprocessed_image.size(), reference_object, reference_object_size, package,
+ 	measurements = MeasurePackage(preprocessed_image.size(), reference_object, reference_object_size, package,
 			measured_edges);
 
-	LOGD("MEASUREMENTS: %f, %f, %f", measurements[0], measurements[1], measurements[2]);
+	//LOGD("MEASUREMENTS: %f, %f, %f", measurements[0], measurements[1], measurements[2]);
 }
 
 void PackageMeasurer::SetReferenceObjectSize(cv::Vec2f dimensions) {

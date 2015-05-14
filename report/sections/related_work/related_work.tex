@@ -1,2 +1,48 @@
-In this chapter related work will be presented.
-% TODO Other reports have this before background. A) Why? B) probably best to follow the convention
+This chapter presents an overview of related work in single view metrology, auto-calibration, and object detection.
+
+\section{Single View Metrology}
+%TODO some more introduction
+%Single view metrology refers to making measurements in images from a single view 
+% ^-- http://web.engr.illinois.edu/~dhoiem/courses/vision_spring10/sources/criminisi00.pdf
+It is well established that planes can be rectified so that euclidean measurements can be made directly from the rectified image, by calculating a homography, using four image-world point correspondences of points in the plane. % TODO citation? rewrite sentence
+It has also been shown that other properties of the plane can be used instead, such as known angles, length ratios in the plane, vanishing points, and vanishing lines \cite{liebowitz1998metric} \cite{criminisi2000single}.
+In this thesis, it is assumed that the four corners of the reference object are known, though.
+A potentially useful result in this matter is presented in \cite{huang2004new}, where it is shown that measurements can also be made in planes perpendicular to the reference plane, provided that the camera is at least partially calibrated.
+
+\section{Auto-calibration}
+As mentioned in section \ref{problem-statement}, it is critical that a package measuring solution is easy to use.
+Therefore, the required information about the camera should be acquired automatically, and online, while the app is running.
+This is done through auto-calibration, which is the process of determining the internal camera parameters directly from a set of uncalibrated images.
+There are several methods to perform auto-calibration, a common one being to impose constraints on the internal parameters by automatically detecting corresponding points or other connections between multiple images. 
+Depending on which constraints are used, and the number of images, the constraints form a linear or non-linear equation system. \cite[458-469]{hartley-zisserman} % TODO ange sidor?
+
+As we will see in section \ref{camera-calibration}, it is possible to impose constraints on the internal parameters in the same way using only one view.
+This is done by finding vanishing points in the scene, i.e. points where parallel lines that are parallel in the world (but not in the image) meet.
+Vanishing point calibration is a well-known process and can be done using either a single or multiple views \cite{guillou2000using}, \cite[195-226]{hartley-zisserman}, \cite{caprile1990using}.
+
+Some recent methods to perform auto-calibration, specifically designed for smartphones, use the orientation sensors of the phone in conjunction with images.
+Most, if not all, modern  smartphones are equipped with gyros, accelerometers, and compasses, which can be used to determine its orientation.
+In \cite{saponaro2013towards} two images with different rotation, but from the same position, are used.
+This method was only used offline, by first recording sensor readings and taking snapshots, and then performing the calculations on a computer.
+In \cite{jia2014online} a different method using the gyro in conjunction with images is proposed, which does work online, and is less restrictive in terms of camera motion.
+
+\section{Object detection}
+The problem of detecting a package in an image is an object-class detection problem.
+The goal is not to detect one specific item with known appearance, but rather a family of different object that belong to the same class.
+In this case the class is cuboid packages (and white papers).
+This is in general an extremely hard problem to solve for arbitrary objects, and suggested solutions to it are very complex.
+
+One notable example is presented in \cite{yan20073d}. The idea is to construct a 3D model of an object in the class one wishes to detect.
+A 3D model is created using a homographic framework from  multiple 2D views of the object.
+A 2D image can then be tested against the 3D model by matching features between the image and the model. 
+When testing against the PASCAL VOC dataset, a standard dataset for object classification and detection algorithms, the presented algorithm achieved an average precision (i.e. the rate at which selected items are relevant) of 0.144 and 0.182 for two classes of objects (horses and motorcycles). 
+
+That may not sound very impressive, but it should be noted that the PASCAL VOC challenge dataset is made to be difficult, the objects appear in a great variety of poses, scales, clutter, occlusions and otherwise poor conditions.\cite{everingham2010pascal}
+
+Another common approach is to use a machine learning solution as in for example \cite{viola2001rapid}, \cite{fergus2003object}, cite{shottoncontour}.
+
+More closely related to this thesis is the paper "Localizing 3D cuboids in single-view images", where the authors focus on the more delimited task of detecting rectangular cuboids in uncalibrated single-view images \cite{xiaolocalizing}.
+Edge and corner information is used create a model which is trained using Support Vector Machines.
+The method shows promising results and can handle different viewpoints, aspect ratio, scale, and occlusion.
+
+Several others try to reason about man-made environments by detecting cuboid structures, for example: \cite{hedau2010thinking}, \cite{hedau2012recovering}, \cite{gupta2010estimating}, \cite{del2012bayesian}.

@@ -22,6 +22,9 @@ public:
 	void AppendReferenceObject(int x, int y);
 	void AppnedPackage(int x, int y);
 	Json::Value AsJson();
+	std::string GetFileName() const;
+	void SetFileName(std::string name);
+	cv::Vec2f GetReferenceObjectSize() const;
 private:
 	double distance;
 	int package_id;

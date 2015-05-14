@@ -5,6 +5,7 @@
 #include "../lib/include/package_detection.h"
 #include "../lib/include/package_detection_internal.h"
 #include "../lib/include/package_measuring.h"
+#include "../lib/include/package_measuring_internal.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <string.h>
@@ -20,7 +21,7 @@ const std::string RESULT_WINDOW = "APM Test GUI";
 
 int canny_ratio = (CANNY_RATIO - 1) * 10.0;
 int poly_error_tolerance = POLY_ERROR_TOLERANCE * 1000;
-int hough_theta = (HOUGH_THETA * 180.0 / CV_PI - 0.1) * 10.0;
+int hough_theta = HOUGH_THETA * 1000;
 int hough_rho = HOUGH_RHO - 1;
 int hough_min_length = HOUGH_MIN_LENGTH - 1;
 int hough_threshold = HOUGH_THRESHOLD - 1;
@@ -34,7 +35,7 @@ cv::Mat image, edges, result;
 std::vector<cv::Point2f> paper, package;
 cv::Vec3f measurements;
 cv::Vec3i measured_edges;
-double calib_height;
+double calib_height_res;
 
 int show_image = 1;
 int show_edges = 0;
@@ -43,7 +44,7 @@ int show_polygons = 0;
 int show_lines = 1;
 int show_paper = 1;
 int show_package = 1;
-int external_contours_only = 1;
+int external_contours_only = 0;
 int reference_object = 0;
 
 void PrintConstants();
@@ -61,8 +62,9 @@ void DrawContour(cv::Mat canvas, std::vector<cv::Point> contour, cv::Scalar colo
 
 void UpdateConstants() {
 	CANNY_RATIO = 1.0 + canny_ratio / 10.0;
+	CANNY_HIGH_THRESHOLD = CANNY_LOW_THRESHOLD * CANNY_RATIO;
 	POLY_ERROR_TOLERANCE = poly_error_tolerance / 1000.0;
-	HOUGH_THETA = (0.1 + hough_theta / 10.0) * CV_PI / 180.0;
+	HOUGH_THETA = hough_theta/1000.0;
 	HOUGH_RHO = hough_rho + 1;
 	HOUGH_MIN_LENGTH = hough_min_length + 1;
 	HOUGH_THRESHOLD = hough_threshold + 1;
@@ -77,13 +79,10 @@ void ProcessImage(int, void*) {
 	result = cv::Scalar::all(0);
 	paper.clear();
 	package.clear();
-
 	if (show_image)
 		image.copyTo(result);
-
 	UpdateConstants();
 	PrintConstants();
-
 	cv::Mat preprocessed_image;
 	PreprocessImage(image, preprocessed_image);
 	FindEdges(preprocessed_image, edges);
@@ -92,11 +91,10 @@ void ProcessImage(int, void*) {
 	package = FindPackage(preprocessed_image, edges, paper);
 	measurements = MeasurePackage(image.size(), paper, paper_size, package, measured_edges);
 	cv::Vec3i tmp_edges;
-	calib_height = MeasurePackage(image.size(), paper, paper_size, package, tmp_edges, false)[2];
+	calib_height_res = MeasurePackage(image.size(), paper, paper_size, package, tmp_edges, false)[2];
 	DrawOverlay();
 
 	cv::imshow(RESULT_WINDOW, result);
-
 }
 
 void DrawOverlay() {
@@ -260,7 +258,8 @@ void onMouse(int event, int x, int y, int flags, void* param) {
 	cv::Mat overlay = result.clone();
 
 	char size[100];
-	sprintf(size, "Size: x=%.2f,y=%.2f,z=%.2f                                 Calib z=%.2f", measurements[0], measurements[1], measurements[2], calib_height);
+	sprintf(size, "Size: x=%.2f,y=%.2f,z=%.2f                                 Calib z=%.2f", measurements[0],
+			measurements[1], measurements[2], calib_height_res);
 
 	cv::rectangle(overlay, cv::Point(0, 0), cv::Point(1000, 50), cv::Scalar(255, 255, 255), -1);
 	cv::putText(overlay, text, cv::Point(5, 15), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 0, 0));

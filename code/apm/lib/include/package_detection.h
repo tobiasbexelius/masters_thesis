@@ -7,6 +7,8 @@ namespace automatic_package_measuring {
 
 std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges, std::vector<cv::Point2f>& reference_object);
 bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection);
+bool FindIntersectionF(const cv::Vec4f& line1, const cv::Vec4f& line2, cv::Point2f& intersection);
+
 
 } /* namespace automatic_package_measuring */
 

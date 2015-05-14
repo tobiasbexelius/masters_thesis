@@ -32,21 +32,51 @@ std::vector<cv::Point2f> FindPackage(const cv::Mat& image, const cv::Mat& edges,
 	double max_score = -std::numeric_limits<double>::max();
 	std::vector<cv::Point2f> max_package;
 	for (auto it = packages.begin(); it != packages.end(); ++it) {
+
+//		cv::Mat derp;
+//		image.copyTo(derp);
+//		for(auto p : *it) {
+//cv::circle(derp, p, 3, cv::Scalar(255,0,0), 5);
+//		}
+//		cv::imshow("derp", derp);
+//
 		double score = RatePackage(lines, *it);
+//		cv::waitKey(0);
 		if (score > max_score) {
 			max_score = score;
 			max_package = *it;
 		}
 
 	}
+
 	if (max_score < MIN_ACCEPTED_SCORE)
 		return std::vector<cv::Point2f>();
+
 
 	return max_package;
 
 }
 
 bool FindIntersection(const cv::Vec4i& line1, const cv::Vec4i& line2, cv::Point2f& intersection) {
+	cv::Point2f o1 = cv::Point2f(line1[0], line1[1]);
+	cv::Point2f e1 = cv::Point2f(line1[2], line1[3]);
+	cv::Point2f o2 = cv::Point2f(line2[0], line2[1]);
+	cv::Point2f e2 = cv::Point2f(line2[2], line2[3]);
+
+	cv::Point2f x = o2 - o1;
+	cv::Point2f d1 = e1 - o1;
+	cv::Point2f d2 = e2 - o2;
+
+	double cross = d1.x * d2.y - d1.y * d2.x;
+	if (std::abs(cross) < 1e-8)
+		return false;
+
+	double t1 = (x.x * d2.y - x.y * d2.x) / cross;
+	intersection = o1 + d1 * t1;
+	return true;
+}
+
+bool FindIntersectionF(const cv::Vec4f& line1, const cv::Vec4f& line2, cv::Point2f& intersection) {
 	cv::Point2f o1 = cv::Point2f(line1[0], line1[1]);
 	cv::Point2f e1 = cv::Point2f(line1[2], line1[3]);
 	cv::Point2f o2 = cv::Point2f(line2[0], line2[1]);
@@ -91,6 +121,7 @@ double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& pack
 
 		prev = cur;
 	}
+
 	if (angle_score < MIN_ACCEPTED_SUBSCORE || length_score < MIN_ACCEPTED_SUBSCORE)
 		return 0;
 
@@ -102,14 +133,14 @@ std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>&
 
 	std::vector<std::tuple<int, int>> line_pairs;
 	int min_image_dimension = std::min(image_size.width, image_size.height);
-	FindParallelLines(lines, MIN_PARALLEL_LINE_DIST * min_image_dimension, line_pairs);
+	FindParallelLines(lines, MIN_PARALLEL_LINE_DIST * min_image_dimension, line_pairs, MAX_PARALLEL_LINE_ANGLE);
 
 	std::vector<std::vector<cv::Point2f>> packages;
 	if (line_pairs.size() < 3)
 		return packages;
 
 	if (line_pairs.size() > MAX_LINE_PAIRS) {
-		std::cout << "Too many line pairs: " << line_pairs.size() << std::endl;
+//		std::cout << "Too many line pairs: " << line_pairs.size() << std::endl;
 		return std::vector<std::vector<cv::Point2f>>();
 	}
 
@@ -125,8 +156,8 @@ std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>&
 
 				if (!isPackageValid)
 					continue;
-//				if (!reference_object.empty() && !EnclosesContour(package, reference_object))
-//					continue;
+				if (!reference_object.empty() && !EnclosesContour(package, reference_object))
+					continue;
 				packages.push_back(package);
 			}
 		}
@@ -281,10 +312,10 @@ double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2) { // 
 }
 
 void FindParallelLines(const std::vector<cv::Vec4i>& lines, const double min_line_dist,
-		std::vector<std::tuple<int, int>>& parallel_line_pairs) {
+		std::vector<std::tuple<int, int>>& parallel_line_pairs, const double max_parallel_angle) {
 	for (int i = 0; i < lines.size(); ++i) {
 		for (int j = i + 1; j < lines.size(); ++j) {
-			if (LineSegmentAngle(lines[i], lines[j]) < MAX_PARALLEL_LINE_ANGLE
+			if (LineSegmentAngle(lines[i], lines[j]) < max_parallel_angle
 					&& LineSegmentDistance(lines[i], lines[j]) > min_line_dist) {
 				parallel_line_pairs.push_back(std::tuple<int, int>(i, j));
 			}
@@ -308,12 +339,12 @@ double EuclideanDistance(cv::Point2f& p1, cv::Point2f& p2) {
 
 // TODO make const when tuning is finished
 double MIN_CORNER_DIST = 0.02; // of smallest image axis
-double MIN_PARALLEL_LINE_DIST = 0.05;
-double MIN_ACCEPTED_SCORE = 50.0;
-double MAX_PARALLEL_LINE_ANGLE = 30.0;
-double MIN_PACKAGE_CONTOUR_LENGTH = 0.2;
-int MAX_LINE_PAIRS = 100;
-double MIN_ACCEPTED_SUBSCORE = 20.0;
+double MIN_PARALLEL_LINE_DIST = 0.1;
+double MIN_ACCEPTED_SCORE = 10.0;//30.0;
+double MAX_PARALLEL_LINE_ANGLE = 33.0;//40.0;
+double MIN_PACKAGE_CONTOUR_LENGTH = 0.1;
+int MAX_LINE_PAIRS = 300;
+double MIN_ACCEPTED_SUBSCORE = 0;//5.0;
 
 } /* namespace internal */
 

@@ -1,14 +1,25 @@
 This chapter describes the methods used when implementing the algorithms used to solve the problem, and the evaluation of the outcome.
+% TODO WHICH TENSE?
 
-\section{Implementation}
+\section{Considered methods}
+
+Object detection: 
+Approxpolydp approach
+considered efficient line to polygon detection algorithm such as in \cite{joaquim2003polygon}.
+However, this method assumes too much about the data to be feasible. Demands too perfect data.
+
+\section{Implementation} % is this a good organisation?
 This section presents the methods use when implementing the algorithms used to solve the problem. % Todo rephrase
 
-\subsection{Software used}
-The most important piece of software used is the library OpenCV. % footnote to opencv homepage?
-OpenCV is an open source library for computer vision, which is used extensively in this thesis. 
-It contains functions for many things that one needs when working with computer vision-related fields, from low-level processing such as filters, to high-level functions for feature detection and machine learning.
-OpenCV is written in C/C++, but also has full interfaces for python, java and MATLAB\cite{wiki:OpenCV}.
-\subsection{Hardware used}
+\subsection{Software}
+The most important piece of software used in this thesis is the library OpenCV, an open source library for computer vision. % footnote to opencv homepage?
+OpenCV contains functions for many things that one needs when working with computer vision-related fields, from low-level processing such as filters, to high-level functions for feature detection, machine learning, camera calibration, pose estimation, and much more.
+It was designed with a strong focus on efficiency to be useful for real-time applications. \cite{bradski2008learning}
+
+OpenCV is written in C and C++, but also has full interfaces for python, java and MATLAB\cite{wiki:OpenCV}.
+The native C++ interface was used in this thesis. % Todo tense?
+
+\subsection{Hardware}
 The hardware used to capture test pictures and run the test app is a Samsung Galaxy S6 Edge, which is an Android smartphone.
 The S6 Edge was chosen because it currently tops benchmarks and tests, both regarding processing power and photo quality \cite{phone_performance_benchmark}\cite{phone_camera_benchmark}.
 
@@ -18,20 +29,26 @@ The app simply displays the camera feed and continuously feeds new frames to the
 When the package or reference object is successfully detected, an overlay is drawn to outline their position on the screen.
 If both the package and reference are found in the same frame, the dimensions of the package are calculated, and each dimension is drawn next to the appropriate edge.
 The processing time for each frame is also displayed.
-% TODO Add figure!
+
+% TODO Add figure! or maybe in results?
 
 \subsection{Preprocessing}
 
-Preprocessing is the first step in most computer vision algorithms. 
-Its purpose here is to reduce noise. 
+Preprocessing is the first step in most computer vision algorithms, and can have many purposes. 
+In this case, the purpose is to reduce noise.
 This is accomplished by converting the colour image to a grayscale image, followed by applying a median filter. 
-A median filter was chosen because it reduces noise effectively, while also removing small, unwanted features from the image, such as small labels and marks on the package or the rest of the scene. 
-At the same time well defined edges are preserved.
+A median filter was chosen because it reduces noise effectively, while also removing small, unwanted features from the image, such as small labels and marks on the package or the rest of the scene.
+At the same time edges are preserved.
+As the name implies, the median filter assigns the value of every pixel to the median of itself, and the neighbouring pixels within a certain radius.
 
-\subsection{Line detection} % TODO write
-The next step is to detect edges in the image. This is done using Canny's edge detection algorithm. As it is often a good pr
-To reduce amount of data contours are pruned by removing peripheral contours and short ones.
-Lines are detected by using the Hough Line Transform.
+\subsection{Edge and Line Detection} % TODO bad quality text
+The next step is to detect edges in the image, which is done using Canny's edge detection algorithm\cite{canny}.
+The output of Canny's Edge detection algorithm is a binary image in which pixels that are considered to be part of an edge are 1 and other pixels are 0.
+Now, the information in the edge image needs to be converted to a symbolic format.
+To accomplish this, contour analysis is first applied to the binary image using \cite{suzuki}.
+The result of the contour analysis is then fed to a line detection algorithm after some pruning.
+For this purpose, a line detection algorithm based on a probabilistic version of the hough transform is used \cite{houghp}.
+This function outputs a more easy to use format, namely the coordinates of the end points of each detected line.
 
 \subsection{Package Detection}
 
@@ -90,7 +107,7 @@ The images are then fed to the algorithm which outputs an estimate of $K$.% TODO
 \begin{figure}[h]
 \begin{center}
 \includegraphics[width=0.4\textwidth]{figures/vanishing_points.png}
-\end{center} % TODO bättre fig text?
+\end{center}
 \caption{Visualisation of how the edges of a cuboid give rise to three orthogonal vanishing points.} % TODO hur referera? Tagen från szeliski s. 330
 \label{fig:vanishing_points}
 \end{figure}
@@ -100,7 +117,7 @@ It is ideal to use vanishing point calibration for this particular problem since
 Additionally, the known homography between the image plane and the top-plane of the package can be used to improve the estimate of $K$.
 
 When the $K$ is known, the camera pose can be estimated as described in \ref{camera-pose}, using the four image-world point correspondences given by the reference object.
-The EPnP is chosen, because it appears to be the current state-of-the-art. % TODO refer opencv?
+The method EPnP was chosen initially, but much better results were achieved with a regular, iterative approach. % TODO refer opencv?
 
 Once the camera pose is obtained, equation \ref{eq:projection1} can be used, which means that any point in the world can be projected to a point in the image.
 However, the reverse mapping is sought, i.e. the position of the package the world of the image coordinates of the bottom corners of the package, i.e. the reverse mapping.
@@ -118,6 +135,25 @@ X(p_{21}-vp_{31}) + Y(p_{22}-vp_{32})+p_{24}-v
 This is solved as a least-squares problem using Single Value Decomposition (SVD).
 Since two pairs of upper-lower corners which share $X$ and $Y$ coordinates are known, two least-squares solutions of $Z$ can be obtained.
 The solution with the smallest error is chosen as $Z$.
+
+\section{Evaluation}
+In this section the methods used to evaluate the resulting algorithm is described.
+% skriva att olika bilder används för konstant-optimering och testning?
+
+In order to achieve reasonable performance in tests, the nature of the images used for testing was constrained in a number of ways.
+First, 
+%
+%
+
+
+
+
+
+
+
+
+
+
 
 
 

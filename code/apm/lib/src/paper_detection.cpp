@@ -31,11 +31,11 @@ std::vector<cv::Point2f> FindPaper(const cv::Mat& image, const cv::Mat& edges) {
 
 	double max_score = -std::numeric_limits<double>::max();
 	std::vector<cv::Point2f> max_paper;
-	cv::Mat eq_image;
-	image.copyTo(eq_image);
-	cv::equalizeHist(image, eq_image);
+	//cv::Mat eq_image;
+	//image.copyTo(eq_image);
+//	cv::equalizeHist(image, eq_image);
 	for (auto it = papers.begin(); it != papers.end(); ++it) {
-		double score = RatePaper(eq_image, lines, *it);
+		double score = RatePaper(image, lines, *it);
 		if (score > max_score) {
 			max_score = score;
 			max_paper = *it;
@@ -89,7 +89,32 @@ double RatePaper(const cv::Mat& image, const std::vector<cv::Vec4i>& lines,
 
 	double ratio_score = std::min(ratio, A4_LENGTH_RATIO) / std::max(ratio, A4_LENGTH_RATIO) * 100;
 
+
+	int min_x = std::numeric_limits<int>::max();
+	int min_y = std::numeric_limits<int>::max();
+	int max_x = std::numeric_limits<int>::min();
+	int max_y = std::numeric_limits<int>::min();
+	for(auto p:paper) {
+		if(p.x < 0 || p.y < 0 || p.x >= image.cols || p.y >= image.rows)
+				return 0;
+
+		if(p.x < min_x)
+			min_x = p.x;
+		if(p.y < min_y)
+			min_y = p.y;
+		if(p.x > max_x)
+			max_x = p.x;
+		if(p.y > max_y)
+			max_y = p.y;
+	}
+
+	if(min_x == max_x || min_y == max_y)
+		return 0;
+
 	cv::Rect bounding_rect = cv::boundingRect(paper);
+
+
+
 	std::vector<cv::Point> roi_paper;
 	for (auto point : paper) {
 		point.x -= bounding_rect.x;
@@ -107,17 +132,22 @@ double RatePaper(const cv::Mat& image, const std::vector<cv::Vec4i>& lines,
 
 	cv::Mat histogram;
 	int channels[] = { 0 };
-	int bins[] = { 35 };
+	int bins[] = { NUM_BINS };
 	const float *ranges[1];
 	float range[] = { 0.0f, 255.0f };
 	ranges[0] = range;
 	cv::calcHist(&roi, 1, channels, cv::Mat(), histogram, 1, bins, ranges);
 
-	double top_bin = histogram.at<float>(bins[0] - 1) / ((double) (cv::contourArea(roi_paper)));
-	double color_score = 4000000.0 * top_bin;
+	double color_score_mult = 0;
+	double area = cv::contourArea(roi_paper);
+	for (int i = 1; i < bins[0]; ++i) {
+		color_score_mult += (histogram.at<float>(bins[0] - i) * 1 / i) / area;
+	}
+
+	double color_score = 5000.0 * color_score_mult;
 
 	if (angle_score < MIN_PAPER_ACCEPTED_SUBSCORE || length_score < MIN_PAPER_ACCEPTED_SUBSCORE
-			|| color_score < MIN_PAPER_ACCEPTED_SUBSCORE || ratio_score < MIN_PAPER_ACCEPTED_SUBSCORE)
+			/*|| color_score < MIN_PAPER_ACCEPTED_SUBSCORE*/ || ratio_score < MIN_PAPER_ACCEPTED_SUBSCORE)
 		return 0;
 
 	return (angle_score + length_score + color_score + ratio_score) / 4;
@@ -142,13 +172,14 @@ std::vector<std::vector<cv::Point2f>> FindPapers(const std::vector<cv::Vec4i>& l
 
 	std::vector<std::tuple<int, int>> line_pairs;
 	int min_image_dimension = std::min(image_size.width, image_size.height);
-	FindParallelLines(lines, MIN_PAPER_PARALLEL_LINE_DIST * min_image_dimension, line_pairs);
+	FindParallelLines(lines, MIN_PAPER_PARALLEL_LINE_DIST * min_image_dimension, line_pairs,
+			MAX_PAPER_PARALLEL_ANGLE);
 	std::vector<std::vector<cv::Point2f>> papers;
 	if (line_pairs.size() < 2)
 		return papers;
 
 	if (line_pairs.size() > MAX_PAPER_LINE_PAIRS) {
-		std::cout << "Paper detection: Too many line pairs: " << line_pairs.size() << std::endl;
+//		std::cout << "Paper detection: Too many line pairs: " << line_pairs.size() << std::endl;
 		return std::vector<std::vector<cv::Point2f>>();
 	}
 
@@ -169,14 +200,16 @@ std::vector<std::vector<cv::Point2f>> FindPapers(const std::vector<cv::Vec4i>& l
 }
 
 // TODO make const when tuning is finished
+int NUM_BINS = 40;
 double A4_LONG_SIDE = 297;
 double A4_SHORT_SIDE = 210;
 double A4_LENGTH_RATIO = A4_LONG_SIDE / A4_SHORT_SIDE;
 double MIN_PAPER_PARALLEL_LINE_DIST = 0.02;
-double MIN_PAPER_CONTOUR_LENGTH = 0.005;
-int MAX_PAPER_LINE_PAIRS = 200;
+double MIN_PAPER_CONTOUR_LENGTH = 0.02;
+int MAX_PAPER_LINE_PAIRS = 2000; //300;
 double MIN_PAPER_ACCEPTED_SCORE = 80;
-double MIN_PAPER_ACCEPTED_SUBSCORE = 60;
+double MIN_PAPER_ACCEPTED_SUBSCORE = 30;
+double MAX_PAPER_PARALLEL_ANGLE = 25;
 
 } /* namespace internal */
 

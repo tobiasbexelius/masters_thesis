@@ -1,9 +1,10 @@
 #include "../include/package_measuring.h"
 #include "../include/package_measuring_internal.h"
 #include "../include/package_detection.h"
+#include "../include/package_detection_internal.h"
 #include <cmath>
 #include <cstdio>
-
+#include <limits>
 //#include <android/log.h>
 //#define LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 //#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -13,28 +14,56 @@
 using namespace automatic_package_measuring::internal;
 
 namespace automatic_package_measuring {
+double angle_err;
+double straight_err;
+cv::Vec3i angle_measured_edges;
+cv::Vec3i straight_measured_edges;
 
 cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f>& reference_object,
 		const cv::Vec2f ref_dimensions, const std::vector<cv::Point2f>& package,
 		cv::Vec3i& measured_edges_out, bool auto_calibrate) {
+
 	if (reference_object.size() != 4 || package.size() != 6)
 		return cv::Vec3f();
 
-	std::vector<cv::Point2f> ref_obj_world = GetReferenceObjectCoordinates(reference_object, ref_dimensions);
+	cv::Vec3f angle_res = MeasurePackageAngle(img_size, reference_object, ref_dimensions, package,
+			auto_calibrate);
+	cv::Vec3f straight_res = MeasurePackageStraight(img_size, reference_object, ref_dimensions, package,
+			auto_calibrate);
+
+//	std::cout << "angle: " << angle_res << " err: " << angle_err << std::endl;
+//	std::cout << "straight: " << straight_res << " err: " << straight_err << std::endl;
+
+	if (straight_err < angle_err && straight_res[0] > 100 && straight_res[1] > 100 && straight_res[2] > 100) {
+		measured_edges_out = straight_measured_edges;
+		angle = false;
+		return straight_res;
+	} else {
+		angle = true;
+		measured_edges_out = angle_measured_edges;
+		return angle_res;
+	}
+
+}
+
+cv::Vec4f AngleMeasurementHypothesis(const cv::Size& img_size,
+		const std::vector<cv::Point2f>& reference_object, const cv::Vec2f ref_dimensions,
+		const std::vector<cv::Point2f>& package, bool auto_calibrate,
+		std::vector<cv::Point2f> ref_obj_world) {
 
 	cv::Mat homography = cv::findHomography(reference_object, ref_obj_world);
 	cv::Mat_<float> K, distortion_coeffs;
 	if (auto_calibrate) {
-		K = AutoCalibrate(homography, package);
+		K = AutoCalibrate(homography, FindVanishingPoints(package));
 		distortion_coeffs = cv::Mat();
 	} else {
 		K = GetIntrinsicMatrix(img_size.width, img_size.height);
 		distortion_coeffs = calib_distortion;
 	}
 
-	// TODO handle special case where only two sides of the package are visible
-	// (top and one side parallel-ish to the camera plane). Then four corners are
-	// on the top plane and two on the floor.
+	if (K.empty()) {
+		return cv::Vec4f();
+	}
 
 	int top_left, top_center, top_right, bottom_left, bottom_center, bottom_right;
 	IdentifyPackageCorners(package, top_left, top_center, top_right, bottom_left, bottom_center,
@@ -46,90 +75,265 @@ cv::Vec3f MeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f
 
 	cv::Mat_<float> extrinsic = FindCameraPose(reference_object, ref_obj_world, K, distortion_coeffs);
 	cv::Mat_<float> camera_matrix = K * extrinsic;
-
 	double left_error;
 	double left_height = CalculateHeight(camera_matrix, package[bottom_left], top_left_3d.x, top_left_3d.y,
 			left_error);
-
 	double right_error;
 	double right_height = CalculateHeight(camera_matrix, package[bottom_right], top_right_3d.x,
 			top_right_3d.y, right_error);
-
-	cv::Vec3f result;
+	cv::Vec4f result;
 
 	result[0] = cv::norm(top_left_3d - top_center_3d);
 	result[1] = cv::norm(top_center_3d - top_right_3d);
 
-	if (left_error < right_error)
-		result[2] = std::abs(left_height);
-	else
+	if (left_height == 0) {
 		result[2] = std::abs(right_height);
+		result[3] = right_error;
+	} else if (right_height == 0) {
+		result[2] = std::abs(left_height);
+		result[3] = left_error;
+	} else if (left_error < right_error) {
+		result[2] = std::abs(left_height);
+		result[3] = left_error;
+	} else {
+		result[2] = std::abs(right_height);
+		result[3] = right_error;
+	}
 
-	measured_edges_out[0] = top_left;
-	measured_edges_out[1] = top_center;
-	measured_edges_out[2] = top_right;
+	angle_measured_edges[0] = top_left;
+	angle_measured_edges[1] = top_center;
+	angle_measured_edges[2] = top_right;
 
-	LOGD("RESULT= %f, %f, %f\n", result[0], result[1], result[2]);
+	return result;
+
+}
+
+cv::Vec3f MeasurePackageAngle(const cv::Size& img_size, const std::vector<cv::Point2f>& reference_object,
+		const cv::Vec2f ref_dimensions, const std::vector<cv::Point2f>& package, bool auto_calibrate) {
+
+	if (reference_object.size() != 4 || package.size() != 6)
+		return cv::Vec3f();
+
+	std::vector<cv::Point2f> ref_obj_world_1 = { cv::Point2f(0, 0), cv::Point2f(ref_dimensions[0], 0),
+			cv::Point2f(ref_dimensions[0], ref_dimensions[1]), cv::Point2f(0, ref_dimensions[1]) };
+	std::vector<cv::Point2f> ref_obj_world_2 = { cv::Point2f(0, 0), cv::Point2f(ref_dimensions[1], 0),
+			cv::Point2f(ref_dimensions[1], ref_dimensions[0]), cv::Point2f(0, ref_dimensions[0]) };
+
+	cv::Vec4f h1 = AngleMeasurementHypothesis(img_size, reference_object, ref_dimensions, package,
+			auto_calibrate, ref_obj_world_1);
+	cv::Vec4f h2 = AngleMeasurementHypothesis(img_size, reference_object, ref_dimensions, package,
+			auto_calibrate, ref_obj_world_2);
+
+//	std::cout << "h1,h2=" << h1<<h2<<std::endl;
+
+	if (h1 == cv::Vec4f() && h2 == cv::Vec4f()) {
+		angle_err = std::numeric_limits<double>::max();
+		return cv::Vec3f();
+	}
+
+	if (h1[0] == 0 || h1[1] == 0 || h1[2] == 0) {
+		angle_err = h2[3];
+		return cv::Vec3f(h2[0], h2[1], h2[2]);
+	}
+
+	if (h2[0] == 0 || h2[1] == 0 || h2[2] == 0) {
+		angle_err = h1[3];
+		return cv::Vec3f(h1[0], h1[1], h1[2]);
+	}
+
+	if (h1[3] < h2[3]) {
+		angle_err = h1[3];
+		return cv::Vec3f(h1[0], h1[1], h1[2]);
+	} else {
+		angle_err = h2[3];
+		return cv::Vec3f(h2[0], h2[1], h2[2]);
+	}
+
+}
+
+cv::Vec4f StraightMeasurementHypothesis(const cv::Size& img_size,
+		const std::vector<cv::Point2f>& reference_object, const cv::Vec2f ref_dimensions,
+		const std::vector<cv::Point2f>& package, bool auto_calibrate,
+		std::vector<cv::Point2f> ref_obj_world) {
+	cv::Mat homography = cv::findHomography(reference_object, ref_obj_world);
+
+	int top_left, top_right, mid_left, mid_right, bottom_left, bottom_right;
+	IdentifyPackageCornersHeadOn(package, top_left, top_right, mid_left, mid_right, bottom_left,
+			bottom_right);
+
+	if (!CouldBeStraight(package, top_left, top_right, mid_left, mid_right, bottom_left, bottom_right))
+		return cv::Vec4f();
+
+	cv::Mat_<float> K, distortion_coeffs;
+	if (auto_calibrate) {
+		K = AutoCalibrate(homography,
+				FindVanishingPointsHeadOn(package, top_left, top_right, mid_left, mid_right, bottom_left,
+						bottom_right));
+		distortion_coeffs = cv::Mat();
+	} else {
+		K = GetIntrinsicMatrix(img_size.width, img_size.height);
+		distortion_coeffs = calib_distortion;
+	}
+
+	if (K.empty()) {
+		return cv::Vec4f();
+	}
+
+	cv::Point3f top_left_3d = ProjectPlanarImagePointTo3D(package[top_left], homography);
+	cv::Point3f top_right_3d = ProjectPlanarImagePointTo3D(package[top_right], homography);
+	cv::Point3f mid_left_3d = ProjectPlanarImagePointTo3D(package[mid_left], homography);
+	cv::Point3f mid_right_3d = ProjectPlanarImagePointTo3D(package[mid_right], homography);
+
+	cv::Mat_<float> extrinsic = FindCameraPose(reference_object, ref_obj_world, K, distortion_coeffs);
+	cv::Mat_<float> camera_matrix = K * extrinsic;
+	double left_error;
+	double left_height = CalculateHeight(camera_matrix, package[bottom_left], mid_left_3d.x, mid_left_3d.y,
+			left_error);
+
+	double right_error;
+	double right_height = CalculateHeight(camera_matrix, package[bottom_right], mid_right_3d.x,
+			mid_right_3d.y, right_error);
+
+	cv::Vec4f result;
+
+	result[0] = cv::norm(top_left_3d - top_right_3d);
+	result[1] = cv::norm(top_left_3d - mid_left_3d);
+
+	if (left_height == 0) {
+		result[2] = std::abs(right_height);
+		result[3] = right_error;
+	} else if (right_height == 0) {
+		result[2] = std::abs(left_height);
+		result[3] = left_error;
+	} else if (left_error < right_error) {
+		result[2] = std::abs(left_height);
+		result[3] = left_error;
+	} else {
+		result[2] = std::abs(right_height);
+		result[3] = right_error;
+	}
+
+	straight_measured_edges[0] = top_left;
+	straight_measured_edges[1] = mid_left;
+	straight_measured_edges[2] = bottom_left;
 
 	return result;
 }
 
-//cv::Vec3f UncalibMeasurePackage(const cv::Size& img_size, const std::vector<cv::Point2f>& reference_object,
-//		const cv::Vec2f ref_dimensions, const std::vector<cv::Point2f>& package,
-//		cv::Vec3i& measured_edges_out) {
-//
-//	if (reference_object.size() != 4 || package.size() != 6)
-//		return cv::Vec3f();
-//
-//	std::vector<cv::Point2f> ref_obj_world_2d = GetReferenceObjectCoordinates(reference_object,
-//			ref_dimensions);
-//
-//	cv::Mat homography = cv::findHomography(reference_object, ref_obj_world_2d);
-//
-//	// TODO handle special case where only two sides of the package are visible
-//	// (top and one side parallel-ish to the camera plane). Then four corners are
-//	// on the top plane and two on the floor.
-//
-//	AutoCalibrate(homography, package);
-//
-//	int top_left;
-//	int top_right;
-//	int mid_left;
-//	int mid_right;
-//	int bottom_left;
-//	int bottom_right;
-//	IdentifyPackageCornersHeadOn(package, top_left, top_right, mid_left, mid_right, bottom_left,
-//			bottom_right);
-//	LOGD("POINTS (%f, %f),(%f, %f),(%f, %f),(%f, %f),(%f, %f),(%f, %f)\n", package[top_left].x,
-//			package[top_left].y, package[top_right].x, package[mid_left].x, package[mid_left].y,
-//			package[mid_right].x, package[mid_right].y, package[top_right].y, package[bottom_left].x,
-//			package[bottom_left].y, package[bottom_right].x, package[bottom_right].y);
-//
-//	LOGD("CORNERS %d,%d,%d,%d,%d,%d\n", top_left, top_right, mid_left, mid_right, bottom_left, bottom_right);
-//
-//	cv::Point3f top_left_3d = ProjectPlanarImagePointTo3D(package[top_left], homography);
-//	cv::Point3f top_right_3d = ProjectPlanarImagePointTo3D(package[top_right], homography);
-//	cv::Point3f mid_left_3d = ProjectPlanarImagePointTo3D(package[mid_left], homography);
-//	cv::Point3f mid_right_3d = ProjectPlanarImagePointTo3D(package[mid_right], homography);
-//
-//	// calc height
-//
-//	cv::Vec3f result;
-//
-//	result[0] = cv::norm(top_left_3d - top_right_3d);
-//	result[1] = cv::norm(top_left_3d - mid_left_3d);
-//	result[2] = 0;
-//
-//	measured_edges_out[0] = top_left;
-//	measured_edges_out[1] = mid_left;
-//	measured_edges_out[2] = bottom_left;
-//
-//	LOGD("RESULT= %f, %f, %f\n", result[0], result[1], result[2]);
-//
-//	return result;
-//}
+cv::Vec3f MeasurePackageStraight(const cv::Size& img_size, const std::vector<cv::Point2f>& reference_object,
+		const cv::Vec2f ref_dimensions, const std::vector<cv::Point2f>& package, bool auto_calibrate) {
+
+	if (reference_object.size() != 4 || package.size() != 6)
+		return cv::Vec3f();
+
+	std::vector<cv::Point2f> ref_obj_world_1 = { cv::Point2f(0, 0), cv::Point2f(ref_dimensions[0], 0),
+			cv::Point2f(ref_dimensions[0], ref_dimensions[1]), cv::Point2f(0, ref_dimensions[1]) };
+	std::vector<cv::Point2f> ref_obj_world_2 = { cv::Point2f(0, 0), cv::Point2f(ref_dimensions[1], 0),
+			cv::Point2f(ref_dimensions[1], ref_dimensions[0]), cv::Point2f(0, ref_dimensions[0]) };
+
+	cv::Vec4f h1 = StraightMeasurementHypothesis(img_size, reference_object, ref_dimensions, package,
+			auto_calibrate, ref_obj_world_1);
+	cv::Vec4f h2 = StraightMeasurementHypothesis(img_size, reference_object, ref_dimensions, package,
+			auto_calibrate, ref_obj_world_2);
+
+	if (h1 == cv::Vec4f() && h2 == cv::Vec4f()) {
+		straight_err = std::numeric_limits<double>::max();
+		return cv::Vec3f();
+	}
+	if (h1[3] < h2[3]) {
+		straight_err = h1[3];
+		return cv::Vec3f(h1[0], h1[1], h1[2]);
+	} else {
+		straight_err = h2[3];
+		return cv::Vec3f(h2[0], h2[1], h2[2]);
+	}
+
+}
 
 namespace internal {
+
+bool angle = 0;
+
+cv::Vec4i PointsToVec(cv::Point2f p1, cv::Point2f p2) {
+	return cv::Vec4i(p1.x, p1.y, p2.x, p2.y);
+}
+
+bool CouldBeStraight(const std::vector<cv::Point2f>& package, int top_left, int top_right, int mid_left,
+		int mid_right, int bottom_left, int bottom_right) {
+	cv::Vec4i top = cv::Vec4i(package[top_left].x, package[top_left].y, package[top_right].x,
+			package[top_right].y);
+	cv::Vec4i mid = cv::Vec4i(package[mid_left].x, package[mid_left].y, package[mid_right].x,
+			package[mid_right].y);
+	cv::Vec4i bottom = cv::Vec4i(package[bottom_left].x, package[bottom_left].y, package[bottom_right].x,
+			package[bottom_right].y);
+
+	double angle1 = LineSegmentAngle(top, mid);
+	double angle2 = LineSegmentAngle(top, bottom);
+	double angle3 = LineSegmentAngle(mid, bottom);
+
+	double max_parallel_angle = 15.0;
+//	std::cout << "hori a:" << angle1 << ", " << angle2 << ", " << angle3 << std::endl;
+
+	if (std::abs(angle1 - angle2) > max_parallel_angle || std::abs(angle1 - angle3) > max_parallel_angle
+			|| std::abs(angle2 - angle3) > max_parallel_angle)
+		return false;
+	cv::Vec4i straight_line = cv::Vec4i(0, 0, 0, 1);
+
+	double bot_left_angle = LineSegmentAngle(straight_line,
+			PointsToVec(package[bottom_left], package[mid_left]));
+	double bot_right_angle = LineSegmentAngle(straight_line,
+			PointsToVec(package[bottom_right], package[mid_right]));
+
+	double mid_left_angle = LineSegmentAngle(straight_line,
+			PointsToVec(package[top_left], package[mid_left]));
+	double mid_right_angle = LineSegmentAngle(straight_line,
+			PointsToVec(package[top_right], package[mid_right]));
+
+//	std::cout << "angles: " << bot_left_angle << ", " << bot_right_angle << ", " << mid_left_angle << ", "
+//			<< mid_right_angle << std::endl;
+
+	double max_vert_angle = 30;
+
+	if (std::abs(bot_left_angle - bot_right_angle) > max_vert_angle
+			|| std::abs(mid_left_angle - mid_right_angle) > max_vert_angle)
+		return false;
+
+	return true;
+}
+
+cv::Point2f FindVanishingPoint(cv::Point2f o1, cv::Point2f e1, cv::Point2f o2, cv::Point2f e2) {
+	cv::Point2f intersection;
+	bool success = FindIntersectionF(cv::Vec4f(o1.x, o1.y, e1.x, e1.y), cv::Vec4f(o2.x, o2.y, e2.x, e2.y),
+			intersection);
+	if (!success){
+//		std::cout << "Inf VP. " << cv::Vec4f(o1.x, o1.y, e1.x, e1.y) << cv::Vec4f(o2.x, o2.y, e2.x, e2.y) << std::endl;
+		return cv::Point2f();
+	}
+
+	return intersection;
+}
+
+std::vector<cv::Point2f> FindVanishingPointsHeadOn(const std::vector<cv::Point2f>& package, int top_left,
+		int top_right, int mid_left, int mid_right, int bottom_left, int bottom_right) {
+
+	std::vector<cv::Point2f> vanishing_points;
+	cv::Point2f vp1 = FindVanishingPoint(package[top_left], package[top_right], package[bottom_left],
+			package[bottom_right]);
+	if (vp1 != cv::Point2f())
+		vanishing_points.push_back(vp1);
+
+	cv::Point2f vp2 = FindVanishingPoint(package[bottom_left], package[mid_left], package[bottom_right],
+			package[mid_right]);
+	if (vp2 != cv::Point2f())
+		vanishing_points.push_back(vp2);
+
+	cv::Point2f vp3 = FindVanishingPoint(package[mid_left], package[top_left], package[mid_right],
+			package[top_right]);
+	if (vp3 != cv::Point2f())
+		vanishing_points.push_back(vp3);
+
+	return vanishing_points;
+}
 
 cv::Mat_<float> FindCameraPose(const std::vector<cv::Point2f>& reference_object,
 		const std::vector<cv::Point2f>& ref_obj_world, const cv::Mat_<float>& intrinsic_matrix,
@@ -318,15 +522,14 @@ int GetLongestEdgeEndCorner(const std::vector<cv::Point2f>& corners) {
 std::vector<cv::Point2f> FindVanishingPoints(const std::vector<cv::Point2f>& package) {
 	std::vector<cv::Point2f> vanishing_points;
 	for (int i = 0; i < package.size() / 2; ++i) {
-		cv::Vec4i line = cv::Vec4i(package[i].x, package[i].y, package[(i + 1) % 6].x,
+		cv::Vec4f line = cv::Vec4f(package[i].x, package[i].y, package[(i + 1) % 6].x,
 				package[(i + 1) % 6].y); // TODO behövs float points???
 		int opp = i + 3;
-		cv::Vec4i opposing = cv::Vec4i(package[opp].x, package[opp].y, package[(opp + 1) % 6].x,
+		cv::Vec4f opposing = cv::Vec4f(package[opp].x, package[opp].y, package[(opp + 1) % 6].x,
 				package[(opp + 1) % 6].y);
 		cv::Point2f intersection;
-		if (!FindIntersection(line, opposing, intersection))
-			return std::vector<cv::Point2f>();
-		vanishing_points.push_back(intersection);
+		if (FindIntersectionF(line, opposing, intersection))
+			vanishing_points.push_back(intersection);
 	}
 
 	return vanishing_points;
@@ -339,36 +542,63 @@ std::vector<cv::Point2f> FindVanishingPoints(const std::vector<cv::Point2f>& pac
  * homografi constraint nr 2
  * bara lådans yttre används
  */
-cv::Mat_<float> AutoCalibrate(const cv::Mat_<double>& homography, const std::vector<cv::Point2f>& package) {
-	std::vector<cv::Point2f> vanishing_points = FindVanishingPoints(package);
+cv::Mat_<float> AutoCalibrate(const cv::Mat_<double>& homography,
+		const std::vector<cv::Point2f>& vanishing_points) {
 
-	cv::Vec3f v1 = cv::Vec3f(vanishing_points[0].x, vanishing_points[0].y, 1);
-	cv::Vec3f v2 = cv::Vec3f(vanishing_points[1].x, vanishing_points[1].y, 1);
-	cv::Vec3f v3 = cv::Vec3f(vanishing_points[2].x, vanishing_points[2].y, 1);
-	cv::Vec3f h1 = cv::Vec3f(homography[0][0], homography[1][0], homography[2][0]);
-	cv::Vec3f h2 = cv::Vec3f(homography[0][1], homography[1][1], homography[2][1]);
+	if (vanishing_points.size() < 2)
+		return cv::Mat();
 
-	cv::Mat_<double> A = cv::Mat_<double>(5, 4);
-	CreateConstraint(v1, v2).copyTo(A.row(0));
-	CreateConstraint(v1, v3).copyTo(A.row(1));
-	CreateConstraint(v2, v3).copyTo(A.row(2));
-	CreateConstraint(h1, h2).copyTo(A.row(3));
-	cv::Mat_<double> r5 = CreateConstraint(h1, h1) - CreateConstraint(h2, h2);
-	r5.copyTo(A.row(4));
+	if (vanishing_points.size() == 2) {
 
-	cv::Mat_<double> w;
-	cv::SVD::solveZ(A, w);
-	cv::Mat_<float> W =
-			(cv::Mat_<float>(3, 3) << w[0][0], 0, w[1][0], 0, w[0][0], w[2][0], w[1][0], w[2][0], w[3][0]);
-	cv::Mat_<float> K = CholeskyDecomposition(W);
+		cv::Vec3f v1 = cv::Vec3f(vanishing_points[0].x, vanishing_points[0].y, 1);
+		cv::Vec3f v2 = cv::Vec3f(vanishing_points[1].x, vanishing_points[1].y, 1);
+		cv::Vec3f h1 = cv::Vec3f(homography[0][0], homography[1][0], homography[2][0]);
+		cv::Vec3f h2 = cv::Vec3f(homography[0][1], homography[1][1], homography[2][1]);
+		cv::Mat_<double> A = cv::Mat_<double>(3, 4);
+		CreateConstraint(v1, v2).copyTo(A.row(0));
+		CreateConstraint(h1, h2).copyTo(A.row(1));
+		cv::Mat_<double> r3 = CreateConstraint(h1, h1) - CreateConstraint(h2, h2);
+		r3.copyTo(A.row(2));
+		cv::Mat_<double> w;
+		cv::SVD::solveZ(A, w);
+		cv::Mat_<float> W =
+				(cv::Mat_<float>(3, 3) << w[0][0], 0, w[1][0], 0, w[0][0], w[2][0], w[1][0], w[2][0], w[3][0]);
+		cv::Mat_<float> K = CholeskyDecomposition(W);
 
-	K[2][0] = 0;
-	K[2][1] = 0;
+		K[2][0] = 0;
+		K[2][1] = 0;
 
-	K = K.inv();
-	K /= K[2][2];
+		K = K.inv();
+		K /= K[2][2];
+		return K;
+	} else {
+		cv::Vec3f v1 = cv::Vec3f(vanishing_points[0].x, vanishing_points[0].y, 1);
+		cv::Vec3f v2 = cv::Vec3f(vanishing_points[1].x, vanishing_points[1].y, 1);
+		cv::Vec3f v3 = cv::Vec3f(vanishing_points[2].x, vanishing_points[2].y, 1);
+		cv::Vec3f h1 = cv::Vec3f(homography[0][0], homography[1][0], homography[2][0]);
+		cv::Vec3f h2 = cv::Vec3f(homography[0][1], homography[1][1], homography[2][1]);
+		cv::Mat_<double> A = cv::Mat_<double>(5, 4);
+		CreateConstraint(v1, v2).copyTo(A.row(0));
+		CreateConstraint(v1, v3).copyTo(A.row(1));
+		CreateConstraint(v2, v3).copyTo(A.row(2));
+		CreateConstraint(h1, h2).copyTo(A.row(3));
+		cv::Mat_<double> r5 = CreateConstraint(h1, h1) - CreateConstraint(h2, h2);
+		r5.copyTo(A.row(4));
+		cv::Mat_<double> w;
+		cv::SVD::solveZ(A, w);
+		cv::Mat_<float> W =
+				(cv::Mat_<float>(3, 3) << w[0][0], 0, w[1][0], 0, w[0][0], w[2][0], w[1][0], w[2][0], w[3][0]);
+		cv::Mat_<float> K = CholeskyDecomposition(W);
 
-	return K;
+		K[2][0] = 0;
+		K[2][1] = 0;
+
+		K = K.inv();
+		K /= K[2][2];
+
+		return K;
+	}
+
 }
 
 cv::Mat CholeskyDecomposition(cv::Mat mat) {
@@ -396,23 +626,23 @@ cv::Mat_<double> CreateConstraint(const cv::Vec3f& u, const cv::Vec3f& v) {
 
 /////////////// FOR ASPECT RATIO 16:9 //////////////////////
 
-//const int calib_width = 720;
-//const int calib_height = 1280;
-//const cv::Mat calib_intrinsic =
-//		(cv::Mat_<float>(3, 3) << 9.4476124447804500e+02, 0, 3.6023041906015595e+02, 0, 9.4988631379427648e+02, 6.1579670879484991e+02, 0, 0, 1);
-//const cv::Mat calib_distortion =
-//		(cv::Mat_<float>(5, 1) << 9.0884505869291463e-02, 9.9527802556862555e-01, -4.2888133638235562e-03, 1.2852458935930279e-03, -5.1800825723712123e+00);
+const int calib_width = 720;
+const int calib_height = 1280;
+const cv::Mat calib_intrinsic =
+		(cv::Mat_<float>(3, 3) << 9.4476124447804500e+02, 0, 3.6023041906015595e+02, 0, 9.4988631379427648e+02, 6.1579670879484991e+02, 0, 0, 1);
+const cv::Mat calib_distortion =
+		(cv::Mat_<float>(5, 1) << 9.0884505869291463e-02, 9.9527802556862555e-01, -4.2888133638235562e-03, 1.2852458935930279e-03, -5.1800825723712123e+00);
 
 /////////////// GALXY S3 ///////////////////////////////////
 
 /////////////// FOR ASPECT RATIO 16:9 //////////////////////
 
-const int calib_width = 720;
-const int calib_height = 1280;
-const cv::Mat calib_intrinsic =
-		(cv::Mat_<float>(3, 3) << 1.0383022526373247e+03, 0, 6.4815656332212768e+02, 0, 1.0312714841510390e+03, 3.3912005664156112e+02, 0, 0, 1);
-const cv::Mat calib_distortion =
-		(cv::Mat_<float>(5, 1) << -5.6081669213434132e-02, 1.9348361811630961e+00, -1.6428716030314656e-03, -8.5823452014998358e-03, -7.6018511226007863e+00);
+//const int calib_width = 720;
+//const int calib_height = 1280;
+//const cv::Mat calib_intrinsic =
+//		(cv::Mat_<float>(3, 3) << 1.0383022526373247e+03, 0, 6.4815656332212768e+02, 0, 1.0312714841510390e+03, 3.3912005664156112e+02, 0, 0, 1);
+//const cv::Mat calib_distortion =
+//		(cv::Mat_<float>(5, 1) << -5.6081669213434132e-02, 1.9348361811630961e+00, -1.6428716030314656e-03, -8.5823452014998358e-03, -7.6018511226007863e+00);
 
 /////////////// FOR ASPECT RATIO 4:3 ///////////////////////
 
@@ -430,7 +660,6 @@ const cv::Mat calib_distortion =
 //const cv::Mat calib_distortion =
 //		(cv::Mat_<float>(5, 1) << 3.3562504822751478e-02, 5.3683800058354936e-01, 0, 0, -1.7276201066920471e+00);
 //
-
 
 // VANISH TEST for test/data/abox2/testImage.jpg
 //const int calib_width = 720;

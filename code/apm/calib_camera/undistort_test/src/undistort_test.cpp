@@ -16,7 +16,7 @@ const double c_y_calib = 1.2235000000000000e+03; //5.1150000000000000e+02;
 int target_width = 768;
 int target_height = 1024;
 int calib_width = 2448;
-int calib_height = 3264;
+int calib_height_res = 3264;
 const cv::Mat distortion_params =
 		(cv::Mat_<double>(5, 1) << 3.5609569440893447e-02, 5.2417477793983713e-01, 0, 0, -1.6951251211390113e+00);
 //(cv::Mat_<double>(5, 1) << 3.3562504804895275e-02, 5.3683800076921451e-01, 0, 0, -1.7276201071408981e+00);
@@ -34,8 +34,8 @@ int main(int argc, char** argv) {
 
 	double f_x = f_x_calib * target_width / calib_width;
 	double c_x = c_x_calib * target_width / calib_width;
-	double f_y = f_y_calib * target_height / calib_height;
-	double c_y = c_y_calib * target_height / calib_height;
+	double f_y = f_y_calib * target_height / calib_height_res;
+	double c_y = c_y_calib * target_height / calib_height_res;
 
 	cv::Mat camera_matrix = (cv::Mat_<double>(3, 3) << f_x, 0, c_x, 0, f_y, c_y, 0, 0, 1);
 

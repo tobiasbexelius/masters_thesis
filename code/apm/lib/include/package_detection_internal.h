@@ -15,7 +15,7 @@ double RatePackage(std::vector<cv::Vec4i>& lines, std::vector<cv::Point2f>& pack
 std::vector<std::vector<cv::Point2f>> FindPackages(const std::vector<cv::Vec4i>& lines,
 		const std::vector<cv::Point2f>& reference_object, const cv::Size& image_size);
 void FindParallelLines(const std::vector<cv::Vec4i>& lines, const double min_line_dist,
-		std::vector<std::tuple<int, int>>& parallel_line_pairs);
+		std::vector<std::tuple<int, int>>& parallel_line_pairs, const double max_parallel_angle);
 bool LineSegmentAngleComparator(const cv::Vec4i& a, const cv::Vec4i& b);
 double LineSegmentAngle(const cv::Vec4i& line1, const cv::Vec4i& line2);
 double LineSegmentDistance(const cv::Vec4i& line1, const cv::Vec4i& line2);

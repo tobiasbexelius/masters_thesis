@@ -8,13 +8,13 @@ Since almost everyone carries a smartphone with them, a practical solution would
 If a reference object, like a credit card for example, is placed on top of the package, it should be possible to measure its dimensions by filming the package and reference object together.
 
 \section{Problem Statement}\label{problem-statement}
-In order for a measuring solution like the one described above, to be useful, it must be easy to use. % commas correct?
+In order for a measuring solution like the one described above to be useful, it must be easy to use. 
 The measuring process should therefore not require any user intervention, such as marking the reference object or package in the image, they will be detected automatically by the program.
 
-Computer vision applications which aim to extract metric information from a scene typically require knowledge about the camera's properties, and position.
-Gathering the necessary information about the camera should therefore not require any additional steps, such as calibrating the camera beforehand.
+Computer vision applications which aim to extract metric information from a scene typically require knowledge about the camera's internal properties and pose.
+Gathering the necessary information about the camera should not require any additional steps, such as calibrating the camera beforehand.
 I.e. the problem is to be solved using an \textit{uncalibrated view}.
-To further simplify the process, and to reduce computational complexity, the problem should be solved using only one, uncalibrated view.
+To further simplify the process, and to reduce computational complexity, the problem should be solved using only a single, uncalibrated view.
 
 However, because a calibrated view is expected to result in higher accuracy, it would be interesting to compare the performance two methods.
 

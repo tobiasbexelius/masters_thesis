@@ -32,8 +32,11 @@ std::string GetOutputFileName(std::string input_dir, std::string input_file);
 std::vector<std::string> GetImages(std::string directory);
 void CreateTest(std::string input_dir, std::string output_dir, std::string image);
 void onMouse(int event, int x, int y, int flags, void* param);
+void AutoCreateTest(std::string input_dir, std::string output_dir, std::string image_file);
 
 int main(int argc, char** argv) {
+
+	bool auto_create = false;
 
 	if (argc < 12) {
 		std::cout
@@ -41,6 +44,9 @@ int main(int argc, char** argv) {
 				<< std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	if (argc == 13)
+		auto_create = std::strcmp(argv[12], "auto") == 0 ? true : false;
 
 	std::string input_dir = argv[1];
 	std::string output_dir = argv[2];
@@ -62,8 +68,36 @@ int main(int argc, char** argv) {
 	}
 
 	for (std::string image : images) {
-		CreateTest(input_dir, output_dir, image);
+		if (auto_create)
+			AutoCreateTest(input_dir, output_dir, image);
+		else
+			CreateTest(input_dir, output_dir, image);
 	}
+}
+
+void AutoCreateTest(std::string input_dir, std::string output_dir, std::string image_file) {
+	if (!EndsWith(output_dir, "/"))
+		output_dir += "/";
+
+	std::string output_file = GetOutputFileName(input_dir, image_file);
+	if (FileExists(output_dir + output_file)) {
+		std::cout << "Test file for image: " << image_file << " already exists. (" << output_dir
+				<< output_file << ")" << std::endl;
+		return;
+	}
+
+	image = cv::imread(image_file);
+	cv::Vec3d dimensions(package_width, package_height, package_depth);
+	cv::Vec2f reference_object_size = cv::Vec2f(reference_object_width, reference_object_height);
+	test_case = apm::APMTestCase(AbsolutePath(image_file), package_id, reference_object_type, dimensions,
+			package_distance, reference_object_size, rotation);
+	Json::Value json_test_case = test_case.AsJson();
+
+	std::ofstream file;
+	file.open(output_dir + output_file);
+	file << json_test_case;
+	file.close();
+	std::cout << "Created file " << output_dir << output_file << "." << std::endl;
 }
 
 void CreateTest(std::string input_dir, std::string output_dir, std::string image_file) {
