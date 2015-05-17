@@ -1,48 +1,39 @@
+\chapter{Method}
+
 This chapter describes the methods used when implementing the algorithms used to solve the problem, and the evaluation of the outcome.
-% TODO WHICH TENSE?
 
 \section{Considered methods}
-
-Object detection: 
-Approxpolydp approach
+TODO! Is this section relevant? % TODO
+Object detection: \\
+Approxpolydp approach\\
 considered efficient line to polygon detection algorithm such as in \cite{joaquim2003polygon}.
-However, this method assumes too much about the data to be feasible. Demands too perfect data.
+However, this method assumes too much about the data to be feasible. Demands too perfect input.
 
-\section{Implementation} % is this a good organisation?
-This section presents the methods use when implementing the algorithms used to solve the problem. % Todo rephrase
+\section{Implementation}
+This section presents the methods used when implementing the algorithms used to solve the problem. % Todo rephrase
 
-\subsection{Software}
-The most important piece of software used in this thesis is the library OpenCV, an open source library for computer vision. % footnote to opencv homepage?
-OpenCV contains functions for many things that one needs when working with computer vision-related fields, from low-level processing such as filters, to high-level functions for feature detection, machine learning, camera calibration, pose estimation, and much more.
+\subsection{OpenCV} % TODO rephrase
+The most important piece of software used in this thesis is the library OpenCV.
+It is used extensively in this thesis, and therefore deserves an introduction.
+
+OpenCV is an open source library for computer vision. % footnote to opencv homepage?
+It contains functions for many things that one needs when working with computer vision-related fields, from low-level processing such as filters, to high-level functions for feature detection, machine learning, camera calibration, pose estimation, and much more.
 It was designed with a strong focus on efficiency to be useful for real-time applications. \cite{bradski2008learning}
 
 OpenCV is written in C and C++, but also has full interfaces for python, java and MATLAB\cite{wiki:OpenCV}.
 The native C++ interface was used in this thesis. % Todo tense?
 
-\subsection{Hardware}
-The hardware used to capture test pictures and run the test app is a Samsung Galaxy S6 Edge, which is an Android smartphone.
-The S6 Edge was chosen because it currently tops benchmarks and tests, both regarding processing power and photo quality \cite{phone_performance_benchmark}\cite{phone_camera_benchmark}.
-
-\subsection{Android Application}
-A simple proof of concept android application was made for online testing on the phone, to test the speed of the measuring algorithm.
-The app simply displays the camera feed and continuously feeds new frames to the measuring algorithm.
-When the package or reference object is successfully detected, an overlay is drawn to outline their position on the screen.
-If both the package and reference are found in the same frame, the dimensions of the package are calculated, and each dimension is drawn next to the appropriate edge.
-The processing time for each frame is also displayed.
-
-% TODO Add figure! or maybe in results?
-
 \subsection{Preprocessing}
 
 Preprocessing is the first step in most computer vision algorithms, and can have many purposes. 
-In this case, the purpose is to reduce noise.
+In this case, the purpose is to reduce noise, and to remove irrelevant information from the image.
 This is accomplished by converting the colour image to a grayscale image, followed by applying a median filter. 
 A median filter was chosen because it reduces noise effectively, while also removing small, unwanted features from the image, such as small labels and marks on the package or the rest of the scene.
 At the same time edges are preserved.
-As the name implies, the median filter assigns the value of every pixel to the median of itself, and the neighbouring pixels within a certain radius.
+As the name implies, the median filter assigns the value of every pixel to the median of itself, and the neighbouring pixels within a certain radius. % is this theory?
 
 \subsection{Edge and Line Detection} % TODO bad quality text
-The next step is to detect edges in the image, which is done using Canny's edge detection algorithm\cite{canny}.
+The next step is to detect edges in the image, which is done using Canny's edge detection algorithm \cite{canny}.
 The output of Canny's Edge detection algorithm is a binary image in which pixels that are considered to be part of an edge are 1 and other pixels are 0.
 Now, the information in the edge image needs to be converted to a symbolic format.
 To accomplish this, contour analysis is first applied to the binary image using \cite{suzuki}.
@@ -59,14 +50,15 @@ A fundamental property of cuboids is exploited by the algorithm: they consist of
 More specifically, the outline of a cuboid in a two dimensional image is made up of three pairs of parallel line segments, which form a hexagon. 
 However because of perspective distortion the line segments will not be entirely parallel, and not  of exactly equal length.
 This is where the ranking algorithm comes in.
-The assumption that the package is the most symmetric hexagon in the image is made. % TODO not quite true, reformulate
+The assumption behind the ranking is that the package is the hexagon with the least error in parallelism and length difference, in the image.
 Thus, the ranking algorithm rates a package candidate according to the degree of parallelism and equality of lengths between opposing sides.
 
-The first step is, however, to find the candidates.
-This is done by first finding pairs of parallel line segments. 
+But first, the candidates must be found.
+The first step to do that is to find pairs of parallel line segments. 
 As mentioned above, the line segments will not be exactly parallel, due to perspective distortion. % TODO perspective distortion correct term? 
-Thus a pair of line segments is considered to be parallel by the algorithm if the angle between them is below a threshold. 
-This threshold is set to be high, to avoid discarding a pair that belongs to the actual package, since the perspective distortion is rather large from some perspectives. % TODO be more specific? example? max distortion?
+Thus, a pair of line segments is considered to be parallel by the algorithm if the angle between them is below a threshold. 
+This threshold is set to be rather high, $30^\circ$.
+That is to avoid discarding a pair that belongs to the actual package, since the effect of perspective distortion is rather large from some perspectives. % TODO be more specific? example? max distortion?
 
 The next step is to pick three pairs of parallel line segments and let their intersections form a polygon. 
 Since the full contour of the package is not always distinguishable, the sought intersections are those between the lines (i. e. does not have a start or end point) defined by the line segments, not the line segments themselves. % elaborate, distinguishable from what? only some intersections are considered
@@ -104,7 +96,7 @@ A checkerboard pattern of squares with known size is printed out on a regular A4
 Then, multiple images are taken of the pattern, from different perspectives. 
 The images are then fed to the algorithm which outputs an estimate of $K$.% TODO refer to opencv implementation in footnote?
 
-\begin{figure}[h]
+\begin{figure}
 \begin{center}
 \includegraphics[width=0.4\textwidth]{figures/vanishing_points.png}
 \end{center}
@@ -137,16 +129,79 @@ Since two pairs of upper-lower corners which share $X$ and $Y$ coordinates are k
 The solution with the smallest error is chosen as $Z$.
 
 \section{Evaluation}
-In this section the methods used to evaluate the resulting algorithm is described.
-% skriva att olika bilder används för konstant-optimering och testning?
+To evaluate the performance of the detection and measuring algorithms two datasets were gathered.
+One training dataset, used to optimise the many constants used by the algorithms, and one test dataset. % TODO how many constants? How is optimisation done?
+The training dataset consisted of 50 images of five different packages.
+The test dataset consisted of 225 images of five different packages.
+The packages in the test dataset are shown in figure \ref{fig:packages} and their dimensions are shown in table \ref{table:package_dimensions}.
 
-In order to achieve reasonable performance in tests, the nature of the images used for testing was constrained in a number of ways.
-First, 
-%
-%
+\input{tables/package_dimensions}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.4\textwidth]{figures/placeholder.png}
+\end{center}
+\caption{The packages in the test dataset.}
+\label{fig:packages}
+\end{figure}
+
+The test dataset was constructed systematically with images observing the packages from different poses. % TODO correct sentence?
+Three parameters were alternated: 
+\begin{itemize}
+	\item Distance to the centre of the package. 
+			The considered distances were 1, 1.5, and 2 metres.
+	\item Height above the ground. 
+			The considered heights were 0.9, 1.2, and 1.5 metres for the first three packages, and 1.2, 1.5, and 1.8 metres for the latter two.
+			The reason for the division is that the high height of the two latter packages made the viewing angle unreasonable when viewing them from 0.9 metres above ground, so the lowest height was removed, and a higher one added.
+	\item Horizontal viewing angle. 
+			Five different angles were used.
+			Two were frontal views of the package, in which only two faces of the package could be observed. One of the longer side, and one of the shorter side.
+			One image was taken between the two sides, with a $45^\circ$ angle to both sides.
+			The last two images view the package with a sharp angle, about $15^\circ$ to the long or short side, respectively.
+			A sample image from each position is shown in figure \label{fig:positions}.
+\end{itemize}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.4\textwidth]{figures/placeholder.png}
+\end{center}
+\caption{Figure showing the different horizontal viewing positions.}
+\label{fig:positions}
+\end{figure}
+
+All combinations of distances, heights, and horizontal angles resulted in 45 images per package.
+
+\subsection{Benchmarking}
+A benchmarking program was constructed in order to measure the performance of the algorithms in the different cases.
+The program ran the algorithms on each image, while gathering information about the success rates and accuracy.
+The detection algorithm and measuring algorithm were tested both independently, and together, to show the performance of the individual pieces and of the whole system. 
+
+The detection algorithm was tested by comparing the outputted corner points against ground truth locations of the reference object and package corners, which had been manually marked in each image.
+The ability to detect the reference object, the package, and both in the same image, was tested.
+
+The measuring algorithm was tested by using the ground truth locations as input, and comparing the resulting measurements against the ground truth dimensions of the package.
+Both calibration methods, online vanishing point calibration, and offline calibration with Zhang's method, were tested.
+
+The overall ability of the system was tested by running the whole algorithm and comparing the result with the ground truth dimensions of the package. 
+
+%To simplify evaluation a test file (in JSON format) with information about each image was created.
+%Each file contained information about which package was displayed in the image, the path to the image, the distance, height, and horizontal angle to the package, the dimensions of the package, and the locations of reference object and package corners in the image, which had been marked manually.
 
 
 
+\subsection{Online testing}
+A simple proof of concept Android application was made for online testing on the phone.
+This was used to assert that it is feasible to run the algorithm on a smartphone.
+Its purpose was also to determine if running the detection algorithm in real-time was an option.
+
+The app simply displays the camera feed and continuously feeds new frames to the measuring algorithm.
+When the package or reference object is successfully detected, an overlay is drawn to outline their position on the screen.
+If both the package and reference are found in the same frame, the dimensions of the package are calculated, and each dimension is drawn next to the appropriate edge.
+The processing time for each frame is also displayed.
+
+The device used to run the test app is a Samsung Galaxy S6 Edge.
+The S6 Edge was chosen because it currently tops benchmarks and tests, both regarding processing power and photo quality \cite{phone_performance_benchmark}\cite{phone_camera_benchmark}.
+The S6 Edge was also used to capture the test images used for offline testing.
 
 
 

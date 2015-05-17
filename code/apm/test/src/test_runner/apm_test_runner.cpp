@@ -27,10 +27,10 @@ template<class T> void optimizeConstantMeasureOnly(std::vector<Json::Value> test
 		std::string constant_name, T * constant, T min, T max, T increment);
 void runTestsCompact(std::vector<Json::Value> test_cases);
 void TestCouldBeStraight(std::vector<Json::Value> test_cases);
-std::vector<std::string> getJsonFiles();
-void parseTestCases();
+std::vector<std::string> GetJsonFiles();
+void ParseTestCases();
 void runTests(std::vector<Json::Value> test_cases);
-apm::APMTestCase createTestCase(Json::Value root);
+apm::APMTestCase CreateTestCase(Json::Value root);
 bool EndsWith(std::string const &fullString, std::string const &ending);
 void help();
 std::string formatDouble(double value, int decimals);
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
 		} else {
 			if (!EndsWith(directory, "/"))
 				directory += "/";
-			files = getJsonFiles();
+			files = GetJsonFiles();
 			if (files.empty()) {
 				cout << "No .json files were found in directory \"" << directory << "\"." << endl;
 				help();
@@ -123,11 +123,11 @@ int main(int argc, char** argv) {
 				exit(EXIT_FAILURE);
 			}
 		}
-		parseTestCases();
+		ParseTestCases();
 	}
 	std::cout << "Total number of tests:" << test_cases.size() << std::endl;
 
-	DetectFailMeasurements(test_cases);
+//	DetectFailMeasurements(test_cases);
 //	TheGrandTest(test_cases);
 
 //	double MIN_ACCEPTED_SCORE = 50.0;
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
 //optimizeConstantMeasureOnly(test_cases, "Constant", &apm::internal::CENTER_THRESHOLD, 0.15, 0.2, 0.01);
 
 //	optimizeConstant(test_cases, "Constant", &apm::internal::HOUGH_THRESHOLD, 25, 35, 1);
-//runTests(test_cases);
+runTests(test_cases);
 //	TestCouldBeStraight(test_cases);
 //	runTestsCompact(test_cases);
 //	separateReports();
@@ -161,8 +161,8 @@ void separateReports() {
 		directory = dir;
 		if (!EndsWith(directory, "/"))
 			directory += "/";
-		files = getJsonFiles();
-		parseTestCases();
+		files = GetJsonFiles();
+		ParseTestCases();
 		runTestsCompact(test_cases);
 		test_cases.clear();
 	}
@@ -174,8 +174,8 @@ void ParseAllTests() {
 		directory = dir;
 		if (!EndsWith(directory, "/"))
 			directory += "/";
-		files = getJsonFiles();
-		parseTestCases();
+		files = GetJsonFiles();
+		ParseTestCases();
 	}
 }
 
@@ -193,7 +193,7 @@ void TestCouldBeStraight(std::vector<Json::Value> test_cases) {
 	int num_tests = 0;
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
 		++num_tests;
-		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTestCase test_case = CreateTestCase(*it);
 		apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 		test.run();
 
@@ -221,7 +221,7 @@ void DetectFailMeasurements(std::vector<Json::Value> test_cases) {
 
 	auto it = test_cases.begin();
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
-		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTestCase test_case = CreateTestCase(*it);
 		apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 		test.run();
 
@@ -243,7 +243,7 @@ void TheGrandTest(std::vector<Json::Value> test_cases) {
 	auto it = test_cases.begin();
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
 		++num_tests;
-		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTestCase test_case = CreateTestCase(*it);
 		apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 		test.run();
 
@@ -295,7 +295,7 @@ void TheGrandTest(std::vector<Json::Value> test_cases) {
 void showAllImages(std::vector<Json::Value> test_cases) {
 	int i = 0;
 	for (auto it = test_cases.begin(); it != test_cases.end(); ++it, ++i) {
-		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTestCase test_case = CreateTestCase(*it);
 		cv::Mat processed_image;
 		apm::PreprocessImage(test_case.GetImage(), processed_image);
 		cv::imshow(std::to_string(i), processed_image);
@@ -304,7 +304,7 @@ void showAllImages(std::vector<Json::Value> test_cases) {
 	cv::waitKey(0);
 }
 
-std::vector<std::string> getJsonFiles() {
+std::vector<std::string> GetJsonFiles() {
 	std::vector<std::string> files;
 	GetFilesInDirectory(files, directory);
 
@@ -315,7 +315,7 @@ std::vector<std::string> getJsonFiles() {
 	return files;
 }
 
-void parseTestCases() {
+void ParseTestCases() {
 	for (auto it = files.begin(); it != files.end(); ++it) {
 		Json::Value root;
 		Json::Reader reader;
@@ -343,7 +343,7 @@ template<class T> void optimizeConstant(std::vector<Json::Value> test_cases, std
 		int num_package_correct = 0;
 
 		for (auto it = test_cases.begin(); it != test_cases.end(); ++it) {
-			apm::APMTestCase test_case = createTestCase(*it);
+			apm::APMTestCase test_case = CreateTestCase(*it);
 			apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 			test.run();
 
@@ -376,7 +376,7 @@ template<class T> void optimizeConstantMeasureOnly(std::vector<Json::Value> test
 		int num_package_correct = 0;
 
 		for (auto it = test_cases.begin(); it != test_cases.end(); ++it) {
-			apm::APMTestCase test_case = createTestCase(*it);
+			apm::APMTestCase test_case = CreateTestCase(*it);
 			apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 			test.run();
 
@@ -400,7 +400,7 @@ void runTestsCompact(std::vector<Json::Value> test_cases) {
 	auto it = test_cases.begin();
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
 		++num_tests;
-		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTestCase test_case = CreateTestCase(*it);
 		apm::APMTest test(test_case, 0.10, apm::PackageMeasurer());
 		test.run();
 
@@ -441,7 +441,7 @@ void runTests(std::vector<Json::Value> test_cases) {
 	auto it = test_cases.begin();
 	for (int i = 0; it != test_cases.end(); ++it, ++i) {
 		++num_tests;
-		apm::APMTestCase test_case = createTestCase(*it);
+		apm::APMTestCase test_case = CreateTestCase(*it);
 		apm::APMTest test(test_case, 0.1, apm::PackageMeasurer());
 		test.run();
 
@@ -521,7 +521,7 @@ std::string formatDouble(double value, int decimals) {
 	return s;
 }
 
-apm::APMTestCase createTestCase(Json::Value root) {
+apm::APMTestCase CreateTestCase(Json::Value root) {
 	std::string file_name = root["fileName"].asString();
 
 	cv::Mat image = cv::imread(file_name);

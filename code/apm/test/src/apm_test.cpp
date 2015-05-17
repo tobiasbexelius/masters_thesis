@@ -23,6 +23,9 @@ void APMTest::run() {
 	actual_package = measurer.GetPackage();
 	actual_measurement = measurer.GetMeasurements();
 
+	MeasureCalib();
+	MeasureWithKey();
+	MeasureWithKeyCalib();
 }
 
 bool APMTest::success() const {
@@ -76,42 +79,42 @@ bool APMTest::isMeasurementCorrect() const {
 }
 
 bool APMTest::testMeasurementCorrect(cv::Vec3f measurement) const {
-	if(measurement[0] ==0||measurement[1] == 0 || measurement[2]==0)
-				return false;
+	if (measurement[0] == 0 || measurement[1] == 0 || measurement[2] == 0)
+		return false;
 
-		cv::Vec3f expected = test_case.GetDimensions();
-		std::vector<double> a_vec = { measurement[0], measurement[1], measurement[2] };
-		std::vector<double> e_vec = { expected[0], expected[1], expected[2] };
-		std::sort(a_vec.begin(), a_vec.end());
-		std::sort(e_vec.begin(), e_vec.end());
+	cv::Vec3f expected = test_case.GetDimensions();
+	std::vector<double> a_vec = { measurement[0], measurement[1], measurement[2] };
+	std::vector<double> e_vec = { expected[0], expected[1], expected[2] };
+	std::sort(a_vec.begin(), a_vec.end());
+	std::sort(e_vec.begin(), e_vec.end());
 
-		double err1 = std::abs(1 - a_vec[0] / e_vec[0]);
-		double err2 = std::abs(1 - a_vec[1] / e_vec[1]);
-		double err3 = std::abs(1 - a_vec[2] / e_vec[2]);
+	double err1 = std::abs(1 - a_vec[0] / e_vec[0]);
+	double err2 = std::abs(1 - a_vec[1] / e_vec[1]);
+	double err3 = std::abs(1 - a_vec[2] / e_vec[2]);
 
-		return err1 < max_error && err2 < max_error && err3 < max_error;
+	return err1 < max_error && err2 < max_error && err3 < max_error;
 }
 
-double APMTest:: calcMeasurementError(cv::Vec3f measurement) const {
-	if(measurement[0] ==0||measurement[1] == 0 || measurement[2]==0)
-				return 1;
+double APMTest::calcMeasurementError(cv::Vec3f measurement) const {
+	if (measurement[0] == 0 || measurement[1] == 0 || measurement[2] == 0)
+		return 1;
 
-		cv::Vec3f expected = test_case.GetDimensions();
-		std::vector<double> a_vec = { measurement[0], measurement[1], measurement[2] };
-		std::vector<double> e_vec = { expected[0], expected[1], expected[2] };
-		std::sort(a_vec.begin(), a_vec.end());
-		std::sort(e_vec.begin(), e_vec.end());
+	cv::Vec3f expected = test_case.GetDimensions();
+	std::vector<double> a_vec = { measurement[0], measurement[1], measurement[2] };
+	std::vector<double> e_vec = { expected[0], expected[1], expected[2] };
+	std::sort(a_vec.begin(), a_vec.end());
+	std::sort(e_vec.begin(), e_vec.end());
 
-		double err1 = std::abs(1 - a_vec[0] / e_vec[0]);
-		double err2 = std::abs(1 - a_vec[1] / e_vec[1]);
-		double err3 = std::abs(1 - a_vec[2] / e_vec[2]);
+	double err1 = std::abs(1 - a_vec[0] / e_vec[0]);
+	double err2 = std::abs(1 - a_vec[1] / e_vec[1]);
+	double err3 = std::abs(1 - a_vec[2] / e_vec[2]);
 
-		return err1 + err2 + err3;
+	return err1 + err2 + err3;
 
 }
 
 double APMTest::getMeasurementError() const {
-return calcMeasurementError(actual_measurement);
+	return calcMeasurementError(actual_measurement);
 }
 
 cv::Vec3f APMTest::getExpectedMeasurement() const {
@@ -175,7 +178,7 @@ bool APMTest::isCalibMeasurementCorrect() const {
 }
 
 double APMTest::getKeyMeasurementError() const {
-return calcMeasurementError(key_measurement);
+	return calcMeasurementError(key_measurement);
 }
 
 double APMTest::getCalibKeyMeasurementError() const {
@@ -208,7 +211,8 @@ void APMTest::MeasureWithKey() {
 	std::vector<cv::Point2f> reference_object = test_case.GetReferenceObject();
 	std::vector<cv::Point2f> package = test_case.GetPackage();
 	cv::Vec3i edges;
-	cv::Vec3f measurement = MeasurePackage(test_case.GetImage().size(), reference_object, test_case.GetReferenceObjectSize(), package, edges, true);
+	key_measurement = MeasurePackage(test_case.GetImage().size(), reference_object,
+			test_case.GetReferenceObjectSize(), package, edges, true);
 
 }
 
@@ -216,13 +220,14 @@ void APMTest::MeasureWithKeyCalib() {
 	std::vector<cv::Point2f> reference_object = test_case.GetReferenceObject();
 	std::vector<cv::Point2f> package = test_case.GetPackage();
 	cv::Vec3i edges;
-	cv::Vec3f measurement = MeasurePackage(test_case.GetImage().size(), reference_object, test_case.GetReferenceObjectSize(), package, edges, false);
+	calib_key_measurement = MeasurePackage(test_case.GetImage().size(), reference_object,
+			test_case.GetReferenceObjectSize(), package, edges, false);
 }
 
-void APMTest::MeasureCalib(){
+void APMTest::MeasureCalib() {
 	cv::Vec3i edges;
-	MeasurePackage(test_case.GetImage().size(), actual_reference_object, test_case.GetReferenceObjectSize(), actual_package, edges, false);
+	calib_measurement = MeasurePackage(test_case.GetImage().size(), actual_reference_object, test_case.GetReferenceObjectSize(),
+			actual_package, edges, false);
 }
-
 
 } /* namespace automatic_package_measuring */

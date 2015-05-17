@@ -11,7 +11,11 @@
 \usepackage{modifications}
 \usepackage{mathtools} 
 \usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{pgfplots}
 \DeclareUnicodeCharacter{00A0}{ }
+
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
@@ -36,45 +40,29 @@
 %----------------------------------------------------------------------------------------
 
 \input{sections/abstract}
-
 \clearpage
-
 \input{sections/abstract_swe}
-
 \clearpage
 \tableofcontents*
 \mainmatter
+\pagestyle{newchap}
 
 %----------------------------------------------------------------------------------------
 %	ESSAY BODY
 %----------------------------------------------------------------------------------------
 
-\pagestyle{newchap}
-
-\chapter{Introduction}
-\input{sections/introduction/introduction}
-
-\chapter{Related Work}
-\input{sections/related_work/related_work}
-
-\chapter{Theoretical Background}
-\input{sections/background/background}
-
-\chapter{Method}
-\input{sections/method/method}
-
-\chapter{Results}
-\input{sections/results/results}
-
-\chapter{Discussion}
-\input{sections/discussion/discussion}
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/background}
+\input{sections/method}
+\input{sections/results}
+\input{sections/discussion}
 
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHY
 %----------------------------------------------------------------------------------------
 
 \bibliographystyle{unsrt}
-
 \bibliography{references}
 
 %----------------------------------------------------------------------------------------
