@@ -15,7 +15,7 @@ As mentioned in section \ref{problem-statement}, it is critical that a package m
 Therefore, the required information about the camera should be acquired automatically, and online, while the app is running.
 This is done through auto-calibration, which is the process of determining the internal camera parameters directly from a set of uncalibrated images.
 There are several methods to perform auto-calibration, a common one being to impose constraints on the internal parameters by automatically detecting corresponding points or other connections between multiple images. 
-Depending on which constraints are used, and the number of images, the constraints form a linear or non-linear equation system. \cite[458-469]{hartley-zisserman} % TODO ange sidor?
+Depending on which constraints are used, and the number of images, the constraints form a linear or non-linear equation system. \cite[458-469]{hartley-zisserman}
 
 As we will see in section \ref{camera-calibration}, it is possible to impose constraints on the internal parameters in the same way using only one view.
 This is done by finding vanishing points in the scene, i.e. points where parallel lines that are parallel in the world (but not in the image) meet.

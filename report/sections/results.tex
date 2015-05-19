@@ -1,61 +1,92 @@
 \chapter{Results} \label{results}
-As described in 
-%The results for each category were grouped by: package, distance, height and horizontal angle.
-%
-%The detection category presents the success rates and accuracy of the detection algorithm, when compared to ground truth 
-%
-%A test program ran the algorithm on each image, while gathering information about the success rates and accuracy of each of the categories: package, distance, height, horizontal angle, and calibration method.
+% TODO how is correct decided and error defined?
+The results are presented in three sections.
+In section \ref{results:detection} the results of the detection algorithm is presented.
+In section \ref{results:measuring} the results of the measuring algorithm is presented.
+And in section \ref{results:measuring} the overall performance of the system is presented,
+together with the results of online testing.
 
+The results in each category are grouped by: package, distance, height, horizontal position, overall performance. % horizontal position?
 
-% Posenamn
-% frontal short side
-% frontal long side
-% sharp angle by short side
-% sharp angle by long side
-% wide angle
+\section{Detection} \label{results:detection}
+The output of the detection algorithm was compared against ground truth locations of the reference object and package corners, as explained in \ref{benchmarking}.
+A detection result was considered to be correct if the error was less than $10\%$, where the error was defined as the sum of distances between the detected points and actual points, divided by the length of the contour spanned by the ground truth corners. Table \ref{table:detection_overall} shows the success rates of detection over all packages and configurations.
+(TODO add accuracy)  % TODO add accuracy
+\input{tables/detection_overall}
 
-\section{Detection}
-
+As shown in table \ref{table:detection_by_package} the success rates varied quite much by package, between 0.49 and 0.76 for detection of both the reference object and package in the same image.
 \input{tables/detection_by_package}
 
+The results varied even more by horizontal position, where the detection rates of reference object and package were between 0.38 and 0.87, as shown in table \ref{table:detection_by_position}.
 \input{tables/detection_by_position}
 
+As shown in table \ref{table:detection_by_distance}, detection rates by distance were about the same for the distances 1 and 1.5 metres at 0.68 and 0.73 respectively, but fell substantially for the distance 2 metres to 0.39.
 \input{tables/detection_by_distance}
 
+As shown in table \ref{table:detection_by_height}, detection rates by height were significantly lower for the lowest height, and about the same for the two higher, at 0.72 and 0.71.
 \input{tables/detection_by_height}
 
-% avg Accuracy and success rate over all configs
-% performance of best config across all pkgs
+\section{Measuring} \label{results:measuring} 
+The results presented in section were obtained by using ground truth locations of the corners as input to the measuring algorithm, and comparing the output against the manually measured dimensions of the packages.
+A measurement was considered to be correct if no dimension of the package had a relative error greater than $10\%$.
+The error column in the tables below states the sum of relative errors. 
+Table \ref{table:measurement_overall} shows that vanishing point calibration have slightly lower success rate than Zhang's method, and marginally larger error.
 
-\section{Measuring}
-%Pre marked corners
+(TODO split error to xyz components since vp calibration and zhang uses same xy) % TODO dela upp felet i xyz eftersom calib och vp använder samma xy
 
-% TODO totalt över alla configs
-% performance of best config across all pkgs
+\input{tables/key_measure_overall}
+
+% TODO text?
 
 \input{tables/key_measure_by_package}
 
+Table \ref{table:key_measurement_by_position} shows that the two horizontal positions ($\leftarrow$ what's a better word for this? TODO) from which only two positions can be seen have a significantly lower success rate than the other positions, especially for vanishing point calibration. % TODO comment: what's a better word for this? TODO 
+
 \input{tables/key_measure_by_position}
 
-\input{tables/key_measure_by_distance}
+Table \ref{table:key_measurement_by_distance} show that success rate and accuracy decrease as the distance to the package grows for both methods. Table \ref{table:key_measurement_by_height} shows that the vanishing point method is relatively unaffected by difference in height, while the success rate when using Zhang's calibration method increases as height grows.
 
+\input{tables/key_measure_by_distance}
 \input{tables/key_measure_by_height}
 
+\section{Overall Performance} \label{results:overall}
+The results in this section present the performance of the detection and measuring algorithms combined, using vanishing point calibration.
+The errors are defined in the same way as in section \ref{results:measuring}.
 
-%\subsection{Offline Calibration}
-%\subsection{Vanishing Point Calibration}
+Table \ref{table:measurement_overall} shows the overall performance of the system , which is $50\%$. However, as can be seen in tables \ref{table:measurement_by_package} - \ref{table:measurement_by_height} some positions are considerably worse than the rest.
+These positions are the horizontal positions in which only two sides of the package can be seen, where the distance is 2 metres, and when the height is the lowest (0.9 and 1.1 metres).
+If these positions are removed, the results of the remaining, "good positions" give much better results. The success rate for these positions is 0.92, as shown in \ref{table:measurement_overall}.
+\\TODO mention the "good positions" in method? % TODO !!!
+\\TODO Maybe merge all the small tables to one big table in each section? % TODO !!!
+% TODO average result of successful measurements for each package?
 
-\subsection{Overall Performance}
-% TODO Approx fps of app
-
-% TODO overall performance
-% performance of best config across all pkgs
-% average result of successful measurements for each package
+\input{tables/measure_overall}
 
 \input{tables/measure_by_package}
 
+Table \ref{table:measurement_by_position} shows that performance is greatly affected by horizontal position, like earlier. Performance is much worse for the positions from which only two sides of the package can be seen. 
+
 \input{tables/measure_by_position}
+
+Bla bla distance table... % TODO
 
 \input{tables/measure_by_distance}
 
+Bla bla height table... % TODO
+
 \input{tables/measure_by_height}
+
+\section{Online testing}
+
+Online testing was performed using the Android app described in \ref{method:online_testing}.
+A screenshot of the resulting app is shown in figure \ref{fig:screenshot}.
+The processing time of the app is typically between 200-700 milliseconds on the Galaxy S6 Edge, depending on the amount of clutter in the image. % TODO times true?
+More clutter results in higher processing times.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.6\textwidth]{figures/screenshot.png}
+\end{center}
+\caption{Screenshot of the app measuring package 2. A blue outline has been drawn around the package, and a red outline has been drawn around the reference object. The real dimensions of the package are $260 \times 191 \times 177$ mm.}
+\label{fig:screenshot}
+\end{figure}

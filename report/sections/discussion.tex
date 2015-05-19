@@ -1,27 +1,97 @@
 \chapter{Discussion}
+The results showed that the proposed method works very well when a package is observed from an angle where three faces of the package are visible, and at sufficiently close range and high altitude.
 
-\section{Future Work}
-% Infinite possibilities
-% Improve detection robustness & speed
-% Object tracking
-% Use multiple images
-% Use no reference object, e.g. take one snapshot, move 1 meter in some direction without otherwise moving camera, take another. Use phone sensors to detect and estimate error.
+\section{Strengths}
+TODO % TODO
 
+\section{Weaknesses}
+Many different cases where the detection and measuring algorithms fail were observed through testing.
 
-\section{Sources of error}
-% when taking pictures from 2 side persepective it is very important to stand in the middle, otherwise one side will appear as a straight line and its corner will therefore not be detected
+\subsection{Detection}
+The detection algorithms were based on simple, feature-based method. The method involved detecting lines in the image and attempting to match the intersections between lines to a quadrilateral or hexagon in which opposing sides have as equal length, and are as parallel as possible.
 
-\section{Conslusions}
+The image processing algorithms used by this method depend on several constants.
+Finding good values for the constants is critical.
+They can not be too strict, because then important features can be filtered out in some situations, but they can not be too tolerant either, because then too much unimportant data can be left in the image, so that it is difficult to make sense of the data, or it takes too long to process.
+It is impossible to choose a single value for a constant which yields good data every time.
+Many examples where there was too much, or too little data left to analyse for the paper or package detection algorithms exist in the test dataset.
+This was one of the most common reasons of failure for the detection algorithms.
+One potential solution for this problem to use "adaptive thresholding". TODO write about adaptive thresholding % TODO !!
 
+Another important reason for failure is that the rating criteria are not sophisticated enough.
+In some cases there is another hexagon with opposing edges that are more parallel and and have more similar length.
+Analysis of the test cases showed that this problem is more common among the two-face views more than the three-face views, which is part of the reason for the drop in performance for two-face views.
+Some other criteria were considered, but sadly there was not enough time to implement them.
+For example additional score could be awarded if the inner contours of the package are detected.
+Currently, the inner contours of the package are filtered out, to reduce the amount of data.
+This addition would require them to be kept, which would in turn call for more intelligent pruning of edges as packages sometimes have a lot of texture which can make the amount of data overwhelming.
+
+In the current implementation only a tiny bit of an edge must be detected for it to be used as a potential package edge, since it is often the case that the full package contour cannot be found.
+It is not modelled that a candidate with detected edges along much of its contour is more likely to be the package.
+This could help with nonsensical candidate sometimes winning.
+
+A different reason for the poor performance of two-face views is that as distance grows, the edges going from bottom to the middle and from the middle to the top of the package contour, become increasingly parallel. % TODO add figure illustrating this and other issues
+If the picture is not taken precisely in front of the middle of the package, but slightly towards the right or the left, the two edges can become inseparable.
+A solution to this problem would be to use the edge between the two middle corners.
+
+TODO add figure with example when the mentioned problems occur? % TODO this
+\\TODO organise this text with a bullet list or subsections or something? % TODO this
+% TODO refer more to results
+% TODO additional reasons:
+% from some angles the constraints imposed by the detection algorithm causes detection to fail (?)
+% sometimes packages fail because they are not straight enough (?)
+% thresholds probably makes it fail when far away, because the package is small (????)
+% also room for much irrelevant stuff when far away, and things behind on the wall (!!!!)
+
+\subsection{Measuring}
+The results in section \ref{results:measuring} show that vanishing point calibration result fail more often than when using Zhang's method, but the accuracy is almost the same between the two methods. (TODO: methods only differ for the z dimension, though..) % TODO !!
+Two main reasons have been found to cause the lower success rate of vanishing point calibration: infinite vanishing points, and increased vulnerability to errors in detection.
+Infinite vanishing points occur when the parallel lines of the package are parallel in the image as well, and hence do not result in a vanishing point. (TODO mention this in theory section?) % TODO !!
+If an infinite vanishing point does occur, a constraint on $\omega$ is lost.% TODO Dubbelkolla detta
+However, since the system is overdetermined, the calibration should still work in theory, even with up to two infinite vanishing points, if the vanishing point in the $Z$-direction is not one of the infinite ones, in which case the calibration becomes degenerate.
+In practice the error was often too great, when one vanishing point was infinite. (TODO find out how many times this occurred in test set and if it worked with an infinite vp any of the cases) % TODO !!!!!!!!!!!
+
+Another reason why the vanishing point method failed more often is that it is more vulnerable to errors in the package corners, since both the calibration and measurements themselves depend on the location of the package corners being correct.
+Due to the inaccuracies a different solution than the correct one have smaller least squares error than the correct answer, is therefore chosen as the solution.
+These problem occur when using detected corner points as well as when using the marked corners, since the marked corners also have some error.
+On average, the accepted solutions have the same error when using detected corner points and marked corners. % TODO förtydliga hur marked corners går till i metod
+
+TODO discuss method somewhere % TODO discuss method, mention that only 1 room was used, not the easiest environment through
+
+TODO say more positive things, discussion sounds too negative so far... % TODO !!
+
+TODO Mention processing time and realtime-vs not realtime somewhere  % TODO !!
+
+\section{Future Work} \label{discussion:future_work}
+TODO... some ideas and talking points: % TODO !
+
+There are infinite possibilities to improve upon this work.
+It can be improved by refining the current approach, improving the three main performance factors: robustness, accuracy and speed.
+Robustness and speed need most improvement.
+Some suggestions have been presented above.
+
+Detection needs most improvement. 
+
+One could use a completely different approach for detection. Something more advanced. E.g.: machine learning, approach from the paper "Localizing 3D cuboids in single-view images"\cite{xiaolocalizing}
+
+New features can be added: Object tracking, so that the full detection algorithm doesn't have to be run every frame.
+
+Using multiple images to calculate an average between multiple measurements, or using the multiple images in the same calculation.
+
+Save intrinsic matrices found with vanishing point calibration. 
+They should converge to provide a very accurate estimation.
+
+\section{Conclusions}
+TODO
+
+% demo app not pleasant to use in its current state, but it could be if tracking is added, or with a non-realtime solution, or any other combination
 % Very difficult to make general detection based on this simple approach
-% Earlier testing, adaptive thresholding
-% App can use a sequence of snapshots, then process all, then output result. should take not take long on s6
 
 
 
-% demo app not pleasant to use in its current state, but it could be if tracking is added, or with a non-realtime solution
 
-% only 1 room was used, not the easiest environment through
 
-% felkällor mätning:
-% inf vps, fel i detektion
+
+
+
+

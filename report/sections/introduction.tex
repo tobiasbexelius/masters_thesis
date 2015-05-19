@@ -19,8 +19,8 @@ To further simplify the process, and to reduce computational complexity, the pro
 
 However, because a calibrated view is expected to result in higher accuracy, it would be interesting to compare the performance two methods.
 
-For this approach to be successful, two components must exist, and work well: the detection process, and the measuring process. % TODO rephrase
-The detection process consists of finding the position of the reference object and the package in the image, and the measuring process consists of using their positions to calculate the dimensions of the package.
+For this approach to be successful, two components must exist, and work well: a detection component and a measuring component.
+The detection component should find the position of the reference object and the package in the image, and the measuring component should use their positions to calculate the dimensions of the package.
 
 To assess the quality of the result, the two components should be evaluated both separately, and together. 
 Each of the three categories will be tested for \textit{robustness} and \textit{accuracy}.
@@ -28,13 +28,13 @@ Robustness is defined to be rate at which the result is reasonably correct.
 Accuracy is defined to be how accurate the result is when a reasonable solution is found.
 
 In principle all of the above can be tested offline, using pictures taken with a smartphone.
-This will be the method used when evaluating the result
-However, since the purpose of the program is to be used in a smartphone, it will also be embedded in a smartphone demo app, to show that it performs well enough in its intended environment, and more importantly, that the program is fast enough to be used in a smartphone.
+This will be the method used when evaluating the result.
+However, since the purpose of the program is to be used in a smartphone, it will also be embedded in a smartphone demo app, to show that it performs well enough in its intended environment and that the program is fast enough to be used in a smartphone.
 
-\section{Delimitations} % limiatations delimitations?
+\section{Delimitations}
 In an finished consumer smartphone application, it would be desirable to have the option to choose between a multitude of reference objects, like credit cards, matchboxes, smartphones, papers, and more. 
-To simplify the detection process, only white papers from the ISO 216 A-series (e.g. A4 or A5) will be considered as reference objects in this thesis.
-The reason behind this choice is that papers of this type are very common, and easy to detect.
+To simplify the detection component, only white papers from the ISO 216 A-series (e.g. A4 or A5) will be considered as reference objects in this thesis.
+The reason behind this choice is that papers of this type are very common, and should be easy to detect.
 
 The type of packages considered are limited to packages with a cuboid shape, and with a colour that has reasonable contrast to that of the reference object.
 

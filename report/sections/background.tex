@@ -3,40 +3,41 @@
 In this chapter the theoretical concepts used throughout the report is presented. Knowledge of two computer vision related fields is necessary to understand the following chapters. These are projective geometry, and image processing.
 
 \section{Projective geometry}
-Everyone has a basic understanding of what projective geometry is, and how it works.
+Everyone has a basic understanding of how projective geometry works.
 We experience it at every wake moment, without thinking about it. 
-Based on where one is standing and when looking at a shape, the shape can look very different. % TODO ändra
+The perceived shape of an object can be very different, depending on from where it is viewed.
 Projective geometry describes these kinds of phenomena.
 In this section some basic concepts in projective geometry is presented, and how images are formed in cameras.
 
-At first glance it seems that very little is preserved by a projective transformation, or "changing perspective" in informal term.
+At first glance it seems that very little is preserved by a projective transformation, or "changing perspective" in informal terms.
 Neither shape, lengths, angles, distances, or ratios of distances are preserved.
 The most general property in a scene that is preserved by a projective transformation is straightness. \cite[1]{hartley-zisserman}
 
-In euclidean geometry, a point in two-dimensional space is typically represented by cartesian coordinates, a pair of numbers, which represent the distance to the origin in each dimension. % TODO rephrase
-In projective geometry homogeneous coordinates are used instead.
+In euclidean geometry, a point in two-dimensional space is typically represented by cartesian coordinates.
+In projective geometry, the homogeneous coordinate system is used instead.
 To convert the cartesian coordinate pair $(x,y)$ to homogeneous coordinates, a one is appended to the cartesian coordinates, resulting in the point $(x,y,1)$. 
-An interesting property about homogeneous coordinates is that they ignore scale, meaning that $(x,y,1)$ and $(kx,ky,k)$ represents the same point for any nonzero value $k$.
-To convert back to cartesian coordinates, divide by $k$ and remove the $1$.\cite[2]{hartley-zisserman} % Rephrase this part
+Conversely, the cartesian representation the homogeneous point $(\tilde{x},\tilde{y},\tilde{z})$ is $(\tilde{x}/\tilde{z},\tilde{y}/\tilde{z})$. 
+In other words, homogeneous coordinates ignore scale; $(x,y,1)$ and $(kx,ky,k)$ represents the same point for any nonzero value $k$.
+These principles extend to other dimensions as well. \cite[2]{hartley-zisserman}
 
 \subsection{Camera Model}\label{camera-model}
-Cameras, create a 2D representation of a 3D world.
-The camera model used in this thesis is called the projective camera model.
+Camera create a 3D projection of the world, i.e. a mapping of 3D coordinates to a 2D plane.
+Homogeneous coordinates provide an elegant way to perform this mapping, with a model called the projective camera model.
 It is based on a pinhole camera model, where all rays of light pass through a single point called the camera centre, $C$. Before reaching $C$, each ray will pierce the image plane, where the image is projected.
 It's location is determined by $f$, the focal length of the camera.
 
 \begin{figure}
 \begin{center}
-\includegraphics[width=0.6\textwidth]{figures/central_projection_camera.png}
+\includegraphics[width=1.0\textwidth]{figures/central_projection_camera.png}
 \end{center}
-\caption{The central projection camera model. The world and image coordinate systems are aligned. The image plane centred on the $Z$ axis, length $f$ in front of the origin.}
+\caption{The central projection camera model. This is a simplification of the general projective camera model, where the image plane is placed with offset $f$ on the $Z$ axis but is otherwise aligned with the world coordinate system.}
 \label{fig:central_projection_camera} % TODO hur referera? zisserman-hartley s.154
 \end{figure}
 
-Using the central projection model, as shown in figure \ref{fig:central_projection_camera}, a 3D point can be mapped to a 2D image point, as follows: $(X,Y,Z)^T\mapsto(fX/Z,fY/Z)^T$.
+Using the central projection model, as shown in figure \ref{fig:central_projection_camera}, a 3D point can be mapped to a 2D image point, using this simple mapping: $(X,Y,Z)^T\mapsto(fX/Z,fY/Z)^T$.
 The central projection model makes some rather limiting assumptions, which, which we will now generalise.
-First, the origin of the image coordinate system is normally not in the centre.
-In that case an offset to the principal point, $(p_{x}, p_{y})$, is added, which represents the coordinates of the centre of the image.
+First, the origin of the image coordinate system is centre not in the centre.
+To remedy this, an offset to the principal point, $(p_{x}, p_{y})$, is added, which represents the coordinates of the centre of the image.
 Furthermore, the mapping above assumes that the camera is not rotated, and located in the origin of the world coordinate system. Taking this into account, the following equation can be formed:
 \begin{equation}\label{eq:projection1}
 \begin{pmatrix}	\tilde{u}\\\tilde{v}\\\tilde{w}\end{pmatrix} = 
@@ -59,25 +60,25 @@ $$
 u = \frac{\tilde{u}}{\tilde{w}},~~v = \frac{\tilde{v}}{\tilde{w}}
 $$
 The above is the projective camera model that will be used in this thesis. 
-It can be generalised further to take things like pixel skew and non-square pixels into account, but those are rare cases and are therefore left out.
+It can be generalised further to take things like non-square, or skewed pixels, but that is left out, since the shape of pixels is typically very close to square.
 
-The left of the two matrices above is called the calibration matrix, or intrinsic matrix, $K$.
-It contains the intrinsic parameters of the camera.
-The intrinsic parameters depend only on the camera, and is always the same for the a given camera, if there is no change in zoom.
-The right matrix is called the extrinsic matrix, and contains the extrinsic parameters of the camera.
-The extrinsic parameters are not tied to the camera's properties, but instead depend on where in the world the camera is located, and where it points.
-The above can also be written in the more concise form $x = K[R|t]X$.
+The left of the two matrices above is called the intrinsic matrix, $K$.
+Its entries, the intrinsic parameters, depend only on the camera, and are always the same for the a given camera, if there is no change in zoom.
+The right matrix is called the extrinsic matrix.
+It contains the extrinsic parameters of the camera.
+The extrinsic parameters are not tied to the camera's properties, but depend on where in the world coordinate system the camera is located, and where it points.
+Equation \ref{eq:projection1} can also be written in the more concise form $x = K[R|t]X$.
 
-When multiplied together, the intrinsic and extrinsic matrices form a $3\times4$-matrix, called the camera matrix, or the projection matrix, $P$:
+When multiplied together, the intrinsic and extrinsic matrices form a $3\times4$-matrix, called the camera matrix, $P$.
 \begin{equation} \label{eq:projection2}
-\begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} = \lambda
+\begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} =
 \begin{pmatrix} p_{11} & p_{12} & p_{13} & p_{14} \\
  				p_{21} & p_{22} & p_{23} & p_{24} \\
 				p_{31} & p_{32} & p_{33} & p_{34} \end{pmatrix}
 \begin{pmatrix}X \\Y \\Z \\1\end{pmatrix}
 \end{equation}
-It can be determined up to an arbitrary scale factor, $\lambda$.
-Because $\lambda$ is arbitrary, $P$ only has 11 degrees of freedom. We can simplify to:
+$P$ is a homogeneous matrix, and thus only has 11 degree of freedom.
+The above can therefore be written as:
 \begin{equation}\label{eq:projection3}
 \begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} =
 \begin{pmatrix} p_{11} & p_{12} & p_{13} & p_{14} \\
@@ -85,40 +86,38 @@ Because $\lambda$ is arbitrary, $P$ only has 11 degrees of freedom. We can simpl
 				p_{31} & p_{32} & p_{33} & 1 \end{pmatrix}
 \begin{pmatrix}X \\Y \\Z \\1\end{pmatrix}
 \end{equation}
-where the scaling of the elements of $P$ is implicit for convenience. \cite[153-165]{hartley-zisserman}
+where the scaling of the elements of $P$ is implicit. \cite[153-165]{hartley-zisserman}
 
 \subsection{Planar Homographies}\label{planar-homographies}
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.6\textwidth]{figures/planar_homography.pdf}
-\end{center}
-\caption{A point on a plane in the world is projected to the image plane. A planar homography can be used to map points between the two planes} % TODO hur referera? Tagen från hartley-zisserman s. 34
-\label{fig:planar_homography}
-\end{figure}
-
-Assume that a projective camera is viewing a planar scene, and that we would like to map points on the plane to points on the image plane. 
-If the world coordinate system is defined to have its origin in the plane, with the $Z$ axis being perpendicular to it, the projective camera model can be simplified. 
-Because $Z=0$ for all coordinates in the plane, the $Z$ coordinate can be removed from the world coordinate vector, along with the third column of the camera matrix, which is cancelled out when $Z=0$. 
+Assume that a projective camera is observing a planar scene, and that we would like to map points on the plane to points on the image plane. 
+If the world coordinate system is defined so the plane is the plane $Z=0$, the projective camera model can be simplified by removing the $Z$ coordinate and the the third column of $P$ from equation \ref{eq:projection3}. 
 This scenario, which is depicted in figure \ref{fig:planar_homography}, yields the following system:
 \begin{equation}\label{eq:homography}
 \begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} =
 \begin{pmatrix} h_{11} & h_{12} & h_{13}  \\
  				h_{21} & h_{22} & h_{23}  \\
-				h_{31} & h_{32} & 1\end{pmatrix}
+				h_{31} & h_{32} & h_{33}\end{pmatrix}
 \begin{pmatrix}X \\Y \\ 1\end{pmatrix}
 \end{equation}
-This transformation is called a planar homography.
-The above system is also denoted $x=HX$.
 
-$H$ has 8 degrees of freedom, which means that it can be determined with 8 constraints. Each point correspondence adds 2 constraints on $H$, since each point has 2 degrees of freedom.
-Hence, a minimum of 4 point correspondences are required to determine $H$.
-In order to uniquely determine $H$, the 8 resulting equations must of course be independent, otherwise the solution is \textit{degenerate}, and does not uniquely determine $H$.
-In a minimal solution degeneracy occurs if three of the corresponding points are collinear. \cite[91-92]{hartley-zisserman} % TODO hur citera flera sidor? citera sidor öht?
-One method for to determine $H$ from a set of point correspondences is called the Direct Linear Transformation algorithm.
-DLT is a simple algorithm which involves forming constraints based on similarity relations (e.g. the point correspondences), and then solving a linear equation system.
-Since the positions of the points are often noisy, a more accurate estimate can be achieved if the system is overdetermined, i.e. there are more than four point correspondences.
-\cite{homography-estimation}
+\begin{figure}
+\begin{center}
+\includegraphics[width=1.0\textwidth]{figures/planar_homography.pdf}
+\end{center}
+\caption{A point on a plane in the world is projected to the image plane. A planar homography can be used to map points between the two planes.} % TODO hur referera? Tagen från hartley-zisserman s. 34
+\label{fig:planar_homography}
+\end{figure}
+
+This transformation is called a planar homography. The homography matrix, $H$ has 8 degrees of freedom. 
+This is a linear equation system, meaning that $H$ can be determined with 8 linear equations.
+A pair of known corresponding points on the two planes, $x=HX$ will each contribute with two linear equations to constrain $H$.
+Thus, four known corresponding points are required to fully determine $H$.
+This assumes that that each point contributes with a unique equation.
+If three or more of the points in a minimal solution are collinear, a unique solution cannot be determined.
+Such a configuration is \textit{degenerate}. \cite[91-92]{hartley-zisserman}
+
+Since the positions of the corresponding points are typically noisy, an exact solution can often not be found.
+One method to find a solution with minimal error is the Direct Linear Transformation algorithm (DLT). DLT can also deal with over-determined solutions, i.e. additional known point correspondences, which can be added to the system to reduce error. \cite{homography-estimation}
 
 \subsection{The Plane at Infinity and the Absolute Conic} \label{ac}
 Two critical concepts in projective geometry are the plane at infinity, $\pi_{\infty}$ and the absolute conic, $\omega_{\infty}$.
@@ -155,7 +154,8 @@ If many images are known the chance of degeneracy is low, and  the solution beco
 Furthermore this method considers radial distortion in the lens, which can be used to further improve accuracy. \cite{zhang-calibration}
 
 \subsubsection{Camera calibration using Vanishing Points}
-Another approach to calculate $K$ is to do so without first calculating $P$, by using vanishing points.
+Another approach to calculate $K$ is to do so without first calculating $P$.
+One way to do that is by using vanishing points. % TODO förklara bättre: 3 vanishing points gör att man kan bestämma plane at infinity?
 It turns out that $K$ can be determined from a single image, by imposing constraints on the image of the absolute conic ($\omega$) and then using the equation presented in \ref{ac} to find $K$.
 
 Like $K$, $\omega$ is represented by a symmetric, homogeneous matrix with the following structure
@@ -187,7 +187,7 @@ $$
 Now, only three constraints are needed (because $\omega$ is homogeneous).
 
 Orthogonal vanishing points give rise to constraints of the form $V_{1}^T \omega v_{2} = 0$.
-A known homography $H=[h_{1},h_{2},h_{3}]$ give the two constraints $h_{1}^T \omega h_{2} = 0$ and $h_{1}^T \omega h_{1} = h_{2}^T \omega h_{2}$. Refer to \cite{hartley-zisserman} chapter 8 to see how they are derived.
+A known homography $H=[h_{1},h_{2},h_{3}]$ give the two constraints $h_{1}^T \omega h_{2} = 0$ and $h_{1}^T \omega h_{1} = h_{2}^T \omega h_{2}$. Refer to \cite{hartley-zisserman} chapter 8 to see how the constraints are derived.
 
 Each constraint can be rewritten to the form $aw=0$ where $a$ is a $1 \times 4$ vector representing the constraint, and $w$ is the vector $w = (w_1,w_2,w_3,w_4)$ containing the elements of $\omega$.
 The $n$ constraint vectors are then stacked on top of each other which leads to the system $Aw=0$ where $A$ is a $n \times 4$ matrix and $0$ is a $4 \times 1$ zero vector. % TODO proper vector notation
@@ -195,7 +195,7 @@ This system can be solved using SVD to determine $\omega$.
 Finally, $\omega$ is decomposed into $K$ by matrix inversion followed by Cholesky factorization.\cite[223-226]{hartley-zisserman}
 
 \subsubsection{Obtaining Camera Pose with known $K$} \label{camera-pose}
-When $K$ is known, the final step before points can be projected using equation \ref{eq:projection1}, is to determine the pose of the camera, i.e. the matrix $[R|t]$. $R|t]$ reprents the rotation and translation of the camera in the world coordinate frame, where $R$ is a $3 \times 3$ matrix and $t$ is a $3 \times 1$ vector.
+When $K$ is known, the final step before points can be projected using equation \ref{eq:projection1}, is to determine the pose of the camera, i.e. the matrix $[R|t]$. $[R|t]$ reprents the rotation and translation of the camera in the world coordinate frame, where $R$ is a $3 \times 3$ matrix and $t$ is a $3 \times 1$ vector.
 Constraints can be imposed through point correspondences like in previous cases.
 The $R$ and $t$ have three degrees of freedom each, which means six constraints are required to determine them.
 As a result, three point correspondences are required to determine the pose, since each correspondence generates two constraints.
