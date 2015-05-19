@@ -45,6 +45,7 @@ void separateReports();
 void TheGrandTest(std::vector<Json::Value> test_cases);
 void DetectFailMeasurements(std::vector<Json::Value> test_cases);
 std::vector<Json::Value> randomCases(std::vector<Json::Value> all_tests, int n);
+void runTestsWithKey(std::vector<Json::Value> test_cases);
 
 std::vector<std::string> some_dirs = { "/Users/tobias/masters_thesis/code/apm/test/data/structured/box1",
 		"/Users/tobias/masters_thesis/code/apm/test/data/structured/box2",
@@ -148,9 +149,10 @@ int main(int argc, char** argv) {
 //optimizeConstantMeasureOnly(test_cases, "Constant", &apm::internal::CENTER_THRESHOLD, 0.15, 0.2, 0.01);
 
 //	optimizeConstant(test_cases, "Constant", &apm::internal::HOUGH_THRESHOLD, 25, 35, 1);
-runTests(test_cases);
+//	runTests(test_cases);
+//	runTestsWithKey(test_cases);
 //	TestCouldBeStraight(test_cases);
-//	runTestsCompact(test_cases);
+	runTestsCompact(test_cases);
 //	separateReports();
 	//showAllImages(test_cases);
 }
@@ -418,6 +420,42 @@ void runTestsCompact(std::vector<Json::Value> test_cases) {
 				test.getMeasurementError() * 100.0);
 
 		if (test.isMeasurementCorrect()) {
+			++num_passed;
+		}
+	}
+
+	double success_rate = ((double) num_passed / num_tests) * 100;
+
+	cout << std::endl;
+	cout << "########## All tests finished. ##########" << endl;
+	cout << "Success rate: " << formatDouble(success_rate, 2) << "% (" << num_passed << ")" << std::endl;
+	cout << "Total: " << num_tests << endl;
+
+}
+
+void runTestsWithKey(std::vector<Json::Value> test_cases) {
+
+	int num_tests = 0;
+	int num_passed = 0;
+	int num_ref_objects_correct = 0;
+	int num_packages_correct = 0;
+	int num_ref_and_package_correct = 0;
+	auto it = test_cases.begin();
+	for (int i = 0; it != test_cases.end(); ++it, ++i) {
+		++num_tests;
+		apm::APMTestCase test_case = CreateTestCase(*it);
+		apm::APMTest test(test_case, 0.10, apm::PackageMeasurer());
+		test.run();
+
+		std::string mode_str;
+
+		mode_str = angle ? "3" : "2";
+
+		printf("Test #%d (%s). Sides: %s. Result: %s (%.2f %%)\n", num_tests,
+				test_case.GetFileName().c_str(), mode_str.c_str(), test.isKeyMeasurementCorrect() ? "PASSED" : "FAILED",
+				test.getKeyMeasurementError() * 100.0);
+
+		if (test.isKeyMeasurementCorrect()) {
 			++num_passed;
 		}
 	}

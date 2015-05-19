@@ -46,6 +46,10 @@ std::string APMTestCase::GetFileName() const {
 }
 
 const cv::Vec3f APMTestCase::GetDimensions() const {
+	if(dimensions[0] == 670 || dimensions[1] == 670 || dimensions[2] == 670) // TODO lol
+		return cv::Vec3f(580, 360, 690);
+	if(dimensions[0] == 590 || dimensions[1] == 590 || dimensions[2] == 590)
+			return cv::Vec3f(383, 280, 605);
 	return dimensions;
 }
 

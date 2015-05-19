@@ -20,7 +20,10 @@ using std::endl;
 
 struct TestData {
 	std::string name;
+
 	int n;
+	double acc_n;
+
 	std::vector<int> b;
 	std::vector<int> d;
 	std::vector<int> h;
@@ -34,7 +37,6 @@ struct TestData {
 	std::vector<std::vector<std::vector<double>>> acc_v;
 
 };
-
 std::vector<std::string> GetJsonFiles();
 void ParseAllTests();
 void ParseTestCases();
@@ -70,10 +72,10 @@ int main(int argc, char** argv) {
 
 void PrintTests(std::vector<Json::Value> test_cases) {
 
-	TestData r, p, m, cm, km, ckm, rp;
+	TestData r, p, m, cm, km, ckm, rp, o_r, o_p, o_rp, o_m, o_cm, o_km, o_ckm;
 
 	int num_tests = test_cases.size();
-	for (TestData* test : { &r, &p, &rp, &m, &cm, &km, &ckm }) {
+	for (TestData* test : { &r, &p, &rp, &m, &cm, &km, &ckm, &o_r, &o_p, &o_rp, &o_m, &o_cm, &o_km, &o_ckm }) {
 		InitTestData(test);
 	}
 
@@ -84,6 +86,13 @@ void PrintTests(std::vector<Json::Value> test_cases) {
 	cm.name = "Calib measurement";
 	km.name = "Key measurement";
 	ckm.name = "Calib key measurement";
+	o_r.name = "Optimal reference object";
+	o_p.name = "Optimal package";
+	o_rp.name = "Optimal reference object and package";
+	o_m.name = "Optimal mesasurement";
+	o_cm.name = "Optimal calib measurement";
+	o_km.name = "Optimal key measurement";
+	o_ckm.name = "Optimal calib key measurement";
 
 	for (auto it = test_cases.begin(); it != test_cases.end(); ++it) {
 		APMTestCase test_case = CreateTestCase(*it);
@@ -91,25 +100,59 @@ void PrintTests(std::vector<Json::Value> test_cases) {
 		test.run();
 		int box, dist, height, angle;
 		ParseTestConfiguration(test_case.GetFileName(), box, dist, height, angle);
-		if (test.isReferenceObjectCorrect())
+		bool optimal_pose = (angle == 2 || angle == 1 || angle == 3) /*&& (dist == 0 || dist == 1) && (height == 1 || height == 2)*/ ? true : false;
+
+		if (test.isReferenceObjectCorrect()) {
 			UpdateTestData(box, dist, height, angle, r, test.getReferenceObjectError());
-		if (test.isPackageCorrect())
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_r, test.getReferenceObjectError());
+		}
+
+		if (test.isPackageCorrect()) {
 			UpdateTestData(box, dist, height, angle, p, test.getPackageError());
-		if (test.isReferenceObjectCorrect() && test.isPackageCorrect())
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_p, test.getPackageError());
+		}
+
+		if (test.isReferenceObjectCorrect() && test.isPackageCorrect()) {
 			UpdateTestData(box, dist, height, angle, rp, 0);
-		if (test.isMeasurementCorrect())
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_rp, 0);
+		}
+
+		if (test.isMeasurementCorrect()) {
 			UpdateTestData(box, dist, height, angle, m, test.getMeasurementError());
-		if (test.isCalibMeasurementCorrect())
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_m, test.getMeasurementError());
+		}
+
+		if (test.isCalibMeasurementCorrect()) {
 			UpdateTestData(box, dist, height, angle, cm, test.getCalibMeasurementError());
-		if (test.isKeyMeasurementCorrect())
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_cm, test.getMeasurementError());
+		}
+
+		if (test.isKeyMeasurementCorrect()) {
 			UpdateTestData(box, dist, height, angle, km, test.getKeyMeasurementError());
-		if (test.isCalibKeyMeasurementCorrect())
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_km, test.getMeasurementError());
+		}
+
+		if (test.isCalibKeyMeasurementCorrect()) {
 			UpdateTestData(box, dist, height, angle, ckm, test.getCalibKeyMeasurementError());
+			if (optimal_pose)
+				UpdateTestData(box, dist, height, angle, o_ckm, test.getMeasurementError());
+		}
+
 	}
 
 	std::cout << "\t\t\tTEST COMPLETE" << std::endl;
 	for (auto test : { r, p, rp, m, cm, km, ckm })
 		PrintTestData(num_tests, test);
+
+	std::cout << "\t\t\tOptimal pose results" << std::endl;
+	for (auto test : { o_r, o_p, o_rp, o_m, o_cm, o_km, o_ckm })
+		PrintTestData(60, test);
 
 }
 
@@ -121,23 +164,24 @@ void PrintTestData(int num_tests, TestData data) {
 	std::vector<double> position_rates = CalcSuccessRates(data.a, 5, num_tests);
 	std::vector<double> height_rates = CalcSuccessRates(data.h, 3, num_tests);
 	std::vector<double> distance_rates = CalcSuccessRates(data.d, 3, num_tests);
-
+	printf("Overall:\t\t%.2f\n", data.n / (double) num_tests);
 	printf("Box:\t\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", box_rates[0], box_rates[1], box_rates[2], box_rates[3],
 			box_rates[4]);
 	printf("Position:\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", position_rates[0], position_rates[1],
 			position_rates[2], position_rates[3], position_rates[4]);
 	printf("Distance:\t%.2f\t%.2f\t%.2f\n", distance_rates[0], distance_rates[1], distance_rates[2]);
 	printf("Height:\t\t%.2f\t%.2f\t%.2f\n", height_rates[0], height_rates[1], height_rates[2]);
-	printf("Angle:\n");
-	for (auto &e : data.v) {
-		std::vector<double> r1 = CalcSuccessRates(e[0], 9, num_tests / 5);
-		std::vector<double> r2 = CalcSuccessRates(e[1], 9, num_tests / 5);
-		std::vector<double> r3 = CalcSuccessRates(e[2], 9, num_tests / 5);
-		printf("\t\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", r1[0], r1[1], r1[2], r2[0],
-				r2[1], r2[2], r3[0], r3[1], r3[2]);
-	}
-
+//	printf("Angle:\n");
+//	for (auto &e : data.v) {
+//		std::vector<double> r1 = CalcSuccessRates(e[0], 9, num_tests / 5);
+//		std::vector<double> r2 = CalcSuccessRates(e[1], 9, num_tests / 5);
+//		std::vector<double> r3 = CalcSuccessRates(e[2], 9, num_tests / 5);
+//		printf("\t\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", r1[0], r1[1], r1[2], r2[0],
+//				r2[1], r2[2], r3[0], r3[1], r3[2]);
+//	}
+	std::cout << std::endl;
 	std::cout << "Error: " << std::endl;
+	printf("Overall:\t\t%.2f\n", data.acc_n / data.n);
 	printf("Box:\t\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", CalcAcc(data.acc_b[0], data.b[0]),
 			CalcAcc(data.acc_b[1], data.b[1]), CalcAcc(data.acc_b[1], data.b[1]),
 			CalcAcc(data.acc_b[3], data.b[3]), CalcAcc(data.acc_b[4], data.b[4]));
@@ -148,14 +192,14 @@ void PrintTestData(int num_tests, TestData data) {
 			CalcAcc(data.acc_d[1], data.d[1]), CalcAcc(data.acc_d[2], data.d[2]));
 	printf("Height:\t\t%.2f\t%.2f\t%.2f\n", CalcAcc(data.acc_h[0], data.h[0]),
 			CalcAcc(data.acc_h[1], data.h[1]), CalcAcc(data.acc_h[2], data.h[2]));
-	printf("Angle:\n");
-	for (int i = 0; i < data.acc_v.size(); ++i)
-		printf("\t\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
-				CalcVAcc(data.acc_v[i], data.v[i], 0, 0), CalcVAcc(data.acc_v[i], data.v[i], 0, 1),
-				CalcVAcc(data.acc_v[i], data.v[i], 0, 2), CalcVAcc(data.acc_v[i], data.v[i], 1, 0),
-				CalcVAcc(data.acc_v[i], data.v[i], 1, 1), CalcVAcc(data.acc_v[i], data.v[i], 1, 2),
-				CalcVAcc(data.acc_v[i], data.v[i], 2, 0), CalcVAcc(data.acc_v[i], data.v[i], 2, 1),
-				CalcVAcc(data.acc_v[i], data.v[i], 2, 2));
+//	printf("Angle:\n");
+//	for (int i = 0; i < data.acc_v.size(); ++i)
+//		printf("\t\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+//				CalcVAcc(data.acc_v[i], data.v[i], 0, 0), CalcVAcc(data.acc_v[i], data.v[i], 0, 1),
+//				CalcVAcc(data.acc_v[i], data.v[i], 0, 2), CalcVAcc(data.acc_v[i], data.v[i], 1, 0),
+//				CalcVAcc(data.acc_v[i], data.v[i], 1, 1), CalcVAcc(data.acc_v[i], data.v[i], 1, 2),
+//				CalcVAcc(data.acc_v[i], data.v[i], 2, 0), CalcVAcc(data.acc_v[i], data.v[i], 2, 1),
+//				CalcVAcc(data.acc_v[i], data.v[i], 2, 2));
 
 	std::cout << std::endl;
 }
@@ -179,7 +223,10 @@ double CalcVAcc(const std::vector<std::vector<double>>& acc_v, const std::vector
 }
 
 void UpdateTestData(int box, int dist, int height, int angle, TestData &data, double error) {
+
 	++data.n;
+	data.acc_n += error;
+
 	++data.b[box];
 	++data.d[dist];
 	++data.h[height];
@@ -194,6 +241,7 @@ void UpdateTestData(int box, int dist, int height, int angle, TestData &data, do
 
 void InitTestData(TestData* test) {
 	test->n = 0;
+	test->acc_n = 0;
 	test->b = std::vector<int>(5);
 	test->d = std::vector<int>(3);
 	test->h = std::vector<int>(3);

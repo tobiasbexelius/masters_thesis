@@ -279,6 +279,7 @@ std::vector<cv::Point2f> FindCorners(const std::vector<cv::Vec4i>& lines,
 			int n2_pair =
 					(find(line_indices.begin(), line_indices.end(), p2_neighbour) - line_indices.begin()) / 2;
 			if (l1_pair == n1_pair || l1_pair == n2_pair || n1_pair == n2_pair) // TODO only true if 3 sides are seen...
+				// the last part of above statement should cause 2 side views to fail sometimes, but results are better with it...
 				return std::vector<cv::Point2f>();
 		}
 
