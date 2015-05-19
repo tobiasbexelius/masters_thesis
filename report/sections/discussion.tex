@@ -34,6 +34,8 @@ A different reason for the poor performance of two-face views is that as distanc
 If the picture is not taken precisely in front of the middle of the package, but slightly towards the right or the left, the two edges can become inseparable.
 A solution to this problem would be to use the edge between the two middle corners.
 
+% TODO detection was designed with three face views in mind.
+
 TODO add figure with example when the mentioned problems occur? % TODO this
 \\TODO organise this text with a bullet list or subsections or something? % TODO this
 % TODO refer more to results
@@ -44,7 +46,7 @@ TODO add figure with example when the mentioned problems occur? % TODO this
 % also room for much irrelevant stuff when far away, and things behind on the wall (!!!!)
 
 \subsection{Measuring}
-The results in section \ref{results:measuring} show that vanishing point calibration result fail more often than when using Zhang's method, but the accuracy is almost the same between the two methods. (TODO: methods only differ for the z dimension, though..) % TODO !!
+The results in section \ref{results:measuring} showed that vanishing point calibration result fail more often than when using Zhang's method, but the accuracy is almost the same between the two methods. (TODO: methods only differ for the z dimension, though..) % TODO !!
 Two main reasons have been found to cause the lower success rate of vanishing point calibration: infinite vanishing points, and increased vulnerability to errors in detection.
 Infinite vanishing points occur when the parallel lines of the package are parallel in the image as well, and hence do not result in a vanishing point. (TODO mention this in theory section?) % TODO !!
 If an infinite vanishing point does occur, a constraint on $\omega$ is lost.% TODO Dubbelkolla detta

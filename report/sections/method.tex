@@ -133,42 +133,9 @@ To evaluate the performance of the detection and measuring algorithms two datase
 One training dataset, used to optimise the many constants used by the algorithms, and one test dataset. % TODO how many constants? How is optimisation done?
 The training dataset consisted of 50 images of five different packages.
 The test dataset consisted of 225 images of five different packages.
-The packages in the test dataset are shown in figure \ref{fig:packages}. A blue plastic folder was placed under the reference object on packages 3-5 to add some contrast between the reference object and the white surfaces.
+The packages in the test dataset are shown in figure \ref{fig:packages}. A blue plastic folder was placed under the reference object on packages 3-5 to  add some contrast between the reference object and the white surfaces.
 
-\begin{figure}
-	\centering
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{figures/package_1.jpg}
-		\caption{}
-		\label{fig:package_1}
-	\end{subfigure}%
-	~~~ %add desired spacing between images, e. g. ~, \quad, \qquad, \hfill etc.
-	%(or a blank line to force the subfigure onto a new line)
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{figures/package_2.jpg}
-		\caption{}
-		\label{fig:package_2}
-	\end{subfigure}
-	\vspace{3mm}\\
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{figures/package_3.jpg}
-		\caption{}
-		\label{fig:package_3}
-	\end{subfigure}
-	~~~
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{figures/package_4.jpg}
-		\caption{}
-		\label{fig:package_4}
-	\end{subfigure}
-	\vspace{3mm}\\
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{figures/package_5.jpg}
-		\caption{}
-		\label{fig:package_5}
-	\end{subfigure}
-	\caption{The packages in the test dataset. (a) Package 1: A moving box ($580 \times 350 \times 405$ mm). (b) Package 2: A small wooden box ($260 \times 191 \times 177$ mm). (c) Package 3: A lightly textured cardboard box ($385 \times 295 \times 225$ mm). (d) Package 4: A white wooden filing cabinet ($580 \times 360 \times 690$ mm). (e) Package 5: A white metal filing cabinet ($383 \times 280 \times 605$ mm).}\label{fig:packages}
-\end{figure}
+\input{floats/packages}
 
 The test dataset was constructed systematically with images observing the packages from different positions.
 Three parameters were alternated: 
@@ -186,34 +153,7 @@ Three parameters were alternated:
 			An example from each position is shown in figure \ref{fig:positions}.
 \end{itemize}
 
-\begin{figure}
-	\centering
-	\begin{subfigure}[b]{0.2\textwidth}
-		\includegraphics[width=\textwidth]{figures/angle_1.jpg}
-		\label{fig:angle_1}
-	\end{subfigure}
-	~
-	\begin{subfigure}[b]{0.2\textwidth}
-		\includegraphics[width=\textwidth]{figures/angle_2.jpg}
-		\label{fig:angle_2}
-	\end{subfigure}
-	~
-	\begin{subfigure}[b]{0.2\textwidth}
-		\includegraphics[width=\textwidth]{figures/angle_3.jpg}
-		\label{fig:angle_3}
-	\end{subfigure}
-	
-	\begin{subfigure}[b]{0.2\textwidth}
-		\includegraphics[width=\textwidth]{figures/angle_4.jpg}
-		\label{fig:angle_4}
-	\end{subfigure}
-	~
-	\begin{subfigure}[b]{0.2\textwidth}
-		\includegraphics[width=\textwidth]{figures/angle_5.jpg}
-		\label{fig:angle_5}
-	\end{subfigure}
-	\caption{Package 1 observed from the five different horizontal angles.}\label{fig:positions}
-\end{figure}
+\input{floats/angles}
 
 All combinations of distances, heights, and horizontal angles resulted in 45 images per package.
 
@@ -232,8 +172,6 @@ The overall ability of the system was tested by running the whole algorithm and 
 
 %To simplify evaluation a test file (in JSON format) with information about each image was created.
 %Each file contained information about which package was displayed in the image, the path to the image, the distance, height, and horizontal angle to the package, the dimensions of the package, and the locations of reference object and package corners in the image, which had been marked manually.
-
-
 
 \subsection{Online testing} \label{method:online_testing}
 A simple proof of concept Android application was made for online testing on the phone.
