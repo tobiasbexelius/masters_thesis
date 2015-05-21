@@ -20,7 +20,7 @@ OpenCV is an open source library for computer vision. % footnote to opencv homep
 It contains functions for many things that one needs when working with computer vision-related fields, from low-level processing such as filters, to high-level functions for feature detection, machine learning, camera calibration, pose estimation, and much more.
 It was designed with a strong focus on efficiency to be useful for real-time applications. \cite{bradski2008learning}
 
-OpenCV is written in C and C++, but also has full interfaces for python, java and MATLAB\cite{wiki:OpenCV}.
+OpenCV is written in C and C++, but also has full interfaces for Python, Java and MATLAB\cite{wiki:OpenCV}.
 The native C++ interface was used in this thesis. % Todo tense?
 
 \subsection{Preprocessing}
@@ -33,18 +33,18 @@ At the same time edges are preserved.
 As the name implies, the median filter assigns the value of every pixel to the median of itself, and the neighbouring pixels within a certain radius. % is this theory?
 
 \subsection{Edge and Line Detection} % TODO bad quality text
-The next step is to detect edges in the image, which is done using Canny's edge detection algorithm \cite{canny}.
+The next step is to detect edges in the image, which is done using Canny's edge detection algorithm \cite{canny}. %Vad är det Canny försöker optimera och hur funkerar den i grova drag.
 The output of Canny's Edge detection algorithm is a binary image in which pixels that are considered to be part of an edge are 1 and other pixels are 0.
-Now, the information in the edge image needs to be converted to a symbolic format.
-To accomplish this, contour analysis is first applied to the binary image using \cite{suzuki}.
+The information in the edge image then needs to be converted to a symbolic format for interpretation.
+To accomplish this, contour analysis is first applied to the binary image using \cite{suzuki}. % Som gör vad då?
 The result of the contour analysis is then fed to a line detection algorithm after some pruning.
-For this purpose, a line detection algorithm based on a probabilistic version of the hough transform is used \cite{houghp}.
+For this purpose, a line detection algorithm based on a probabilistic version of the Hough transform is used \cite{houghp}. % Som fungerar hur ungefär?
 This function outputs a more easy to use format, namely the coordinates of the end points of each detected line.
 
 \subsection{Package Detection}
 
 The algorithm used to detect the package is based on a ranking scheme, where multiple hypothesis about where the package is are created, and then scored. 
-The candidate with the highest score is chosen as the package. 
+The candidate with the highest score is chosen as the assumed package. 
 
 A fundamental property of cuboids is exploited by the algorithm: they consist of parallel line segments of equal length. 
 More specifically, the outline of a cuboid in a two dimensional image is made up of three pairs of parallel line segments, which form a hexagon. 
@@ -53,7 +53,7 @@ This is where the ranking algorithm comes in.
 The assumption behind the ranking is that the package is the hexagon with the least error in parallelism and length difference, in the image.
 Thus, the ranking algorithm rates a package candidate according to the degree of parallelism and equality of lengths between opposing sides.
 
-But first, the candidates must be found.
+First however, the candidates must be found.
 The first step to do that is to find pairs of parallel line segments. 
 As mentioned above, the line segments will not be exactly parallel, due to perspective distortion. % TODO perspective distortion correct term? 
 Thus, a pair of line segments is considered to be parallel by the algorithm if the angle between them is below a threshold. 
@@ -61,14 +61,14 @@ This threshold is set to be rather high, $30^\circ$.
 That is to avoid discarding a pair that belongs to the actual package, since the effect of perspective distortion is rather large from some perspectives. % TODO be more specific? example? max distortion?
 
 The next step is to pick three pairs of parallel line segments and let their intersections form a polygon. 
-Since the full contour of the package is not always distinguishable, the sought intersections are those between the lines (i. e. does not have a start or end point) defined by the line segments, not the line segments themselves. % elaborate, distinguishable from what? only some intersections are considered
+Since the full contour of the package is not always distinguishable, the sought intersections are those between the lines defined by the line segments, not the line segments themselves. % elaborate, distinguishable from what? only some intersections are considered
 The polygon is considered to be a candidate if it passes some basic tests, for example it must be convex and have six corners. 
 The corner must also be within the bounds of the image.
 Additionally, if the location of the reference object is known, the package must enclose the reference object.
 This is done for all combinations of three parallel line pairs.
 % Additional constraints... 
 
-When all candidates are generated they are scored according to the rules rules presented above.
+When all candidates are generated they are scored according to the rules presented above.
 
 \subsection{Reference Object Detection}
 
@@ -79,7 +79,7 @@ The ranking algorithm also uses some additional criteria, since the reference ob
 \subsection{Measuring}
 
 The measuring is carried out in two steps, first the width and depth of the package are measured, followed by the height. 
-This reason behind this order is that the reference object is placed on top of the package, which means that there is some special information about the top plane, and top corners, of the package.
+The reason behind this order is that the reference object is placed on top of the package, which means that there is some special information about the top plane, and top corners, of the package.
 
 As described in \ref{planar-homographies} the world coordinate system can be defined to have its origin in one of the corners of the reference object.
 Since the physical size of the reference object is known, the position of all corners is known in both image, and world coordinates.
@@ -89,6 +89,8 @@ The position of the four top corners of the package can now be calculated, along
 Now, all that is needed is the position of one (or more) of the lower corners of the package, in world coordinates.
 A homography cannot be created in the same way between the image plane and the side planes of the package, since the world coordinates of only two points is known in either of the side planes.
 This is why camera calibration is useful, because with it, points can be projected with equation \ref{eq:projection1}.
+
+% TODO Det vore bra i detta stycke att att ha en summering av alla beräkningssteg i punktform, så man ser vad som beräknas och vilka input och outpur för olika delsteg är.
 
 As discussed in \ref{problem-statement} two types of calibrations are to be implemented, one using an offline configuration which must be done beforehand, and one using online calibration.
 The offline configuration is implemented using Zhang's method.
@@ -166,7 +168,7 @@ The detection algorithm was tested by comparing the outputted corner points agai
 The ability to detect the reference object, the package, and both in the same image, was tested.
 
 The measuring algorithm was tested by using the ground truth locations as input, and comparing the resulting measurements against the ground truth dimensions of the package.
-Both calibration methods, online vanishing point calibration, and offline calibration with Zhang's method, were tested.
+Both calibration methods, online vanishing point calibration, and offline calibration with Zhang's method, were tested. % Någonstans bör man poängtera att off-line calibrering torde ge bättre resultat, medan den andra metoden har fördelen att vara mer praktisk, speciellt för kameror som är helt okända.
 
 The overall ability of the system was tested by running the whole algorithm and comparing the result with the ground truth dimensions of the package. 
 
@@ -176,7 +178,7 @@ The overall ability of the system was tested by running the whole algorithm and 
 \subsection{Online testing} \label{method:online_testing}
 A simple proof of concept Android application was made for online testing on the phone.
 This was used to assert that it is feasible to run the algorithm on a smartphone.
-Its purpose was also to determine if running the detection algorithm in real-time was an option.
+Its purpose was also to determine if running the detection algorithm in real-time is feasible.
 
 The app simply displays the camera feed and continuously feeds new frames to the measuring algorithm.
 When the package or reference object is successfully detected, an overlay is drawn to outline their position on the screen.

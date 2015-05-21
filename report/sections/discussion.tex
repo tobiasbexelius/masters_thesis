@@ -18,6 +18,12 @@ With a small modification it could be placed on the floor next to the package in
 % TODO calculate good positions success rate for measuring based on key points as well, so that the performance of the different components can be discussed.
 % TODO perhaps present errors per dimension? Discuss error here. % 
 
+% TODO diskutera generellt kring resultaten: poor error metric for detection
+
+% TODO mention classification of 2d vs 3d view
+
+% TODO weakness of method: height instead of angle
+
 \section{Weaknesses} \label{discussion:weaknesses}
 A few different cases where the detection and measuring algorithms fail were observed through testing.
 
@@ -61,7 +67,7 @@ The results in section \ref{results:measuring} showed that vanishing point calib
 Two main reasons have been found to cause the lower success rate of vanishing point calibration: infinite vanishing points, and increased vulnerability to errors in detection.
 
 Infinite vanishing points occur when the parallel lines of the package are parallel in the image as well, and hence do not result in a finite vanishing point. 
-If an infinite vanishing point does occur, a constraint on $\omega$ is lost
+If an infinite vanishing point does occur, a constraint on $\omega$ is lost.
 However, since the system is overdetermined, the calibration should still work in theory, even with up to two infinite vanishing points, if the vanishing point in the $Z$-direction is not one of the infinite ones, in which case the calibration becomes degenerate.
 In practice the error was often too great, when one vanishing point was infinite. % TODO find out how many times this occurred in test set and if it worked with an infinite vp any of the cases
 
@@ -108,7 +114,7 @@ TODO
 % demo app not pleasant to use in its current state, but it could be if tracking is added, or with a non-realtime solution, or any other combination
 % Very difficult to make general detection based on this simple approach
 
-
+% promising results, immature detection, presented suggestions to fix shortcomings
 
 
 

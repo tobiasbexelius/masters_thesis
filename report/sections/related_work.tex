@@ -7,8 +7,8 @@ This chapter presents an overview of related work in single view metrology, auto
 % ^-- http://web.engr.illinois.edu/~dhoiem/courses/vision_spring10/sources/criminisi00.pdf
 It is well established that planes can be rectified so that euclidean measurements can be made directly from the rectified image, by calculating a homography, using four image-world point correspondences of points in the plane. % TODO citation? rewrite sentence
 It has also been shown that other properties of the plane can be used instead, such as known angles, length ratios in the plane, vanishing points, and vanishing lines \cite{liebowitz1998metric} \cite{criminisi2000single}.
-In this thesis, it is assumed that the four corners of the reference object are known, though.
-A potentially useful result in this matter is presented in \cite{huang2004new}, where it is shown that measurements can also be made in planes perpendicular to the reference plane, provided that the camera is at least partially calibrated.
+
+A potentially useful result in this area is presented in \cite{huang2004new}, where it is shown that measurements can also be made in planes perpendicular to the reference plane, provided that the camera is at least partially calibrated.
 
 \section{Auto-calibration}
 As mentioned in section \ref{problem-statement}, it is critical that a package measuring solution is easy to use.
@@ -34,13 +34,13 @@ In this case the class is cuboid packages (and white papers).
 This is in general an extremely hard problem to solve for arbitrary objects, and suggested solutions to it are very complex.
 
 One notable example is presented in \cite{yan20073d}. The idea is to construct a 3D model of an object in the class one wishes to detect.
-A 3D model is created using a homographic framework from  multiple 2D views of the object.
+This 3D model is created using a homographic framework from  multiple 2D views of the object.
 A 2D image can then be tested against the 3D model by matching features between the image and the model. 
 When testing against the PASCAL VOC dataset, a standard dataset for object classification and detection algorithms, the presented algorithm achieved an average precision (i.e. the rate at which selected items are relevant) of 0.144 and 0.182 for two classes of objects (horses and motorcycles). 
 
-That may not sound very impressive, but it should be noted that the PASCAL VOC challenge dataset is made to be difficult, the objects appear in a great variety of poses, scales, clutter, occlusions and otherwise poor conditions.\cite{everingham2010pascal}
+That may not sound very impressive, but it should be noted that the PASCAL VOC challenge dataset is made to be difficult and the objects appear in a great variety of poses, scales, clutter, occlusions and otherwise poor conditions.\cite{everingham2010pascal}
 
-Another common approach is to use a machine learning solution as in for example \cite{viola2001rapid}, \cite{fergus2003object}, cite{shottoncontour}.
+Another common approach is to use a machine learning solution as in for example \cite{viola2001rapid}, \cite{fergus2003object}, \cite{shottoncontour}.
 
 More closely related to this thesis is the paper "Localizing 3D cuboids in single-view images", where the authors focus on the more delimited task of detecting rectangular cuboids in uncalibrated single-view images \cite{xiaolocalizing}.
 Edge and corner information is used create a model which is trained using Support Vector Machines.

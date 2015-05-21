@@ -1,5 +1,5 @@
-\chapter{Theoretical Background}
-
+\chapter{Theoretical Background} % TODO möjligen "Projective geometry"
+% TODO Bra vore om du redan i början av kapitlet har en förklaring till vad du behöver, så att man förstår poängen med det som presenteras.
 In this chapter the theoretical concepts used throughout the report is presented. Knowledge of two computer vision related fields is necessary to understand the following chapters: projective geometry and image processing.
 
 \section{Projective geometry}
@@ -19,9 +19,9 @@ It turns out that the most general property in a scene that is preserved by a pr
 
 \subsection{Homogeneous coordinates}
 
-In euclidean geometry, a point in two-dimensional space is typically represented by cartesian coordinates.
+In Euclidean geometry, a point in two-dimensional space is typically represented by cartesian coordinates.
 In projective geometry, the homogeneous coordinate system is used instead.
-To convert the cartesian coordinate pair $(x,y)$ to homogeneous coordinates, a one is appended to the cartesian coordinates, resulting in the point $(x,y,1)$. 
+To convert the Cartesian coordinate pair $(x,y)$ to homogeneous coordinates, a one is appended to the cartesian coordinates, resulting in the point $(x,y,1)$. 
 Conversely, the cartesian representation the homogeneous point $(\tilde{x},\tilde{y},\tilde{z})$ is $(\tilde{x}/\tilde{z},\tilde{y}/\tilde{z})$. 
 In other words, homogeneous coordinates ignore scale; $(x,y,1)$ and $(kx,ky,k)$ represents the same point for any nonzero value $k$.
 These principles extend to other dimensions as well. \cite[2]{hartley-zisserman}
@@ -30,7 +30,7 @@ These principles extend to other dimensions as well. \cite[2]{hartley-zisserman}
 Camera create a 3D projection of the world, i.e. a mapping of 3D coordinates to a 2D plane.
 Homogeneous coordinates provide an elegant way to perform this mapping, with a model called the projective camera model.
 It is based on a pinhole camera model, where all rays of light pass through a single point called the camera centre, $C$. Before reaching $C$, each ray will pierce the image plane, where the image is projected.
-It's location is determined by $f$, the focal length of the camera.
+Its location is determined by $f$, the focal length of the camera.
 
 \begin{figure}
 \begin{center}
@@ -48,9 +48,9 @@ Furthermore, the mapping above assumes that the camera is not rotated, and locat
 \begin{equation}\label{eq:projection1}
 \begin{pmatrix}	\tilde{u}\\\tilde{v}\\\tilde{w}\end{pmatrix} = 
 \begin{pmatrix}
-	f & 0 & p_{x} & 0\\
-	0 & f & p_{y} & 0\\
-	0 & 0 & 1 & 0
+	f & 0 & p_{x}\\
+	0 & f & p_{y}\\
+	0 & 0 & 1
 \end{pmatrix}
 \begin{pmatrix}
 	r_{11} & r_{12} & r_{13} & t_{1}\\
@@ -84,7 +84,7 @@ When multiplied together, the intrinsic and extrinsic matrices form a $3\times4$
 \begin{pmatrix}X \\Y \\Z \\1\end{pmatrix}
 \end{equation}
 $P$ is a homogeneous matrix, and thus only has 11 degree of freedom.
-The above can therefore be written as:
+Assuming that $P_{34}$ is nonzero the above can therefore be written as:
 \begin{equation}\label{eq:projection3}
 \begin{pmatrix} \tilde{u} \\ \tilde{v} \\ \tilde{w} \end{pmatrix} =
 \begin{pmatrix} p_{11} & p_{12} & p_{13} & p_{14} \\
@@ -129,7 +129,7 @@ One method to find a solution with minimal error is the Direct Linear Transforma
 Two critical concepts in projective geometry are the plane at infinity, $\pi_{\infty}$ and the absolute conic, $\omega_{\infty}$.
 These are very theoretical concepts and will only be touched upon briefly due to their importance for camera calibration.
 
-As mentioned earlier, parallelism is not preserved by projective transformations. % förklarat begreppet projective transformations tidigare?
+As mentioned earlier, parallelism is not preserved by projective transformations. 
 As a consequence, lines that are parallel in euclidean space are not necessarily parallel in projective space, but intersect at a vanishing point.
 An example of this is how parallel train tracks meet at the horizon.
 
@@ -137,12 +137,12 @@ $\pi_{\infty}$ is a plane where parallel lines meet.
 On $\pi_{\infty}$ lies an imaginary conic, the absolute conic, $\omega_{\infty}$.
 Its projection onto the image plane is called the Image of the Absolute Conic.
 The full theory regarding these concepts is out of scope for this thesis, but the important thing to know is that $\omega_{\infty}$ is invariant to projective transformations.
-This has important implications for camera calibration because, because it means that $\omega_{\infty}$ acts as a natural calibration object present in every image.
+This has important implications for camera calibration, because it means that $\omega_{\infty}$ acts as a natural calibration object present in every image.
 It can be shown that the following relationship exists between $K$ and the image of the image of the absolute conic:
 $\omega = (KK^T)^{-1}$. \cite[210]{hartley-zisserman}\cite{pollefeys}
 
 \subsection{Camera Calibration} \label{camera-calibration}
-This section will describe how to determine the camera matrix $P$, and its components.
+This section describes how to determine the camera matrix $P$, and its components. % TODO reformulate
 This problem is known as camera calibration.
 It is a similar problem to the one described in \ref{planar-homographies}, and can be solved in the same manner.
 
@@ -196,7 +196,7 @@ $$
 $$
 Now, only three equations are needed, since $\omega$ is a homogeneous matrix.
 
-Orthogonal vanishing points give rise to constraints of the form $v_{1}^T \omega v_{2} = 0$.
+A pair of orthogonal vanishing points $v_1$ and $v_2$ give rise to a constraint of the form $v_{1}^T \omega v_{2} = 0$.
 A known homography $H=[h_{1},h_{2},h_{3}]$ give the two constraints $h_{1}^T \omega h_{2} = 0$ and $h_{1}^T \omega h_{1} = h_{2}^T \omega h_{2}$. Refer to \cite{hartley-zisserman} chapter 8 for an explanation on how these equations are derived.
 
 Each constraint can be rewritten to the form $a_{1 \times 4}$w$_{4 \times 1}=0$ where w contains the four elements of $\omega$.
@@ -210,21 +210,21 @@ When $K$ is known, the final step before points can be projected using equation 
 Constraints can be imposed through point correspondences like in previous cases.
 The $R$ and $t$ have three degrees of freedom each, which means six constraints are required to determine them.
 As a result, three point correspondences are required to determine the pose, since each correspondence generates two constraints.
-But, the resulting system is non-linear, so it is more difficult to solve than in the earlier cases. \cite[187]{hartley-zisserman}
+However, the resulting system is non-linear, and is therefore more difficult to solve than in the earlier cases. \cite[187]{hartley-zisserman}
 
-However, there exist a large number of techniques to solve this problem which is known as Perspective-n-Point (PnP). % TODO improve this section
+There are many techniques to solve this problem which is known as Perspective-n-Point (PnP). % TODO improve this section
 Both iterative, e.g. \cite{hesch-pnp} and \cite{oberkampf-pnp}, and non-iterative solutions exist, e.g. \cite{quan-pnp} and \cite{lepetit-pnp}.
 The latter method is called EPnP, and claims to be both faster and more accurate than other methods. 
 
 \section{Image Processing}
 Image processing concerns processing of digital images, which consist of small image elements, pixels.
-A distinction is often made between the field of image processing and image analysis, where image processing refers to low-level processing, and image analysis concerns high-level processing.
+A distinction is often made between the field of image processing and image analysis, where image processing refers to subjective improvement of quality of an image, and image analysis concerns the interpretation of images.
 Both the input and output of an image processing algorithm are typically images, for example algorithms for noise, contrast enhancement, and colour correction. 
-In contrast, the input of an image analysis algorithm is typically an iamge, but the output is some representation of features in the image.
+In contrast, the input of an image analysis algorithm is typically an image, but the output is some representation of features in the image.
 The task could example be image segmentation, i.e. the task of dividing an image into regions or objects.\cite[p. 1-2]{pitas}\cite[p. 1-2]{gonzalez-woods}
 In this thesis the two concepts will be used interchangeably henceforth.
 TODO What to write? How detailed?% TODO write
-
+% Frågan är om de i nästa kapitel förklara i grova drag hur de bildbehamndlingsmetoder som används fungerar.
 
 
 

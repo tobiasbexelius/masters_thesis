@@ -1,94 +1,81 @@
 \chapter{Results} \label{results}
-%% TODO how is correct decided and error defined?
-%The results are presented in three sections.
-%In section \ref{results:detection} the results of the detection algorithm is presented.
-%In section \ref{results:measuring} the results of the measuring algorithm is presented.
-%And in section \ref{results:measuring} the overall performance of the system is presented,
-%together with the results of online testing.
-%
-%The results in each category are grouped by: package, distance, height, horizontal position, overall performance. % horizontal position?
+The results are divided into four sections.
+In section \ref{results:detection} the results of the detection algorithm are presented.
+In section \ref{results:measuring} the results of the measuring algorithm are presented.
+In section \ref{results:overall} the results of detection and measuring combined are presented.
+Finally, in section \ref{results:online} the results of online testing are presented
 
 \section{Detection} \label{results:detection}
-The output of the detection algorithm was compared against ground truth locations of the reference object and package corners, as explained in \ref{benchmarking}.
-A detection result was considered to be correct if the error was less than $10\%$, where the error was defined as the sum of distances between the detected points and actual points, divided by the length of the package contour. Table \ref{table:detection_overall} shows the success rates and average error of the detection algorithm.
+The output of the detection algorithm was compared against ground truth positions of the reference object and package corners, as explained in \ref{benchmarking}.
+The error was defined as the sum of distances between the detected points and actual points, divided by the length of the contour.
+A detection result was considered to be correct if the error was less than $10\%$.
+Table \ref{table:detection_overall} shows the success rates and average error of the detection algorithm on the set of 225 example image.
 
 \input{floats/detection_overall}
 
-Table \ref{table:detection_categories} shows the success rates of detection grouped by four categories: package, horizontal angle, distance, and height. Table \ref{table:detection_categories_error} shows the average error grouped in the same way.
+Table \ref{table:detection_categories} shows the success rates of detection grouped by four categories: package, rotation, distance, and height. Table \ref{table:detection_categories_error} shows the average error grouped in the same way.
 
 \input{floats/detection_categories}
 
 \input{floats/detection_categories_error}
 
-As shown in table \ref{table:detection_by_package} the success rates varied quite much by package, between 0.49 and 0.76 for detection of both the reference object and package in the same image.
-\input{floats/detection_by_package}
-
-The results varied even more by horizontal position, where the detection rates of reference object and package were between 0.38 and 0.87, as shown in table \ref{table:detection_by_position}.
-\input{floats/detection_by_position}
-
-As shown in table \ref{table:detection_by_distance}, detection rates by distance were about the same for the distances 1 and 1.5 metres at 0.68 and 0.73 respectively, but fell substantially for the distance 2 metres to 0.39.
-\input{floats/detection_by_distance}
-
-As shown in table \ref{table:detection_by_height}, detection rates by height were significantly lower for the lowest height, and about the same for the two higher, at 0.72 and 0.71.
-\input{floats/detection_by_height}
+From table \ref{table:detection_categories} it can be concluded that the success rate of detection varied significantly between the entries in each category.
+The frontal views yielded a much lower success rate than the other views.
+The same can be said for the furthest distance, and the lowest height. 
+From table \ref{table:detection_categories_error} it can be concluded that the relative error did not vary much.
+The error was consistently lower for the package than the reference object. % TODO poorly chosen error metric, redo if time
 
 \section{Measuring} \label{results:measuring} 
-The results presented in section were obtained by using ground truth locations of the corners as input to the measuring algorithm, and comparing the output against the manually measured dimensions of the packages.
-A measurement was considered to be correct if no dimension of the package had a relative error greater than $10\%$.
-The error column in the tables below states the sum of relative errors. 
-Table \ref{table:measurement_overall} shows that vanishing point calibration have slightly lower success rate than Zhang's method, and marginally larger error.
+Measuring results were obtained by using ground truth positions of the corners as input to the measuring algorithm, and comparing the output against the real dimensions of the packages.
+The error of each measurement was defined as the sum of relative errors of the three dimensions.
+The error was measured as sum of relative errors.
+A measurement was considered to be correct if no individual dimension of the package had a relative error greater than $10\%$.
 
-(TODO split error to xyz components since vp calibration and zhang uses same xy) % TODO dela upp felet i xyz eftersom calib och vp använder samma xy
+Table \ref{table:measuring_overall} shows the success rate and average error of the two calibration methods.
 
-\input{floats/key_measure_overall}
+\input{floats/measuring_overall} % TODO split error into x,y,z
 
-% TODO text?
+Table \ref{table:measuring_categories} and \ref{table:measuring_categories_error} show the success rate and average error grouped in the same was as in the previous section.
 
-\input{floats/key_measure_by_package}
+\input{floats/measuring_categories}
 
-Table \ref{table:key_measurement_by_position} shows that the two horizontal positions ($\leftarrow$ what's a better word for this? TODO) from which only two positions can be seen have a significantly lower success rate than the other positions, especially for vanishing point calibration. % TODO comment: what's a better word for this? TODO 
+\input{floats/measuring_categories_error}
 
-\input{floats/key_measure_by_position}
-
-Table \ref{table:key_measurement_by_distance} show that success rate and accuracy decrease as the distance to the package grows for both methods. Table \ref{table:key_measurement_by_height} shows that the vanishing point method is relatively unaffected by difference in height, while the success rate when using Zhang's calibration method increases as height grows.
-
-\input{floats/key_measure_by_distance}
-\input{floats/key_measure_by_height}
+The results in table \ref{table:measuring_categories} are somewhat similar to the corresponding detection results.
+The two frontal views yielded lower success rates, especially for vanishing point calibration.
+Success rates also decreased as distance increased.
+Table \ref{table:measuring_categories_error} showed that the offline calibration method yielded slightly lower error than vanishing point calibration.
 
 \section{Overall Performance} \label{results:overall}
 The results in this section present the performance of the detection and measuring algorithms combined, using vanishing point calibration.
 The errors are defined in the same way as in section \ref{results:measuring}.
 
-Table \ref{table:measurement_overall} shows the overall performance of the system , which is $50\%$. However, as can be seen in tables \ref{table:measurement_by_package} - \ref{table:measurement_by_height} some positions are considerably worse than the rest.
-These positions are the horizontal positions in which only two sides of the package can be seen, where the distance is 2 metres, and when the height is the lowest (0.9 and 1.1 metres).
-If these positions are removed, the results of the remaining, "good positions" give much better results. The success rate for these positions is 0.92, as shown in \ref{table:measurement_overall}.
-\\TODO mention the "good positions" in method? % TODO !!!
-\\TODO Maybe merge all the small tables to one big table in each section? % TODO !!!
-% TODO average result of successful measurements for each package?
+Table \ref{table:overall_overall} shows the overall performance of detection and measuring combined.
 
-\input{floats/measure_overall}
+\input{floats/overall_overall}
 
-\input{floats/measure_by_package}
+Table \ref{table:overall_categories} and \ref{table:overall_categories_error} show the success rate and average error of detection and measuring combined.
 
-Table \ref{table:measurement_by_position} shows that performance is greatly affected by horizontal position, like earlier. Performance is much worse for the positions from which only two sides of the package can be seen. 
+\input{floats/overall_categories}
 
-\input{floats/measure_by_position}
+\input{floats/overall_categories_error}
 
-Bla bla distance table... % TODO
+The results are similar to those of the individual parts, as expected.
+The lower success rates of the frontal views, the furthest distance and the lowest height, are even more prominent in this case.
+The results of disregarding these poorly performing positions and only considering the remaining positions are shown in table \ref{table:overall_good}.
 
-\input{floats/measure_by_distance}
+\input{floats/overall_good}
 
-Bla bla height table... % TODO
+Table \ref{table:overall_good} shows that disregarding a few of the positions results in a considerably better performance.
 
-\input{floats/measure_by_height}
+\section{Online testing} \label{results:online}
 
-\section{Online testing}
+Online testing was performed using the Android application described in \ref{method:online_testing}.
+A screenshot of the resulting application is shown in figure \ref{fig:screenshot}. % TODO add more screenshots
+The processing time of the application was typically around 300 milliseconds at the resolution $800 \times 450$ on the Galaxy S6 Edge, depending on the amount of clutter in the image. 
+More clutter resulted in higher processing times.
 
-Online testing was performed using the Android app described in \ref{method:online_testing}.
-A screenshot of the resulting app is shown in figure \ref{fig:screenshot}.
-The processing time of the app is typically around 300 milliseconds at the resolution  TODO on the Galaxy S6 Edge, depending on the amount of clutter in the image. % TODO times true?
-More clutter results in higher processing times.
-% TODO measure time for different resolutions
+% 1000 ms at 1280x720
 
 \begin{figure}[H]
 \begin{center}
