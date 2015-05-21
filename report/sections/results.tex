@@ -1,18 +1,24 @@
 \chapter{Results} \label{results}
-% TODO how is correct decided and error defined?
-The results are presented in three sections.
-In section \ref{results:detection} the results of the detection algorithm is presented.
-In section \ref{results:measuring} the results of the measuring algorithm is presented.
-And in section \ref{results:measuring} the overall performance of the system is presented,
-together with the results of online testing.
-
-The results in each category are grouped by: package, distance, height, horizontal position, overall performance. % horizontal position?
+%% TODO how is correct decided and error defined?
+%The results are presented in three sections.
+%In section \ref{results:detection} the results of the detection algorithm is presented.
+%In section \ref{results:measuring} the results of the measuring algorithm is presented.
+%And in section \ref{results:measuring} the overall performance of the system is presented,
+%together with the results of online testing.
+%
+%The results in each category are grouped by: package, distance, height, horizontal position, overall performance. % horizontal position?
 
 \section{Detection} \label{results:detection}
 The output of the detection algorithm was compared against ground truth locations of the reference object and package corners, as explained in \ref{benchmarking}.
-A detection result was considered to be correct if the error was less than $10\%$, where the error was defined as the sum of distances between the detected points and actual points, divided by the length of the contour spanned by the ground truth corners. Table \ref{table:detection_overall} shows the success rates of detection over all packages and configurations.
-(TODO add accuracy)  % TODO add accuracy
+A detection result was considered to be correct if the error was less than $10\%$, where the error was defined as the sum of distances between the detected points and actual points, divided by the length of the package contour. Table \ref{table:detection_overall} shows the success rates and average error of the detection algorithm.
+
 \input{floats/detection_overall}
+
+Table \ref{table:detection_categories} shows the success rates of detection grouped by four categories: package, horizontal angle, distance, and height. Table \ref{table:detection_categories_error} shows the average error grouped in the same way.
+
+\input{floats/detection_categories}
+
+\input{floats/detection_categories_error}
 
 As shown in table \ref{table:detection_by_package} the success rates varied quite much by package, between 0.49 and 0.76 for detection of both the reference object and package in the same image.
 \input{floats/detection_by_package}
@@ -80,8 +86,9 @@ Bla bla height table... % TODO
 
 Online testing was performed using the Android app described in \ref{method:online_testing}.
 A screenshot of the resulting app is shown in figure \ref{fig:screenshot}.
-The processing time of the app is typically between 200-700 milliseconds on the Galaxy S6 Edge, depending on the amount of clutter in the image. % TODO times true?
+The processing time of the app is typically around 300 milliseconds at the resolution  TODO on the Galaxy S6 Edge, depending on the amount of clutter in the image. % TODO times true?
 More clutter results in higher processing times.
+% TODO measure time for different resolutions
 
 \begin{figure}[H]
 \begin{center}
