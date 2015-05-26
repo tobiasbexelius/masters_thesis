@@ -100,7 +100,7 @@ void PrintTests(std::vector<Json::Value> test_cases) {
 		test.run();
 		int box, dist, height, angle;
 		ParseTestConfiguration(test_case.GetFileName(), box, dist, height, angle);
-		bool optimal_pose = (angle == 2 || angle == 1 || angle == 3) /*&& (dist == 0 || dist == 1) && (height == 1 || height == 2)*/ ? true : false;
+		bool optimal_pose = (angle == 2 || angle == 1 || angle == 3) && (dist == 0 || dist == 1) && (height == 1 || height == 2) ? true : false;
 
 		if (test.isReferenceObjectCorrect()) {
 			UpdateTestData(box, dist, height, angle, r, test.getReferenceObjectError());
