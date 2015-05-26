@@ -24,6 +24,8 @@ With a small modification it could be placed on the floor next to the package in
 
 % TODO weakness of method: height instead of angle
 
+% TODO för att förbättra nogrannhet, använd fler vps
+
 \section{Weaknesses} \label{discussion:weaknesses}
 A few different cases where the detection and measuring algorithms fail were observed through testing.
 
@@ -63,7 +65,7 @@ If the picture is not taken precisely in front of the middle of the package, but
 %This could help with nonsensical candidate sometimes winning.
 
 \subsection{Measuring}
-The results in section \ref{results:measuring} showed that vanishing point calibration result fail more often than when using Zhang's method, but the accuracy is almost the same between the two methods. (TODO: methods only differ for the z dimension, though..) % TODO !!
+The results in section \ref{results:measuring} showed that vanishing point calibration result fail more often than when using Zhang's method, but the accuracy is almost the same between the two methods. % TODO methods only differ for the z dimension, though...
 Two main reasons have been found to cause the lower success rate of vanishing point calibration: infinite vanishing points, and increased vulnerability to errors in detection.
 
 Infinite vanishing points occur when the parallel lines of the package are parallel in the image as well, and hence do not result in a finite vanishing point. 
@@ -92,7 +94,7 @@ However, performance is not guaranteed to be the same in other environments.
 Another limitation is that not much effort was put into dealing with false positives.
 The only countermeasure to this is that minimum score thresholds where added to the rating algorithm, i.e. a reference object or package hypothesis with a too low score were discarded even if it was the best hypothesis.
 
-\section{Future Work} \label{discussion:future_work}
+\section{Future work} \label{discussion:future_work}
 Some suggestions on how to improve current detection method at a high level have already been suggested in section \ref{discussion:weaknesses}.
 But, the lower level image processing algorithms can also be changed.
 To fix the problem regarding the use of constant thresholds, one can use thresholding techniques to automatically determine good thresholds to detect edges in an image, or a region of an image.
@@ -110,6 +112,8 @@ They should then converge over time to a very accurate calibration matrix. \cite
 
 \section{Conclusions}
 TODO
+
+% Någonstans bör man poängtera att off-line calibrering torde ge bättre resultat, medan den andra metoden har fördelen att vara mer praktisk, speciellt för kameror som är helt okända.
 
 % demo app not pleasant to use in its current state, but it could be if tracking is added, or with a non-realtime solution, or any other combination
 % Very difficult to make general detection based on this simple approach

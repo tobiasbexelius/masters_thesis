@@ -1,24 +1,26 @@
 \chapter{Introduction}
 Computer vision applications on handheld devices is an area which has received growing interest in recent years. 
-Modern smartphones are cheap, and their cameras are good enough for many computer vision purposes.
+Modern smartphones are cheap, and their cameras and CPUs are good enough for many computer vision purposes.
 % TODO hitta källa som säger nåt intressant om detta
 
-An interesting computer vision problem, which can be useful in a smartphone is to measure the dimensions of an object, a postal package, for example.
+An interesting computer vision problem which can be useful to solve with a smartphone, is to measure the dimensions of an object, a postal package for example.
 Imagine that you would like to know the dimensions of a package, but do not have a measuring tool.
 Since almost everyone carries a smartphone with them, a practical solution would be to have an application which can measure the package, without measuring tape or ruler.
 If a reference object, like a credit card for example, is placed on top of the package, it should be possible to measure its dimensions by filming the package and reference object together.
 
-\section{Problem Statement}\label{problem-statement}
+\section{Problem statement}\label{problem-statement}
 In order for a measuring solution like the one described above to be useful, it must be easy to use. 
-The measuring process should therefore not require any user intervention, such as marking the reference object or package in the image. They will be detected automatically by the app.
+The measuring process should therefore not require any user intervention, such as marking the reference object or package in the image. 
+They will be detected automatically by the app.
 
 Computer vision applications which aim to extract metric information from a scene typically require knowledge about the internal properties and pose of the camera.
 Gathering the necessary information about the camera should not require any additional steps, such as calibrating the camera beforehand.
-I.e. the problem is to be solved using an \textit{uncalibrated view}.
-To further simplify the process, and to reduce computational complexity, the problem should be solved using only a single, uncalibrated view.
+In other words, the problem is to be solved using an \textit{uncalibrated view}.
+To further simplify the process, and to reduce computational complexity, the problem should be solved using only \textit{a single uncalibrated view}.
 
-However, because a calibrated view is expected to result in higher accuracy, a version that uses a calibrated view will also be implemented.
-The performance of the two methods will be compared.
+However, a calibrated view is expected to yield higher accuracy.
+If so, it would be interesting to know how much accuracy needs to be sacrificed to gain the extra utility of not needing prior calibration.
+In order to determine this, a version which uses a calibrated view will also be implemented, and the results of the two methods compared.
 
 For this approach to be successful, two components must exist, and work well: a detection component and a measuring component.
 The detection component should find the position of the reference object and the package in the image, and the measuring component should use their positions to calculate the dimensions of the package.
@@ -45,3 +47,5 @@ The package must stand on a flat surface, and there the area in close proximity 
 % TODO Section about Bontouch/Postnord???
 
 % TODO metion real time vs not real time?
+
+% TODO Någonstans bör man poängtera att off-line calibrering torde ge bättre resultat, medan den andra metoden har fördelen att vara mer praktisk, speciellt för kameror som är helt okända.
