@@ -1,36 +1,19 @@
 \chapter{Discussion}
-This chapter discusses the strengths and weaknesses of the used method, limitations of the results, and proposes ways to improve upon this work.
-
-\section{Strengths}
 The results showed that the used method works well when using images of a package being observed from an angle where three faces of the package are visible, and at sufficiently close range and high altitude. 
-As shown in table \ref{table:measurement_overall}, the success rate increased from 50\% to 92\% when selecting a subset of the camera poses.
+As shown in table \ref{table:overall_good}, the success rate increased from 50\% to 92\% when selecting a subset of the camera poses.
 The average error was also reduced from 8\% to 7\%.
-The results from the selected subset of camera poses are satisfying, and suggestions on how to improve the performance of the remaining cases are proposed in \ref{discussion:weaknesses}
+The results from the selected subset of camera poses are satisfying, and suggestions on how to improve the performance of the remaining cases will be proposed.
 
 Aside from success rates, this method performs the measurements of cuboids automatically, entirely without user intervention.
 Additionally, no prior calibration, or special calibration objects are required.
 That is avoided by using the fact that the package acts as a calibration object.
-The only additional required object is a reference object.
+The only additional required object except for the package is a reference object.
 In the current implementation, only white papers are detected, but detection of other planar objects, like credit cards for example, can easily be added.
 A different planar reference object can be used directly by the measuring algorithm, the only requirement is that it must fit on top of the package.
 With a small modification it could be placed on the floor next to the package instead.
 
-% TODO calculate good positions success rate for measuring based on key points as well, so that the performance of the different components can be discussed.
-% TODO perhaps present errors per dimension? Discuss error here. % 
-
-% TODO diskutera generellt kring resultaten: poor error metric for detection
-
-% TODO mention classification of 2d vs 3d view
-
-% TODO weakness of method: height instead of angle
-
-% TODO för att förbättra nogrannhet, använd fler vps
-
-\section{Weaknesses} \label{discussion:weaknesses}
-A few different cases where the detection and measuring algorithms fail were observed through testing.
-
-\subsection{Detection}
-The detection algorithms were based on simple, feature-based method. 
+\section{Detection} \label{discussion:detection}
+The detection algorithm was based on simple, feature-based method. 
 The method involved detecting lines in the image and attempting to match the intersections between lines to a quadrilateral or hexagon in which opposing sides have as equal length, and are as parallel as possible.
 
 The image processing algorithms used by this method depend on several constants.
@@ -41,20 +24,25 @@ Many examples where there was too much, or too little data left to analyse for t
 This balance was extra important in this case, since the algorithm is supposed to be run on a smartphone with with limited processing power and with limited processing time.
 This was one of the most common reasons of failure for the detection algorithms.
 
-Another problem is that the rating criteria were not sophisticated enough.
-In some cases there was another hexagon with opposing edges more parallel and with more similar length than the package.
-This occurred more often for two-face than the three-face views.
+The tables in section \ref{results:detection} showed that the detection algorithm was much more successful for images taken from certain positions.
+These were the three rotations from which three faces of the package could be seen, the two closest distances, and the two highest heights.
+Regarding the rotations, it is believed that the variations are exclusively because the constraints and rules imposed by the algorithm, were better suited for three face views, than two faced views.
+Initially, the algorithm was only designed with three face views in mind.
 
-Some other criteria were considered, but sadly there was not enough time to implement them.
-For example additional score could be awarded if the inner contours of the package are detected.
-Currently, the inner contours of the package are filtered out, to reduce the amount of data.
-This addition would require them to be kept, which would in turn call for more intelligent pruning of edges as packages sometimes have a lot of texture which can make the amount of data overwhelming.
+Regarding the variations in success rate connected to distance and height, it is believed to be partly because of implementation details and threshold values which favoured the higher and closed configurations, but they are also a little more difficult by nature.
+As height increases, less clutter is seen in the background, and more of the floor.
+As distance increases, there is room for more clutter in the background.
+When there is more clutter, it is more difficult to distinguish what is truly relevant in the image, and it is more likely that there are too many lines.
 
-Another reason for the poor performance of two-face views is that as distance grows, the edges going from bottom to the middle and from the middle to the top of the package contour, become increasingly parallel. 
-If the picture is not taken precisely in front of the middle of the package, but slightly towards the right or the left, the two edges can become inseparable.
-
-% TODO refer more to results <<<<<<<<<<<<<<<
-% also room for much irrelevant stuff when far away, and things behind on the wall (!!!!)
+%The scoring function was also not always good enough.
+%In some cases there was another hexagon with opposing edges more parallel and with more similar length than the package.
+%Some other criteria were considered, but sadly there was not enough time to implement them.
+%For example additional score could be awarded if the inner contours of the package are detected.
+%Currently, the inner contours of the package are filtered out, to reduce the amount of data.
+%This addition would require them to be kept, which would in turn call for more intelligent pruning of edges as packages sometimes have a lot of texture which can make the amount of data overwhelming.
+%
+%Another reason for the poor performance of two-face views is that as distance grows, the edges going from bottom to the middle and from the middle to the top of the package contour, become increasingly parallel. 
+%If the picture is not taken precisely in front of the middle of the package, but slightly towards the right or the left, the two edges can become inseparable.
 
 % TODO additional reasons:
 % from some angles the constraints imposed by the detection algorithm causes detection to fail (?)
@@ -64,65 +52,86 @@ If the picture is not taken precisely in front of the middle of the package, but
 %It is not modelled that a candidate with detected edges along much of its contour is more likely to be the package.
 %This could help with nonsensical candidate sometimes winning.
 
-\subsection{Measuring}
-The results in section \ref{results:measuring} showed that vanishing point calibration result fail more often than when using Zhang's method, but the accuracy is almost the same between the two methods. % TODO methods only differ for the z dimension, though...
-Two main reasons have been found to cause the lower success rate of vanishing point calibration: infinite vanishing points, and increased vulnerability to errors in detection.
+\section{Measuring}
+The tables in section \ref{results:measuring} showed that vanishing point calibration failed more often than when using Zhang's method, but the accuracy was the same between the two methods. % TODO split error into x,y,z
+It is somewhat surprising that there was no significant difference in accuracy among the accepted measurements.
+A drop in success rate from $91\%$ to $81\%$ seems like a very reasonable sacrifice to make to gain the practicality of using uncalibrated views.
+From a commercial perspective, it would be unfeasible to ask the users of a smartphone application to perform the calibration procedure.
+Therefore it is very good news that the uncalibrated method worked so well.
+
+Two main reasons were found to cause the lower success rate of vanishing point calibration: infinite vanishing points, and increased vulnerability to errors in detection.
 
 Infinite vanishing points occur when the parallel lines of the package are parallel in the image as well, and hence do not result in a finite vanishing point. 
 If an infinite vanishing point does occur, a constraint on $\omega$ is lost.
 However, since the system is overdetermined, the calibration should still work in theory, even with up to two infinite vanishing points, if the vanishing point in the $Z$-direction is not one of the infinite ones, in which case the calibration becomes degenerate.
-In practice the error was often too great, when one vanishing point was infinite. % TODO find out how many times this occurred in test set and if it worked with an infinite vp any of the cases
+In practice the error was often too great, when one vanishing point was infinite. 
+An infinite vanishing point occurred in 13 images in the test set, and in only one of these cases, a correct answer was found.
+Infinite vanishing points only occurred with frontal view images, which also explains the greater difference in success rate between two and three face views, when using vanishing point calibration, compared to Zhang's method.
 
-The vanishing point calibration method is also more vulnerable to errors in the package corners, since both the calibration and measurements themselves depend on the location of the package corners being correct.
+The vanishing point calibration method was also more vulnerable to errors in the package corners, since both the calibration and measurements themselves depend on the location of the package corners being correct.
+
 %Errors do not necessarily increase proportionally with the error 
 % TODO find out correlation between error in detection and measurement! 
 
 %Due to the inaccuracies a different solution than the correct one have smaller least squares error than the correct answer, is therefore chosen as the solution.
 %These problem occur when using detected corner points as well as when using the marked corners, since the marked corners also have some error.
 %On average, the accepted solutions have the same error when using detected corner points and marked corners. % TODO förtydliga hur marked corners går till i metod
-
-\section{Online testing}
-Realtime vs not realtime. Processing time. % TODO make formal measurements of processing time, should be very easy to calc average
+\section{Online testing} % TODO measure average processing time properly and show in results?
+Online testing showed that the used method works well on a smartphone as well.
+With a processing time of about 300 ms on the resolution $800 \times 450$, it is not yet quite fast enough to deliver a good user experience when used in real-time, at least not using the created demo application.
+Unless one was very careful to hold the camera still, the overlay would move off the edges of the package, since the rate at which the overlay is updated is much slower than the rate at which new camera frames are displayed.
+However, the algorithm could, in its current state, provide satisfying results in a non-real time application.
+Such an application could for example let the user take one, or a few snapshots, process the snapshots, and display the result in a still image, instead of drawing the overlay on the live camera feed.
 
 \section{Limitations}
-Because of limitations in the evaluation method, it should be notedThere are some limitations as to what the results can show, as a consequence of limitations in the evaluation method.
+There are some limitations as to what the results can show, as a consequence of limitations in the evaluation method.
 For example only one room was used for testing.
 It was not an optimal environment, due to the striped floor and suboptimal lightning conditions.
-The colour of the floor was also similar to the colour of one of the package.
+The colour of the floor was also quite similar to the colour of one of package 1, which caused some issues.
 However, performance is not guaranteed to be the same in other environments.
 
 Another limitation is that not much effort was put into dealing with false positives.
 The only countermeasure to this is that minimum score thresholds where added to the rating algorithm, i.e. a reference object or package hypothesis with a too low score were discarded even if it was the best hypothesis.
 
 \section{Future work} \label{discussion:future_work}
-Some suggestions on how to improve current detection method at a high level have already been suggested in section \ref{discussion:weaknesses}.
-But, the lower level image processing algorithms can also be changed.
-To fix the problem regarding the use of constant thresholds, one can use thresholding techniques to automatically determine good thresholds to detect edges in an image, or a region of an image.
+It is clear from the results that the detection is currently the bottleneck of the algorithm.
+Some suggestions on how to improve the detection algorithm on a high level were presented in section \ref{discussion:detection}, but the lower level image processing algorithms can also be improved.
+An improvement with much potential is to fix the problem of using constant thresholds for the image processing algorithms.
+One can use thresholding techniques to automatically determine good thresholds to detect edges in an image, or a region of an image.
 This can be done in conjunction with Canny edge detection, as shown in \cite{wang2005fast} and \cite{liu2004automated}.
+This would also improve the chances of the algorithm working in different environments.
+
 Alternatively, a completely different approach could be used for object detection, such as the one presented in "Localizing 3D cuboids in single-view images" as mentioned in section \ref{related_work:object_detection}.
+This method can handle different poses well, occlusion, and clutter.
+However it is unclear if this method is feasible to use, given the time constraints.
 
 Another interesting improvement is to use multiple images to measure the package.
-One could either use multiple measurements and simply calculate an average, combined with outlier rejection with for example the RANSAC algorithm.
-This should both improve success rate and accuracy..
+One could either use multiple measurements and simply calculate an average, combined with outlier rejection with for example RANSAC \cite{fischler1981random}.
+This should both improve success rate and accuracy.
 In the same way, one could save the intrinsic matrices found with vanishing point calibration between measurements and combine them.
-They should then converge over time to a very accurate calibration matrix. \cite{fischler1981random}
+They should then converge over time to a very accurate calibration matrix. 
 
-% Nämn object tracking och rois.
-%\cite{yilmaz2006object}
+% Nämn object tracking och rois. \cite{yilmaz2006object}
 
 \section{Conclusions}
-TODO
+A method to measure the dimensions of cuboid packages using a single, uncalibrated view, has been presented.
+The algorithm could successfully measure the package in $51\%$ of all images in the test set, which consisted of 225 images of 5 packages from various positions.
+However, the algorithm could handle some of the camera poses much better than others.
+If only a subset of the camera poses were chosen, a success rate of $92\%$ was achieved instead.
+The images in the subset were those where three faces of the package could be seen, those taken from the two closer of the distances (1 and 1.5 metres), and those taken from the two of the higher heights (1.2 and 1.5, or 1.5 and 1.8 metres).
+The difference in performance largely depended on implementation details, but problems such as increased clutter and infinite vanishing points occurred in the poorly performing positions, also factored in.
 
-% Någonstans bör man poängtera att off-line calibrering torde ge bättre resultat, medan den andra metoden har fördelen att vara mer praktisk, speciellt för kameror som är helt okända.
+A version of the algorithm which used calibrated views were also implemented, to determine how much performance needed to be sacrificed to gain the convenience of not having to go through the calibration procedure.
+The success rates when testing the measuring algorithm in isolation was $81\%$ for uncalibrated views, and $93\%$ for calibrated views.
+The average relative error was $7\%$ for both methods.
 
-% demo app not pleasant to use in its current state, but it could be if tracking is added, or with a non-realtime solution, or any other combination
-% Very difficult to make general detection based on this simple approach
+Online testing showed that the algorithm is not yet mature to be run in a real-time application, but could work well in a non-real time application.
 
-% promising results, immature detection, presented suggestions to fix shortcomings
+% TODO bättre resultat om man skulle constraina mer, t.ex. tvinga paketet att va i en fyrkant i centrum av bilden.
+% TODO comment on results by package
 
+% TODO mention classification of 2d vs 3d view
 
-
-
-
+% TODO för att förbättra nogrannhet, använd fler vps
 
 

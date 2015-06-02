@@ -1,4 +1,10 @@
 \chapter{Projective Geometry} \label{chapter:projective_geometry}
+% Dani: Kapitel 3 - du beskriver ett antal områden men det är igen inte klar hur exakt det relaterar till ditt arbete.
+%
+% För att kunna räkna ut 
+%
+% Beskriv hur områdena hänger ihop.Hur rubrikerna leder till varandra
+%
 This chapter presents the theoretical concepts and relationships in projective geometry which are necessary to perform measurements from an image.
 First, the foundations projective geometry are presented, followed by the projective camera model, which can be used to project a 3D point in the world to a point on the image plane of a camera.
 Finally, the process of camera calibration is explained, and how the camera can be calibrated from a single view, using vanishing points.
@@ -163,7 +169,7 @@ Degeneracy is avoided by using multiple images, and since many point corresponde
 Since $P=K[R|t]$, and $K$ remains the same between images taken by the same camera, $K$ can be extracted from $P$ through QR-decomposition, and reused later even if the camera has moved \cite{wiki:qr-decomposition}. 
 This is desirable to do, because if $K$ is known, the extrinsic parameters can be determined using less information than what is needed to determine $P$ from scratch, as described in section \ref{camera-pose}.
 
-\subsection{Camera calibration using vanishing points}
+\subsection{Camera calibration using vanishing points} \label{background:vanishing_point_calibration}
 It is also possible to determine $K$ is to do so without first determining $P$, for example by using vanishing points.
 It turns out that $K$ can be determined from a single image by imposing constraints on the image of the absolute conic ($\omega$) and then using the equation from section \ref{ac}:
 \begin{equation} \label{eq:conic_k}

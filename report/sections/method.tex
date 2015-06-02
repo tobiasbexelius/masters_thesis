@@ -1,26 +1,40 @@
 \chapter{Method}
+% Dani: Kapitel 4 kääns som ett referat som går igenom din implementation/kod. Tänk på att den som läser
+%ska kunna förstå varför vissa lösningar var nödvändiga, får en bra överblick av ditt system. Kanske bra att
+%börja med en flow diagram eller liknande.
+%
+
 This chapter describes the different steps of implementing the automatic package measuring algorithm.
 The tools, components, and algorithms used are described.
 Finally, the method used to evaluate the outcome are described.
 
-\section{Implementation} \label{method:implementation}
+\section{System description} \label{method:implementation}
 This section presents how the package measuring solution was implemented.
 First, the image processing tools used, and the process of detecting the reference object and package is described.
 Then, the process of calculating the dimensions of the package, using the theory presented in chapter \ref{chapter:projective_geometry} and the detected object points, is described.
 
-\subsection{OpenCV}
-The most important tool used in this thesis is the library OpenCV.
-It is used extensively in this thesis, and therefore deserves an introduction.
+\subsection{Overview}
+This section provides an overview of the different components that are necessary to carry out this task. A flowchart which describes the process is shown in figure \ref{fig:flowchart}.
+On the topmost level in the flowchart are the two components which have been described earlier: detection and measuring. 
+The detection component uses an image as input, and and outputs the positions of the corners of the reference object and package.
+The measuring component uses these as input, and outputs the dimensions of the package.
 
-OpenCV is an open source library for computer vision.
-It contains over 2500 optimised, state-of-the-art computer vision algorithms \cite{opencv_about}.
-The functions in OpenCV range from low-level image filters to high-level algorithms for object recognition, camera calibration, pose estimation, machine learning, and much more.
+The different steps of detection and their purpose are summarised below: % TODO THIS!!!!!
+\begin{itemize}
+	\item Preprocessing. 
+	\item Edge detection.
+	\item Line detection.
+	\item Reference object detection.
+	\item Package detection.
+\end{itemize}
 
-OpenCV has a large community backing it, consisting of both startup companies, large corporations and researchers.
-Development is led by the Russian company Itseez, and among the supporters are Google, Microsoft, Intel, IBM and Toyota \cite{opencv_about}. 
-
-OpenCV is written in C++, but also has full interfaces for Python, Java and MATLAB and supports a variety of platforms, including Windows OS X, Linux, Android and iOS \cite{opencv_about}.
-The native C++ interface was used in this thesis.
+\begin{figure}
+\begin{center}
+\includegraphics[width=1.0\textwidth]{figures/flowchart.png}
+\end{center}
+\caption{A flowchart which illustrates the workflow of the program.}
+\label{fig:flowchart}
+\end{figure}
 
 \subsection{Image processing}
 One of the goals in image processing is to subjectively improve the quality of an image. 
@@ -47,8 +61,8 @@ The outline of Canny's algorithm is as follows:
 	\item Hysteresis, to remove false edges. At this point, the intensity image will contain many weak edges which are irrelevant. To remedy this, two thresholds are used, a low threshold and a high threshold. Pixels in the gradient image with a value lower than the low threshold are rejected, and pixels with a value  higher than the high threshold are accepted. Pixels with values in between the two thresholds are accepted if they are connected to a pixel above the high threshold. Accepted pixels are set to 1, and rejected pixels to 0, resulting in an accurate, binary edge image.
 \end{enumerate}
 
-% TODO skriva något om contour analysis?  \cite{suzuki}
-%
+% TODO skriva något om contour analysis?  \cite{suzuki} 
+% TODO do this!!! ^--- very important pruning step
 \subsection{Line detection} %TODO tempus korrekt? % TODO add image? of sinusoids and each step.
 Since the package consists of a set of lines, and and the edge image is difficult to interpret as it is, it seems like a good idea to find the lines in the image.
 This was done with the Hough transform \cite{illingworth1988survey}.
@@ -95,12 +109,21 @@ This was done with the following steps:
 
 When all candidates had been generated they were scored according to the rules above.
 
+This algorithm is quadratic in the total number of detected lines and cubic in the number of parallel line pairs.
+In some cases, that was too slow, especially on a mobile device with very limited computation time.
+If there was too much data the algorithm will therefore abort the detection at this stage.
+Specifically, 100 parallel line pairs was declared as the maximum.
+To reduce the risk of having to discard an image, some pruning was attempted at different stages in the algorithm.
+For example, edges at the very outskirts of the image were removed, since it was assumed that the package was somewhat in the centre of the image.
+Edges that are too small were also removed.
+In the package detection step itself, pruning was done by for example demanding that the distance between parallel line pairs was above a threshold.
+
 \subsection{Reference object detection}
 The reference object was detected using a modified version of the package detection algorithm.
 Since the reference object was a paper, which is a quadrilateral, two pairs of parallel line segments were picked out at a time to form a quadrilateral.
 The ranking algorithm also used some additional criteria, since the reference object is a white ISO 216 A-series  paper, the score was also based on how bright the area within the polygon was, and how well the aspect ratio between the two sides matched that of a ISO 216 A-series paper.
 
-\subsection{Measuring}
+\subsection{Measuring} % TODO describe 2 face vs 3 face recognition
 The measuring was carried out in two steps, first the width and depth of the package were measured, followed by the height. 
 The reason behind that order was that the reference object was placed on top of the package, meaning that some extra information was known about the  top plane of the package.
 
@@ -122,14 +145,6 @@ As stated in section \ref{camera-calibration}, the procedure is to print out a p
 
 Vanishing point calibration is ideal for this particular problem, since every cuboid package has three orthogonal sets of parallel lines which result in three orthogonal vanishing points, as in figure \ref{fig:vanishing_points}.
 Additionally, the known homography between the image plane and the top-plane of the package can be used to improve the estimate of $K$.
-
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.4\textwidth]{figures/vanishing_points.png}
-\end{center}
-\caption{Visualisation of how the edges of a cuboid give rise to three orthogonal vanishing points: $x_0$, $x_1$, and $x_2$.} % TODO hur referera? Tagen från szeliski s. 330
-\label{fig:vanishing_points}
-\end{figure}
 
 When $K$ had been obtained by either calibration method, the camera pose was estimated as described in \ref{camera-pose}, using the four image-world point correspondences given by the reference object.
 The method EPnP was chosen initially, but much better results were achieved with a regular, iterative approach.
@@ -190,26 +205,33 @@ Measurements were made with both calibration methods:, online vanishing point ca
 Finally, the overall ability of the system was tested by running the whole algorithm and comparing the result with the ground truth dimensions of the package. 
 
 \subsection{Online testing} \label{method:online_testing}
-A simple proof of concept Android application was made for online testing a the smartphone.
-This was used to assert that it is feasible to run the algorithm on a smartphone.
-Its purpose was also to determine if running the detection algorithm in real-time is feasible.
+A simple proof of concept application for Android was made for online testing on a smartphone.
+This was used to assert that it is feasible to run the algorithm on a smartphone, and to determine if it was possible to run the algorithm in real-time.
 
-The app simply displays the camera feed and continuously feeds new frames to the measuring algorithm.
+The application simply displays the camera feed and continuously feeds new frames to the measuring algorithm.
 When the package or reference object is successfully detected, an overlay is drawn to outline their position on the screen.
 If both the package and reference are found in the same frame, the dimensions of the package are calculated, and each dimension is drawn next to the appropriate edge.
 The processing time for each frame is also displayed.
-Screenshots of the application are shown in section \ref{results:online}.
+A screenshot of the application is shown in figure \ref{fig:screenshot}.
 
-The device used to run the test app is a Samsung Galaxy S6 Edge.
+\section{Implementation details}
+This section gives an overview of the most important software and hardware which was used during implementation and testing.
+
+\subsection{OpenCV}
+The most important software used in this thesis is the library OpenCV.
+It is used extensively in this thesis, and therefore deserves an introduction.
+
+OpenCV is an open source library for computer vision.
+It contains over 2500 optimised, state-of-the-art computer vision algorithms \cite{opencv_about}.
+The functions in OpenCV range from low-level image filters to high-level algorithms for object recognition, camera calibration, pose estimation, machine learning, and much more.
+
+OpenCV has a large community backing it, consisting of both startup companies, large corporations and researchers.
+Development is led by the Russian company Itseez, and among the supporters are Google, Microsoft, Intel, IBM and Toyota \cite{opencv_about}. 
+
+OpenCV is written in C++, but also has full interfaces for Python, Java and MATLAB and supports a variety of platforms, including Windows OS X, Linux, Android and iOS \cite{opencv_about}.
+The native C++ interface was used in this thesis.
+
+\subsection{Hardware}
+The device used to run the test application was a Samsung Galaxy S6 Edge.
 The S6 Edge was chosen because it currently tops benchmarks and tests, both regarding processing power and photo quality \cite{phone_performance_benchmark}\cite{phone_camera_benchmark}.
 The S6 Edge was also used to capture the test images used for offline testing.
-
-
-
-
-
-
-
-
-
-

@@ -1,5 +1,25 @@
 \chapter{Results} \label{results}
-The results are divided into four sections.
+% Dani: Resultat kapitelet kan också utvecklas - speciellt online testing - detta är alldeles för kort beskrivet.
+%
+% Mer beskrivande text. 
+%
+% Error i bilden vs världen
+%
+% Detection and localisation
+%
+% Motivera varför jag valde 1, 1.5, 2 meter etc. (i metod)
+%
+% relative error -> average relative error
+%
+% duplicering av mening nånstans
+%
+% procent istället
+%
+% Find out why error increases so little with distance.
+%
+% Motivera error metric
+
+The results are divided into four parts.
 In section \ref{results:detection} the results of the detection algorithm are presented.
 In section \ref{results:measuring} the results of the measuring algorithm are presented.
 In section \ref{results:overall} the results of detection and measuring combined are presented.
@@ -9,7 +29,7 @@ Finally, in section \ref{results:online} the results of online testing are prese
 The output of the detection algorithm was compared against ground truth positions of the reference object and package corners, as explained in \ref{benchmarking}.
 The error was defined as the sum of distances between the detected points and actual points, divided by the length of the contour.
 A detection result was considered to be correct if the error was less than $10\%$.
-Table \ref{table:detection_overall} shows the success rates and average error of the detection algorithm on the set of 225 example image.
+Table \ref{table:detection_overall} shows the success rates and average error of the detection algorithm on the 
 
 \input{floats/detection_overall}
 
@@ -60,13 +80,14 @@ Table \ref{table:overall_categories} and \ref{table:overall_categories_error} sh
 
 \input{floats/overall_categories_error}
 
-The results are similar to those of the individual parts, as expected.
+The results are similar to those of the individual parts, as can be expected.
 The lower success rates of the frontal views, the furthest distance and the lowest height, are even more prominent in this case.
 The results of disregarding these poorly performing positions and only considering the remaining positions are shown in table \ref{table:overall_good}.
 
 \input{floats/overall_good}
 
 Table \ref{table:overall_good} shows that disregarding a few of the positions results in a considerably better performance.
+After disregarding the poorly performing positions, 60 images of the original 225 remained.
 
 \section{Online testing} \label{results:online}
 
@@ -74,6 +95,10 @@ Online testing was performed using the Android application described in \ref{met
 A screenshot of the resulting application is shown in figure \ref{fig:screenshot}. % TODO add more screenshots
 The processing time of the application was typically around 300 milliseconds at the resolution $800 \times 450$ on the Galaxy S6 Edge, depending on the amount of clutter in the image. 
 More clutter resulted in higher processing times.
+
+% Hur appen beter sig
+
+
 
 % 1000 ms at 1280x720
 
