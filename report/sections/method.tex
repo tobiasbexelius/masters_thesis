@@ -1,31 +1,36 @@
 \chapter{Method}
-% Dani: Kapitel 4 kääns som ett referat som går igenom din implementation/kod. Tänk på att den som läser
-%ska kunna förstå varför vissa lösningar var nödvändiga, får en bra överblick av ditt system. Kanske bra att
-%börja med en flow diagram eller liknande.
-%
-
-This chapter describes the different steps of implementing the automatic package measuring algorithm.
-The tools, components, and algorithms used are described.
-Finally, the method used to evaluate the outcome are described.
+This chapter describes the different steps that were required to create the automatic package measuring algorithm.
+First an overview of the system is presented, followed by a more in-depth description.
+Then, the method used to evaluate the system is presented.
+Finally, a brief overview of the used software and hardware is given.
 
 \section{System description} \label{method:implementation}
-This section presents how the package measuring solution was implemented.
-First, the image processing tools used, and the process of detecting the reference object and package is described.
-Then, the process of calculating the dimensions of the package, using the theory presented in chapter \ref{chapter:projective_geometry} and the detected object points, is described.
+This section begins with an overview of the system, followed by a more in-depth description of the components.
 
 \subsection{Overview}
-This section provides an overview of the different components that are necessary to carry out this task. A flowchart which describes the process is shown in figure \ref{fig:flowchart}.
+This section provides an overview of the different components that were necessary to measure packages automatically.
+A flowchart which describes the process is shown in figure \ref{fig:flowchart}.
 On the topmost level in the flowchart are the two components which have been described earlier: detection and measuring. 
 The detection component uses an image as input, and and outputs the positions of the corners of the reference object and package.
-The measuring component uses these as input, and outputs the dimensions of the package.
+The measuring component takes the corner positions as input, and outputs the dimensions of the package.
 
-The different steps of detection and their purpose are summarised below: % TODO THIS!!!!!
+The different steps of the detection component and their respective purpose are summarised below:
 \begin{itemize}
-	\item Preprocessing. 
-	\item Edge detection.
-	\item Line detection.
-	\item Reference object detection.
-	\item Package detection.
+	\item \textbf{Preprocessing.} In the preprocessing step, the image is blurred with a median filter and converted from colour to grayscale. Its purpose is to facilitate the subsequent edge detection step by reducing noise and removing unnecessary details from the image. This step is described further in section \ref{method:image_processing}.
+	\item \textbf{Edge detection.} As the name implies, the goal of the edge detection step is to detect edges in the image. This is done with Canny's edge detection algorithm \cite{canny}, which is described in section \ref{method:edge_detection}.  Edge detection provides a way to extract the important features of the image, which can be interpreted at later stages.
+	\item \textbf{Line detection.} In this stage, lines are detected based on the edge data from the previous step. This is done with the Hough transform \cite{illingworth1988survey}, which is described in section \ref{method:line_detection}. The purpose of this step is to convert the edge data, which is received as a binary edge image, to a symbolic format, i.e. the end points of detected lines in the image. 
+	\item \textbf{Package detection.} This step uses the line data and the location of the reference object to detect the package in the image. A simple model-based algorithm is used, which uses the fact that the outline of a cuboid package consists of three pairs of parallel lines. The sought information is the positions of the corners of the package. This algorithm is described in section \ref{method:package_detection}.
+ 	\item \textbf{Reference object detection.} The reference object is detected using a modified version of the package detection algorithm. It is described in section \ref{method:reference_object_detection}.
+\end{itemize}
+After detection, the measuring takes place, using the detected corner points. This algorithm is based on the theory presented in chapter \ref{chapter:projective_geometry} and it is described in section \ref{fig:screenshot} The steps are summarised below:
+\begin{itemize}
+	\item \textbf{Estimate a planar homography.} A planar homography is calculated between the image plane and the top plane of the package, using the known location and size of the reference object.
+	\item \textbf{Calculate world coordinates of top corners.} Using the homography, the world coordinates of the top corners of the package can be calculated, since they lie in the same plane as the reference object.
+	\item \textbf{Calculate length and width.} The length and width of the package are calculated with the euclidean distance between the top corners.
+	\item \textbf{Calculate vanishing points.} Vanishing points are calculated using the intersections between edges of the package as shown in figure \ref{fig:vanishing_points}.
+	\item \textbf{Estimate intrinsic parameters.} The intrinsic parameters are calculated by imposing constraints on the image of the absolute conic as described in section \ref{background:vanishing_point_calibration}. The vanishing points and the planar homography are used to do this.
+	\item \textbf{Estimate camera pose.} Using the intrinsic parameters and the planar homography, the camera pose is estimated, as described in section \ref{camera-pose}.
+	\item \textbf{Calculate height.} Finally, when the intrinsic matrix $K$ and the extrinsic matrix $[R|t]$ are known, the height can be calculated using an equation system derived from equation \ref{eq:projection3}. This is made possible by the fact that a top corner shares $X$ and $Y$ coordinates with each bottom corner. 
 \end{itemize}
 
 \begin{figure}
@@ -36,20 +41,22 @@ The different steps of detection and their purpose are summarised below: % TODO 
 \label{fig:flowchart}
 \end{figure}
 
-\subsection{Image processing}
-One of the goals in image processing is to subjectively improve the quality of an image. 
-The image is typically a digital image, swhich consists of small image elements, pixels.
-Running image processing algorithms are often the first steps in computer vision systems, which is often referred to as preprocessing.
-Both the input and output of an image processing algorithm are typically images, for example algorithms for noise reduction, contrast enhancement, and colour correction \cite[p. 1-2]{gonzalez-woods}. 
+\subsection{Preprocessing} \label{method:image_processing}
+%The primary goal in image processing is to subjectively improve the quality of an image. 
+%The image is typically a digital image, which consists of small image elements, pixels.
+Preprocessing is often the first step in computer vision systems.
+It consists of for example applying filters to improve the quality of the image for the specific task at hand.
+%Running image processing algorithms are often the first steps in computer vision systems, which is often referred to as preprocessing.
+%Both the input and output of an image processing algorithm are typically images, for example algorithms for noise reduction, contrast enhancement, and colour correction \cite[p. 1-2]{gonzalez-woods}. 
 
-As the purpose is subjective improvement of quality, the means of performing preprocessing varies greatly depending on the application.
+%As the purpose is subjective improvement of quality, the means of performing preprocessing varies greatly depending on the application.
 In this case, the aim is to reduce noise, and to remove irrelevant information from the image.
 This is accomplished by converting the colour image to a grayscale image, followed by applying a median filter. 
 A median filter was chosen because it reduces noise effectively, while also removing small, unwanted features from the image, such as small labels and marks on the package or the rest of the scene.
 At the same time edges are preserved.
 As the name implies, the median filter assigns the value of every pixel to the median of itself, and the neighbouring pixels within a certain radius \cite{huang1979fast}.
 
-\subsection{Edge detection}
+\subsection{Edge detection} \label{method:edge_detection}
 After preprocessing, the next step was to extract features from the image which can be used to make an interpretation of the image.
 More specifically, the features that were extracted are edges. 
 This was done using Canny's edge detection algorithm \cite{canny}. % TODO some additional comment maybe?
@@ -63,7 +70,7 @@ The outline of Canny's algorithm is as follows:
 
 % TODO skriva något om contour analysis?  \cite{suzuki} 
 % TODO do this!!! ^--- very important pruning step
-\subsection{Line detection} %TODO tempus korrekt? % TODO add image? of sinusoids and each step.
+\subsection{Line detection} \label{method:line_detection}%TODO tempus korrekt? % TODO add image? of sinusoids and each step.
 Since the package consists of a set of lines, and and the edge image is difficult to interpret as it is, it seems like a good idea to find the lines in the image.
 This was done with the Hough transform \cite{illingworth1988survey}.
 The Hough transform can be used to detect many shapes.
@@ -79,8 +86,8 @@ In practice, a more efficient, probabilistic version presented in \cite{houghp} 
 This algorithm yields the end points of detected line segments in the image.
 That is better than the edge image, since some irrelevant edges are removed, and the representation is more convenient.
 
-\subsection{Package detection}
-The algorithm used to detect the package was based on a ranking scheme, where multiple hypothesis about where the package is were created, and then scored. 
+\subsection{Package detection} \label{method:package_detection}
+The algorithm used to detect the package was based on a ranking scheme, where multiple hypothesis about where the package were created, and then scored. 
 The candidate with the highest score was chosen as the assumed package. 
 
 A fundamental property of cuboids was exploited by the algorithm: they consist of parallel line segments of equal length. 
@@ -116,14 +123,14 @@ Specifically, 100 parallel line pairs was declared as the maximum.
 To reduce the risk of having to discard an image, some pruning was attempted at different stages in the algorithm.
 For example, edges at the very outskirts of the image were removed, since it was assumed that the package was somewhat in the centre of the image.
 Edges that are too small were also removed.
-In the package detection step itself, pruning was done by for example demanding that the distance between parallel line pairs was above a threshold.
+In the package detection step itself, pruning was done by for example demanding that the distance between parallel line pairs was above a threshold, i.e. a minimum size was enforced on the package.
 
-\subsection{Reference object detection}
+\subsection{Reference object detection} \label{method:reference_object_detection}
 The reference object was detected using a modified version of the package detection algorithm.
 Since the reference object was a paper, which is a quadrilateral, two pairs of parallel line segments were picked out at a time to form a quadrilateral.
 The ranking algorithm also used some additional criteria, since the reference object is a white ISO 216 A-series  paper, the score was also based on how bright the area within the polygon was, and how well the aspect ratio between the two sides matched that of a ISO 216 A-series paper.
 
-\subsection{Measuring} % TODO describe 2 face vs 3 face recognition
+\subsection{Measuring} \label{method:measuring} % TODO describe 2 face vs 3 face recognition
 The measuring was carried out in two steps, first the width and depth of the package were measured, followed by the height. 
 The reason behind that order was that the reference object was placed on top of the package, meaning that some extra information was known about the  top plane of the package.
 
@@ -136,24 +143,23 @@ Finally, the width and the depth were calculated by calculating the euclidean di
 To calculate the height, the world coordinates of one of the lower corners of the package were still needed.
 This is why camera calibration is useful, because when the intrinsic and extrinsic parameters are known, equation \ref{eq:projection1} can be used.
 
-% TODO Det vore bra i detta stycke att att ha en summering av alla beräkningssteg i punktform, så man ser vad som beräknas och vilka input och output för olika delsteg är.
 As stated earlier, two types of calibrations were to be implemented, one using an offline configuration which must be done beforehand, and one using online calibration.
 The offline version was implemented with Zhang's method and the online version was implemented with vanishing point calibration.
 
-The offline calibration was performed once, using an implementation provided by OpenCV.
+The offline calibration was performed once.
 As stated in section \ref{camera-calibration}, the procedure is to print out a paper with a known pattern (a checkerboard pattern), take images of the paper from many positions, and feed the images to the algorithm.
 
 Vanishing point calibration is ideal for this particular problem, since every cuboid package has three orthogonal sets of parallel lines which result in three orthogonal vanishing points, as in figure \ref{fig:vanishing_points}.
 Additionally, the known homography between the image plane and the top-plane of the package can be used to improve the estimate of $K$.
 
-When $K$ had been obtained by either calibration method, the camera pose was estimated as described in \ref{camera-pose}, using the four image-world point correspondences given by the reference object.
-The method EPnP was chosen initially, but much better results were achieved with a regular, iterative approach.
+When $K$ had been obtained by either calibration method, the camera pose was estimated as described in \ref{camera-pose}, using the four image-world point correspondences given by the reference object. % TODO which method?
+%The method EPnP was chosen initially, but much better results were achieved with a regular, iterative approach.
 
 Once the camera pose was obtained, equation \ref{eq:projection1} could be used, meaning that any point in the world can be projected to a point in the image.
-However, the reverse mapping was sought, i.e. the position of the package the world of the image coordinates of the bottom corners of the package.
+However, the reverse mapping was sought, the position of a bottom corner of the package in world coordinates, given its position in image coordinates.
 This is not possible to do, unless something is known about the geometry of the scene.
 Luckily, it is known that each lower corner shares $X$, and $Y$ coordinates with a top corner, which position is already known.
-The image coordinates $(u,v)$ of a lower corner, and the world coordinates $(X,Y)$ of the corresponding upper corner ccould then be used to solve for the $Z$ coordinate of the lower corner. 
+The image coordinates $(u,v)$ of a lower corner, and the world coordinates $(X,Y)$ of the corresponding upper corner could then be used to solve for the $Z$ coordinate of the lower corner. 
 Equation \ref{eq:projection3} was transformed to the following over-determined system:
 \begin{equation} \label{eq:constrained-projection}
 \begin{pmatrix} up_{33}-p_{13} \\ vp_{33}-p_{23} \end{pmatrix} Z = 
@@ -166,13 +172,11 @@ This was solved as a least-squares problem using Single Value Decomposition (SVD
 Since two pairs of upper-lower corners which share $X$ and $Y$ coordinates were known, two least-squares solutions of $Z$ could be obtained.
 The solution with the smallest error was chosen as $Z$.
 
-\section{Evaluation}
+\section{Evaluation} \label{method:evaluation}
 To evaluate the performance of the method, a test dataset of 225 images of packages were taken.
 Five different packages were in the dataset, with 45 images of each.
 The packages in the test dataset are shown in figure \ref{fig:packages}. A blue plastic folder was placed under the reference object on packages 3-5 to add some contrast between the reference object and the white surfaces.
-The images were taken with a Samsung Galaxy Edge S6 at 16 megapixels ($2988 \times 5312$ pixels) and then scaled down to $720 \times 1280$ pixels, to reduce computational time.
-More about the hardware in section \ref{method:online_testing}.
-
+The images were taken with a Samsung Galaxy Edge S6 at 16 megapixels ($2988 \times 5312$ pixels) and then scaled down to $720 \times 1280$ pixels, to reduce computational time. % TODO ok att ha olika upplösning på offline och online?
 \input{floats/packages}
 
 The test dataset was constructed systematically with images observing the packages from different positions.
@@ -190,6 +194,9 @@ Three parameters were alternated:
 			The last two images view the package with a sharp angle, about $15^\circ$ to the long or short side, respectively.
 			An example from each position is shown in figure \ref{fig:positions}.
 \end{itemize}
+
+The distances 1, 1.5 and 2 metres were chosen because 1 and 2 metres were thought to be a lower and upper bound for distances that most users would naturally use, and 1.5 metres is in between the two.
+The heights were chosen by the same logic.
 
 \input{floats/angles}
 
@@ -217,7 +224,7 @@ A screenshot of the application is shown in figure \ref{fig:screenshot}.
 \section{Implementation details}
 This section gives an overview of the most important software and hardware which was used during implementation and testing.
 
-\subsection{OpenCV}
+\subsection{OpenCV} % TODO beskriv vad jag har använt ur opencv?
 The most important software used in this thesis is the library OpenCV.
 It is used extensively in this thesis, and therefore deserves an introduction.
 

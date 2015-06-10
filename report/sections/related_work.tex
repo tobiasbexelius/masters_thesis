@@ -1,25 +1,18 @@
 \chapter{Related Work}
-% Dani: Relaterat arbete är alldeles för kort. Varför valde du dessa 3 områden? Hur relaterar arbeten du läste till det du gjorde?
-%Vilka andra metoder kunde man använts om du hade mer tid?
-%
-%
-%
-% "How it relates to this thesis"
-% Based on work from...
-%
-% our method uses model-based.
-% mäta cuboids relaterat till model-based, och specifik metod som mäter cuboids
-% 
-%Model based
-%
-% Single view för att inte behöva blanda in fler bilder
-% auto calib för att man ska slippa kalibrera
-%
-%
-This chapter presents an overview of recent research in the most important fields related to this thesis.
-These fields are single view metrology, auto-calibration, and object detection.
+This chapter presents an overview of recent research in the most important fields related to this thesis: single view metrology, auto-calibration, and model-based object detection.
 
-\section{Single view metrology} % TODO write more here
+Single-view metrology allows measurements to be made from a single view, which is desired to reduce processing time, and to reduce the complexity of the system.
+
+Auto-calibration allows measurements to be made without having to calibrate the camera offline.
+This will be done through vanishing point calibration.
+Vanishing point calibration is often not considered to be auto-calibration as it requires special structure in the scene to work. 
+However, since it can be performed automatically in this case where it is known that such structure will exist, it is described here nevertheless.
+
+Model-based object detection is used, since it is easy to model a cuboid with edge data.
+
+Some of the presented research papers are too advanced to be used in this thesis, but they are presented to show what could have been done, had there been more time.
+
+\section{Single view metrology}
 Single view metrology refers to the process of making measurements in images from a single view.
 In general it is impossible to make 3D measurements from only a single view, since depth information is unknown.
 If additional information about the scene is known, such as information about known distances and planes, certain measurements can be made.
@@ -32,44 +25,45 @@ It has been shown that other properties of the plane can be used instead of just
 Another potentially useful result in this area is presented in \cite{huang2004new}, where it is shown that measurements can also be made in planes perpendicular to the reference plane, provided that the camera is at least partially calibrated.
 
 \section{Auto-calibration} \label{related_work:vanishing_point_calibration} 
-%
-%
-% TODO fler referenser om vanishing point calibration <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-%
-%
 As stated in section \ref{introduction:requirements} it is important that the calibration of the internal parameters of the camera is performed automatically, if the resulting application is to be convenient to use.
 Preferably, it should be done without the user's knowledge, while the application is running.
 This can be achieved through auto-calibration, which is the process of determining the internal camera parameters directly from a set of uncalibrated images.
 This is done by imposing constraints on the internal parameters by automatically detecting corresponding points or other connections between multiple images. 
-Depending on which constraints are used, and the number of images, the constraints form a linear or non-linear equation system. \cite[458-469]{hartley-zisserman}
-
+Depending on which constraints are used, and the number of images, the constraints form a linear or non-linear equation system \cite[p. 458-469]{hartley-zisserman}. 
 As it will be shown in section \ref{camera-calibration}, it is possible to impose constraints on the internal parameters in the same way using only one view, by finding vanishing points in the scene.
-Vanishing points are points where lines that are parallel in the world, but not in the image, meet.
-Vanishing point calibration is a well-known process and can be done using either a single or multiple views \cite{guillou2000using}, \cite[195-226]{hartley-zisserman}, \cite{caprile1990using}.
+This is done using the method presented in \cite[p. 195-226]{hartley-zisserman}, which uses three orthogonal vanishing points in a single view.
+
+Several other methods for vanishing points calibration exist.
+
+For example multi-view solutions such as in for example \cite{caprile1990using}, where two views are used along with a special cube which acts as a calibration object.
+The cube has parallel lines drawn on its surfaces, which helps produce accurate vanishing points.
+This procedure first determines the intrinsic parameters of each camera using the vanishing points formed by the cube, similarly to the method used here.
+Then, the extrinsic parameters of the cameras are calculated in a second step.
+
+There are also methods which aim to extract vanishing points automatically from any structured scene, without and special object in it \cite{cipolla1999camera} \cite{grammatikopoulos2007automatic}.
+The only requirement is that there are vanishing points to find.
+Luckily, vanishing points are common in man-made environments, both indoors and outdoors.
 
 Some recent methods to perform auto-calibration, specifically designed for smartphones, use the orientation sensors of the phone in conjunction with images.
 Most, if not all, modern  smartphones are equipped with gyros, accelerometers, and compasses, which can be used to determine its orientation.
-In \cite{saponaro2013towards} two images with different rotation, but from the same position, are used.
-This method was only used offline, by first recording sensor readings and taking snapshots, and then performing the calculations on a computer. % TODO ta bort denna referens och skriv mer ingående om nästa
-In \cite{jia2014online} a different method using the gyro in conjunction with images is proposed, which does work online, and is less restrictive in terms of camera motion.
+In \cite{jia2014online} a method is presented to calibrate a smartphone camera and gyroscope simultaneously online, and to synchronise the camera and gyroscope data.
+Synchronisation of camera and motion sensors enables computer vision and augmented reality applications to detect when the camera rotates.
 
 \section{Model-based object detection} \label{related_work:object_detection}
 The problem of detecting a package in an image is an object-class detection problem.
 The goal is not to detect one specific item with known appearance, but rather a family of different object that belong to the same class.
 In this case the class is cuboid packages (and white papers).
+
 This is in general an extremely hard problem to solve for arbitrary objects, and suggested solutions to it are very complex.
-
-% The approach used in this thesis % model based \cite{pope1994model} % TODO THIS <<<<<<<<<<<
-
 One notable example is presented in \cite{yan20073d}. The idea is to construct a 3D model of an object in the class one wishes to detect.
 This 3D model is created using a homographic framework from  multiple 2D views of the object.
 A 2D image can then be tested against the 3D model by matching features between the image and the model. 
-When testing against the PASCAL VOC dataset, a standard dataset for object classification and detection algorithms, the presented algorithm achieved an average precision (i.e. the rate at which selected items are relevant) of 0.144 and 0.182 for two classes of objects (horses and motorcycles). 
-
-That may not sound very impressive, but it should be noted that the PASCAL VOC challenge dataset is made to be difficult and the objects appear in a great variety of poses, scales, clutter, occlusions and otherwise poor conditions \cite{everingham2010pascal}.
+When testing against the PASCAL VOC dataset, a standard dataset for object classification and detection algorithms, the presented algorithm achieved an average precision (i.e. the rate at which selected items are relevant) of 0.144 and 0.182 for two classes of objects (horses and motorcycles).
+That may not sound very impressive, but it should be noted that the PASCAL VOC challenge dataset is made to be difficult and the objects appear in a great variety of poses, scales, clutter, occlusion and otherwise poor conditions \cite{everingham2010pascal}.
 
 More closely related to this thesis is the paper "Localizing 3D cuboids in single-view images", where the authors focus on the more delimited task of detecting rectangular cuboids in uncalibrated single-view images \cite{xiaolocalizing}.
 Edge and corner information is used create a model which is trained using Support Vector Machines.
 The method shows promising results and can handle different viewpoints, aspect ratio, scale, and occlusion.
-
 Several others try to reason about man-made environments by detecting cuboid structures, for example: \cite{hedau2010thinking}, \cite{hedau2012recovering}, \cite{gupta2010estimating}, \cite{del2012bayesian}.
+
+In this thesis, a simpler approach is used, because the detector does not have to deal with clutter or occlusion, because of the assumptions made in section \ref{introduction:delimitations}.

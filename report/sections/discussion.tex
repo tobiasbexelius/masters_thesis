@@ -1,7 +1,7 @@
-\chapter{Discussion}
+'
 The results showed that the used method works well when using images of a package being observed from an angle where three faces of the package are visible, and at sufficiently close range and high altitude. 
-As shown in table \ref{table:overall_good}, the success rate increased from 50\% to 92\% when selecting a subset of the camera poses.
-The average error was also reduced from 8\% to 7\%.
+As shown in table \ref{table:overall_good}, the success rate increased from 51\% to 92\% when selecting a subset of the camera poses.
+The average error was also reduced from 7\% to 6\%.
 The results from the selected subset of camera poses are satisfying, and suggestions on how to improve the performance of the remaining cases will be proposed.
 
 Aside from success rates, this method performs the measurements of cuboids automatically, entirely without user intervention.
@@ -13,7 +13,7 @@ A different planar reference object can be used directly by the measuring algori
 With a small modification it could be placed on the floor next to the package instead.
 
 \section{Detection} \label{discussion:detection}
-The detection algorithm was based on simple, feature-based method. 
+The detection algorithm was based on simple, model-based method. 
 The method involved detecting lines in the image and attempting to match the intersections between lines to a quadrilateral or hexagon in which opposing sides have as equal length, and are as parallel as possible.
 
 The image processing algorithms used by this method depend on several constants.
@@ -29,7 +29,7 @@ These were the three rotations from which three faces of the package could be se
 Regarding the rotations, it is believed that the variations are exclusively because the constraints and rules imposed by the algorithm, were better suited for three face views, than two faced views.
 Initially, the algorithm was only designed with three face views in mind.
 
-Regarding the variations in success rate connected to distance and height, it is believed to be partly because of implementation details and threshold values which favoured the higher and closed configurations, but they are also a little more difficult by nature.
+Regarding the variations in success rate connected to distance and height, it is believed to be partly because of implementation details and threshold values which favoured the higher and closer configurations, but they are also more difficult by nature.
 As height increases, less clutter is seen in the background, and more of the floor.
 As distance increases, there is room for more clutter in the background.
 When there is more clutter, it is more difficult to distinguish what is truly relevant in the image, and it is more likely that there are too many lines.
@@ -55,7 +55,7 @@ When there is more clutter, it is more difficult to distinguish what is truly re
 \section{Measuring}
 The tables in section \ref{results:measuring} showed that vanishing point calibration failed more often than when using Zhang's method, but the accuracy was the same between the two methods. % TODO split error into x,y,z
 It is somewhat surprising that there was no significant difference in accuracy among the accepted measurements.
-A drop in success rate from $91\%$ to $81\%$ seems like a very reasonable sacrifice to make to gain the practicality of using uncalibrated views.
+A drop in success rate from $93\%$ to $81\%$ seems like a very reasonable sacrifice to make to gain the practicality of using uncalibrated views.
 From a commercial perspective, it would be unfeasible to ask the users of a smartphone application to perform the calibration procedure.
 Therefore it is very good news that the uncalibrated method worked so well.
 
@@ -83,7 +83,7 @@ Unless one was very careful to hold the camera still, the overlay would move off
 However, the algorithm could, in its current state, provide satisfying results in a non-real time application.
 Such an application could for example let the user take one, or a few snapshots, process the snapshots, and display the result in a still image, instead of drawing the overlay on the live camera feed.
 
-\section{Limitations}
+\section{Limitations}									
 There are some limitations as to what the results can show, as a consequence of limitations in the evaluation method.
 For example only one room was used for testing.
 It was not an optimal environment, due to the striped floor and suboptimal lightning conditions.
@@ -103,7 +103,7 @@ This would also improve the chances of the algorithm working in different enviro
 
 Alternatively, a completely different approach could be used for object detection, such as the one presented in "Localizing 3D cuboids in single-view images" as mentioned in section \ref{related_work:object_detection}.
 This method can handle different poses well, occlusion, and clutter.
-However it is unclear if this method is feasible to use, given the time constraints.
+However it is unclear if this method is feasible to use, given the processing time constraints.
 
 Another interesting improvement is to use multiple images to measure the package.
 One could either use multiple measurements and simply calculate an average, combined with outlier rejection with for example RANSAC \cite{fischler1981random}.

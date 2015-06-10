@@ -38,7 +38,7 @@ The package and reference object will be detected and localised automatically by
 
 Detection and localisation are to be performed with a model-based detector.
 The detector will use the edge information in the image to detect and localise the objects.
-A model-based detector is used for simplicity, and because it is deemed appropriate because cuboid packages have a well-defined shape which should be easy to detect with edge data.
+A model-based detector is used because cuboid packages have a well-defined shape which should be easy to model and detect with edge data.
 
 Uncalibrated measurements will be achieved by using the geometric properties of cuboids to determine the internal parameters of the camera. More specifically, the vanishing points formed by the edges of the package will be used.
 
@@ -59,20 +59,20 @@ Additionally, the edges which give rise to the vanishing points must be found in
 
 While using an uncalibrated view is more convenient, a calibrated view is expected to yield higher accuracy.
 If so, it would be interesting to know how much accuracy needs to be sacrificed to gain the extra utility of not needing prior calibration.
-In order to determine this, a version which uses a calibrated view will also be implemented.
+In order to determine this, a version of the algorithm which uses a calibrated view will also be implemented.
 The calibrated version will serve as a baseline implementation, to which the performance of the uncalibrated method will be compared.
 
 For this approach to be successful, two components must exist, and work well: a detection component and a measuring component.
 The detection component should find the position of the reference object and the package in the image, and the measuring component should use their positions to calculate the dimensions of the package.
 
 To assess the quality of the result, the two components will be evaluated by measuring success rate and accuracy.
-Success rate is defined as the rate at which the result is reasonably correct.
-Accuracy is defined as how accurate the result is when a correct solution is found.
+%Success rate is defined as the rate at which the result is reasonably correct.
+%Accuracy is defined as how accurate the result is when a correct solution is found.
 The components will both be evaluated in isolation, and combined.
 
 In principle all of the above can be tested offline, using pictures taken with a smartphone.
 This will be the primary method used when evaluating the result.
-However, since the purpose of the program is to be used in a smartphone, it will also be embedded in a smartphone demo app, to show that it performs well enough in its intended environment and that the program is fast enough to be used in a smartphone.
+However, since the purpose of the program is to be used in a smartphone, it will also be embedded in a demo application for a smartphone, to show that it performs well enough in its intended environment and that the program is fast enough to be used in a smartphone.
 
 \section{Purpose} 
 The main scientific purpose of this thesis is to determine the feasibility of an automatic cuboid measurer on a handheld device.
@@ -82,15 +82,18 @@ The method used to solve the problem must require minimal effort from the user, 
 Camera calibration is to be avoided by exploiting the geometry of cuboids to find vanishing points which can be used to calibrate the camera automatically.
 This fact provides another scientific purpose: to determine whether or not it is feasible to use vanishing point calibration to measure the dimensions of cuboids from a single image.
 
-While it is certain that the camera can be calibrated with three orthogonal vanishing points, it is not clear if the result will be accurate enough to make good measurements \cite[195-226]{hartley-zisserman}.
+While it is certain that the camera can be calibrated with three orthogonal vanishing points, it is not clear if the result will be accurate enough to make good measurements \cite[p. 195-226]{hartley-zisserman}.
 As presented further in section \ref{related_work:vanishing_point_calibration} the related work uses either multiple views or a large amount of lines in the image to find the vanishing points.
 Here, maximum three lines will contribute to each vanishing point in a single image, which may reduce accuracy.
 
-\section{Delimitations}
+\section{Delimitations} \label{introduction:delimitations}
 In a finished consumer smartphone application, it would be desirable to have the option to choose between a multitude of reference objects, like credit cards, matchboxes, smartphones, papers, and more. 
 To simplify the detection component, only white papers from the ISO 216 A-series (e.g. A4 or A5) will be considered as reference objects in this thesis.
 The reason behind this choice is that papers of this type are very common, and should be easy to detect.
 
-The type of packages considered are limited to packages with a cuboid shape, and with a colour that has reasonable contrast to that of the reference object. The package must stand on a flat surface, and the area in close proximity to the package should be empty.
+The type of packages considered are limited to packages with a cuboid shape, and with a colour that has reasonable contrast to that of the reference object.
+
+The package is assumed to be placed on a flat surface.
+It is also assumed to not be occluded, and the scene is assumed to not contain much clutter.
 
 % TODO Section about Bontouch/Postnord???

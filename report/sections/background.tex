@@ -1,13 +1,10 @@
 \chapter{Projective Geometry} \label{chapter:projective_geometry}
-% Dani: Kapitel 3 - du beskriver ett antal områden men det är igen inte klar hur exakt det relaterar till ditt arbete.
-%
-% För att kunna räkna ut 
-%
-% Beskriv hur områdena hänger ihop.Hur rubrikerna leder till varandra
-%
-This chapter presents the theoretical concepts and relationships in projective geometry which are necessary to perform measurements from an image.
-First, the foundations projective geometry are presented, followed by the projective camera model, which can be used to project a 3D point in the world to a point on the image plane of a camera.
-Finally, the process of camera calibration is explained, and how the camera can be calibrated from a single view, using vanishing points.
+This chapter presents the theoretical concepts in projective geometry which are necessary to perform measurements from an image.
+First, an introduction to projective geometry is given.
+Then follows the projective camera model and planar homographies, which provide the equations which will be used to make measurements.
+Then follows a description of camera calibration, which is the process of gathering the necessary information about unknown cameras, so that these equations can be used. 
+First offline calibration is described, which is used to created the baseline implementation.
+Then, vanishing point calibration is described, which is used to calibrate a camera online, from a single view.
 
 \section{Introduction}
 Everyone has a basic understanding of how projective geometry works.
@@ -21,7 +18,7 @@ Projective geometry describes these kinds of phenomena.
 
 As can be seen in figure \ref{fig:perspective}, very little is preserved by a projective transformation.
 Neither shape, lengths, angles, distances, or ratios of distances are preserved.
-It turns out that the most general property in a scene that is preserved by a projective transformation is straightness. \cite[1]{hartley-zisserman}
+It turns out that the most general property in a scene that is preserved by a projective transformation is straightness. \cite[p. 1]{hartley-zisserman}
 
 \section{Homogeneous coordinates}
 
@@ -30,7 +27,7 @@ In projective geometry, the homogeneous coordinate system is used instead.
 To convert the Cartesian coordinate pair $(x,y)$ to homogeneous coordinates, a one is appended to the cartesian coordinates, resulting in the point $(x,y,1)$. 
 Conversely, the cartesian representation the homogeneous point $(\tilde{x},\tilde{y},\tilde{z})$ is $(\tilde{x}/\tilde{z},\tilde{y}/\tilde{z})$. 
 In other words, homogeneous coordinates ignore scale; $(x,y,1)$ and $(kx,ky,k)$ represents the same point for any nonzero value $k$.
-These principles extend to other dimensions as well. \cite[2]{hartley-zisserman}
+These principles extend to other dimensions as well. \cite[p. 2]{hartley-zisserman}
 
 Figure \ref{fig:central_projection_camera} can help to give an intuitive understanding of homogeneous coordinates.
 The homogeneous point $\textbf{X}$ and the corresponding cartesian point $\textbf{x}$ in the image plane, lie on the same ray which originates from the camera centre.
@@ -101,7 +98,7 @@ Assuming that $P_{34}$ is nonzero, the above can be written as:
 				p_{31} & p_{32} & p_{33} & 1 \end{pmatrix}
 \begin{pmatrix}X \\Y \\Z \\1\end{pmatrix}
 \end{equation}
-where the scaling of the elements of $P$ is implicit. \cite[153-165]{hartley-zisserman}
+where the scaling of the elements of $P$ is implicit \cite[p. 153-165]{hartley-zisserman}.
 
 \section{Planar homographies}\label{planar-homographies}
 Assume that a projective camera is observing a planar scene, and that we would like to map points on the plane to points on the image plane. 
@@ -129,10 +126,10 @@ A pair of known corresponding points on the two planes, $x=HX$ will each contrib
 Thus, four known corresponding points are required to fully determine $H$.
 This assumes that that each point contributes with a unique equation.
 If three or more of the points in a minimal solution are collinear, a unique solution cannot be determined.
-Such a configuration is \textit{degenerate}. \cite[91-92]{hartley-zisserman}
+Such a configuration is \textit{degenerate} \cite[p. 91-92]{hartley-zisserman}. 
 
 Since the positions of the corresponding points are typically noisy, an exact solution can often not be found.
-One method to find a solution with minimal error is the Direct Linear Transformation algorithm (DLT). \cite{homography-estimation}
+One method to find a solution with minimal error is the Direct Linear Transformation algorithm (DLT) \cite{homography-estimation}. 
 
 \section{The plane at infinity and the absolute conic} \label{ac}
 Two critical concepts in projective geometry are the plane at infinity, $\pi_{\infty}$ and the absolute conic, $\omega_{\infty}$.
@@ -148,7 +145,7 @@ Its projection onto the image plane is called the Image of the Absolute Conic.
 The full theory regarding these concepts is out of scope for this thesis, but the important thing to know is that $\omega_{\infty}$ is invariant to projective transformations.
 This has important implications for camera calibration, because it means that $\omega_{\infty}$ acts as a natural calibration object present in every image.
 It can be shown that the following relationship exists between $K$ and the image of the image of the absolute conic:
-$\omega = (KK^T)^{-1}$. \cite[210]{hartley-zisserman}\cite{pollefeys}
+$\omega = (KK^T)^{-1}$ \cite[p. 210]{hartley-zisserman}\cite{pollefeys}. 
 
 \section{Camera calibration} \label{camera-calibration}
 This section describes how to determine the camera matrix $P$, and its components.
@@ -157,7 +154,7 @@ It is a similar problem to the one described in section \ref{planar-homographies
 
 The difference from the 2D case is that matrix has an extra column. The number of unknowns is now eleven instead of eight, which means that five and a half point correspondences (meaning five points and one $x$ or $y$ correspondence) are needed instead of four.
 The problem of degeneracy is also more complicated than in the 2D case, since we try to make projections from three dimensions instead of two.
-The most important case is that degeneracy occurs if all point known correspondances lie in the union of a plane and a line. \cite[179-180]{hartley-zisserman}
+The most important case is that degeneracy occurs if all point known correspondences lie in the union of a plane and a line \cite[p. 179-180]{hartley-zisserman}. 
 
 A classic strategy for calibrating cameras is to use orthogonal planes with a known pattern on them. 
 Since the planes are orthogonal, degeneracy is avoided.
@@ -211,15 +208,14 @@ Each constraint can be rewritten to the form $a_{1 \times 4}$w$_{4 \times 1}=0$
 
 The $n$ equations are then stacked on top of each to form the system $A_{n \times 4}$w$=0_{4 \times 1}$
 This system can be solved using SVD to determine $\omega$.
-Finally, $\omega$ is decomposed into $K$ by matrix inversion followed by Cholesky factorization. \cite[223-226]{hartley-zisserman}
+Finally, $\omega$ is decomposed into $K$ by matrix inversion followed by Cholesky factorization \cite[p. 223-226]{hartley-zisserman}. 
 
 \subsection{Obtaining camera pose with known $K$} \label{camera-pose}
 When $K$ is known, the final step before points can be projected using equation \ref{eq:projection1}, is to determine the pose of the camera, i.e. extrinsic matrix, $[R|t]$. $[R|t]$ represents the rotation and translation of the camera in the world coordinate frame, where $R$ is a $3 \times 3$ matrix and $t$ is a $3 \times 1$ vector.
 Constraints can be imposed through point correspondences like in previous cases.
 $R$ and $t$ have three degrees of freedom each, which means six constraints are required to determine them.
 As a result, three point correspondences are required to determine the pose, since each correspondence generates two constraints.
-However, the resulting system is non-linear, and is therefore more difficult to solve than in the earlier cases, and have multiple solutions. \cite[187]{hartley-zisserman}
-
+However, the resulting system is non-linear, and is therefore more difficult to solve than in the earlier cases, and have multiple solutions \cite[p. 187]{hartley-zisserman}. 
 There are many techniques to deal with this problem which is known as Perspective-n-Point (PnP). 
 Both iterative, e.g. \cite{hesch-pnp} and \cite{oberkampf-pnp}, and non-iterative solutions exist, e.g. \cite{quan-pnp} and \cite{lepetit-pnp}.
 The latter method is called EPnP, and claims to be both faster and more accurate than other methods. 

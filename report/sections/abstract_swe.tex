@@ -1,5 +1,15 @@
 
 \begin{foreignabstract}{swedish}
-Att göra % TODO abstract
+Denna rapport presenterar en metod för att mäta rektangulära paket automatiskt från en enda okalibrerad vy.
+Metoden konstruerades för att användas på en mobil enhet, och tar hänsyn till de medföljande tidskraven och hårdvarubegränsningarna.
 
+Metoden använder ett planärt referensobjekt av känd storlek, som placeras ovanpå paketet.
+Referensobjektet och paketet detekteras sedan automatiskt i bilden, och deras positioner ges till en mätalgoritm.
+
+Mätalgoritmen använder geometrin hos rätblock för att undvika manuell kamerakalibrering.
+Genom att använda flyktpunkterna som paketets kanter ger upphov till, kan kameran kalibreras online från en enda vy.
+
+Med den här metoden uppnåddes ett korrekt resultat på $92\%$ av bilderna när en delmängd av de testade kamerapositionerna användes.
+På hela mängden testbilder uppnåddes ett korrekt resultat i $51\%$ av fallen.
+Online-testning på en smartphone visar att detektionsalgoriment inte är mogen att köras i en realtidsapplikation, men kan fungera väl i en icke-realtidesapplikation.
 \end{foreignabstract}
