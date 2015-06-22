@@ -1,4 +1,4 @@
-'
+\chapter{Discussion}
 The results showed that the used method works well when using images of a package being observed from an angle where three faces of the package are visible, and at sufficiently close range and high altitude. 
 As shown in table \ref{table:overall_good}, the success rate increased from 51\% to 92\% when selecting a subset of the camera poses.
 The average error was also reduced from 7\% to 6\%.
@@ -53,7 +53,7 @@ When there is more clutter, it is more difficult to distinguish what is truly re
 %This could help with nonsensical candidate sometimes winning.
 
 \section{Measuring}
-The tables in section \ref{results:measuring} showed that vanishing point calibration failed more often than when using Zhang's method, but the accuracy was the same between the two methods. % TODO split error into x,y,z
+The tables in section \ref{results:measuring} showed that vanishing point calibration failed more often than when using Zhang's method, but the accuracy was the same between the two methods.
 It is somewhat surprising that there was no significant difference in accuracy among the accepted measurements.
 A drop in success rate from $93\%$ to $81\%$ seems like a very reasonable sacrifice to make to gain the practicality of using uncalibrated views.
 From a commercial perspective, it would be unfeasible to ask the users of a smartphone application to perform the calibration procedure.
@@ -86,7 +86,7 @@ Such an application could for example let the user take one, or a few snapshots,
 \section{Limitations}									
 There are some limitations as to what the results can show, as a consequence of limitations in the evaluation method.
 For example only one room was used for testing.
-It was not an optimal environment, due to the striped floor and suboptimal lightning conditions.
+It was not an optimal environment, due to the striped floor and suboptimal lighting conditions.
 The colour of the floor was also quite similar to the colour of one of package 1, which caused some issues.
 However, performance is not guaranteed to be the same in other environments.
 
@@ -103,7 +103,7 @@ This would also improve the chances of the algorithm working in different enviro
 
 Alternatively, a completely different approach could be used for object detection, such as the one presented in "Localizing 3D cuboids in single-view images" as mentioned in section \ref{related_work:object_detection}.
 This method can handle different poses well, occlusion, and clutter.
-However it is unclear if this method is feasible to use, given the processing time constraints.
+However, it is unclear if this method is feasible to use, given the processing time constraints.
 
 Another interesting improvement is to use multiple images to measure the package.
 One could either use multiple measurements and simply calculate an average, combined with outlier rejection with for example RANSAC \cite{fischler1981random}.
@@ -121,7 +121,7 @@ If only a subset of the camera poses were chosen, a success rate of $92\%$ was a
 The images in the subset were those where three faces of the package could be seen, those taken from the two closer of the distances (1 and 1.5 metres), and those taken from the two of the higher heights (1.2 and 1.5, or 1.5 and 1.8 metres).
 The difference in performance largely depended on implementation details, but problems such as increased clutter and infinite vanishing points occurred in the poorly performing positions, also factored in.
 
-A version of the algorithm which used calibrated views were also implemented, to determine how much performance needed to be sacrificed to gain the convenience of not having to go through the calibration procedure.
+A version of the algorithm which used calibrated views was also implemented, to determine how much performance needed to be sacrificed to gain the convenience of not having to go through the calibration procedure.
 The success rates when testing the measuring algorithm in isolation was $81\%$ for uncalibrated views, and $93\%$ for calibrated views.
 The average relative error was $7\%$ for both methods.
 

@@ -19,11 +19,18 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{tabularx}
+\usepackage{pdfpages}
 \DeclareUnicodeCharacter{00A0}{ }
+\newcommand{\credit}[1]{\par\hfill \footnotesize Credit:~\itshape#1}
+
 
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
+\begin{document}
+
+\includepdf[pages={1}]{figures/kth-cover.pdf}
+\clearpage
 
 \title{Automatic Package Measuring}
 
@@ -31,9 +38,8 @@
 \foreigntitle{Automatisk paketmätning}
 \author{Tobias Andersson\\\MakeLowercase{tobias2@kth.se}}
 \date{June 2015}
-\blurb{Master’s Thesis in Computer Science (30 credits)\\Supervisor: Mårten Björkman (celle@csc.kth.se)\\Examiner: Danica Kragic (dani@kth.se)\\~\\Project provider:\\Roland Persson (roland.persson@bontouch.com)\\Bontouch AB}
+\blurb{Master’s Thesis in Computer Science (30 credits)\\Supervisor: Mårten Björkman (celle@csc.kth.se)\\Examiner: Danica Kragic (dani@k th.se)\\~\\Project provider:\\Roland Persson (roland.persson@bontouch.com)\\Bontouch AB}
 \trita{}
-\begin{document}
 \frontmatter
 \pagestyle{empty}
 \removepagenumbers
@@ -49,6 +55,10 @@
 \input{sections/abstract_swe}
 \clearpage
 \tableofcontents*
+\clearpage
+\listoffigures 
+\listoftables 
+\clearpage
 \mainmatter
 \pagestyle{newchap}
 
@@ -70,12 +80,7 @@
 \bibliographystyle{unsrt}
 \bibliography{references}
 
-%----------------------------------------------------------------------------------------
-%	APPENDIX
-%----------------------------------------------------------------------------------------
-%\appendix
-%\addappheadtotoc
-%\chapter{An appendix}\label{appA}
-%that we refer to here: \ref{RDF_4}
+\includepdf[pages={2}]{figures/kth-cover.pdf}
+
 
 \end{document}

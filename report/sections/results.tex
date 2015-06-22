@@ -6,17 +6,17 @@ In section \ref{results:overall} the results of detection and measuring combined
 Finally, in section \ref{results:online} the results of online testing are presented.
 
 \section{Detection} \label{results:detection}
-The output of the detection algorithm was compared against ground truth positions of the reference object and package corners, as explained in section \ref{method:evaluation}.
+The output of the detection algorithm was compared against ground truth positions of the reference object and package corners. As explained in section \ref{benchmarking}, the ground truth positions of the reference object and the package were manually marked in each of the 225 images.
 The error was defined as the sum of distances between the detected points and actual points, divided by the length of the contour in the image.
 A detection result was considered to be correct if the error was less than $10\%$.
 This error metric was chosen to make the error invariant to resolution changes, and to make results comparable between different packages and distances.
 
-Table \ref{table:detection_overall} shows the success rates and average relative error of detection.
-It was clearly easier to detect the reference object than the package, but the package detection had a lower relative error.
+Table \ref{table:detection_overall} shows the success rates and average relative error of detection. The detection results are presented for the reference object and the package separately, and for both the reference object and package in the same image.
+It was clearly easier to detect the reference object than the package, but the package detection had a lower average relative error.
 
 \input{floats/detection_overall}
 
-Table \ref{table:detection_categories} shows the success rates of detection grouped by four categories: package, rotation, distance, and height. Table \ref{table:detection_categories_error} shows the average relative error grouped in the same way.
+Table \ref{table:detection_categories} shows the success rates of detection grouped by four categories: package, rotation, distance, and height. Table \ref{table:detection_categories_error} shows the average relative error grouped in the same way. Each value is the average success rate or relative error of the specified position configuration or package.
 
 \input{floats/detection_categories}
 
@@ -25,8 +25,8 @@ Table \ref{table:detection_categories} shows the success rates of detection grou
 From table \ref{table:detection_categories} it can be concluded that the success rate of detection varied significantly between the entries in each category.
 The frontal views yielded a much lower success rate than the other views.
 The furthest distance and the lowest height also yielded lower success rates.
-From table \ref{table:detection_categories_error} it can be concluded that the relative error did not vary much.
-The error was consistently lower for the package than the reference object.
+From table \ref{table:detection_categories_error} it can be concluded that the average relative error did not vary much.
+The relative error was consistently lower for the package than the reference object.
 
 \section{Measuring} \label{results:measuring} 
 Measuring results were obtained by using ground truth positions of the corners as input to the measuring algorithm, and comparing the output against the real dimensions of the packages.
@@ -36,7 +36,7 @@ A measurement was considered to be correct if no dimension had a relative error 
 Table \ref{table:measuring_overall} shows the success rate and average error of the two methods: uncalibrated views with vanishing point calibration, and calibrated views with Zhang's method.
 It is shown that uncalibrated views had a lower success rate than calibrated views (81\% and 93\% respectively), but the average relative error was the same for both methods, 7\%.
 
-\input{floats/measuring_overall} % TODO split error into x,y,z
+\input{floats/measuring_overall}
 
 Table \ref{table:measuring_categories} and \ref{table:measuring_categories_error} show the success rate and average error for the two methods, grouped by the same categories as in the previous section.
 
@@ -51,7 +51,8 @@ Table \ref{table:measuring_categories_error} shows very little change in average
 
 \section{Overall performance} \label{results:overall}
 The results in this section present the performance of the detection and measuring algorithms combined, using vanishing point calibration.
-The errors are defined in the same way as in section \ref{results:measuring}.
+The error was once again defined as the sum of the relative error of each dimension, and
+a measurement was considered to be correct if no dimension had a relative error greater than $10\%$.
 
 Table \ref{table:overall_overall} shows the overall performance of detection and measuring combined.
 
@@ -68,7 +69,7 @@ The lower success rates of the frontal views, the furthest distance and the lowe
 The average relative errors vary slightly more than for the individual parts.
 
 It is obvious that the poor performance of certain positions drags down the overall success rate significantly.
-It is therefore of interest to see the results of only the "good positions".
+It is therefore of interest to what happens if the poorly performing positions are disregarded.
 Table \ref{table:overall_good} shows the overall performance of the system if the poorly performing positions are disregarded, i.e. the frontal views, the furthest distance, and the lowest height.
 
 \input{floats/overall_good}
@@ -79,7 +80,7 @@ After disregarding the poorly performing positions, 60 images of the original 22
 \section{Online testing} \label{results:online}
 
 Online testing was performed using the Android application described in \ref{method:online_testing}.
-A screenshot of the resulting application is shown in figure \ref{fig:screenshot}. % TODO add more screenshots?
+A screenshot of the resulting application is shown in figure \ref{fig:screenshot}.
 The processing time of the application was typically around 300 milliseconds at the resolution $800 \times 450$ pixels on the Galaxy S6 Edge, depending on the amount of clutter in the image. 
 More clutter resulted in higher processing times.
 
@@ -89,10 +90,10 @@ With processing times of around 300 milliseconds the overlay would easily get mi
 
 The online testing was not performed in a very formal manner, since the purpose was only to confirm that it is feasible to run the algorithm on a modern smartphone, not to accurately measure processing times.
 
-\begin{figure}%[H]
+\begin{figure}
 \begin{center}
 \includegraphics[width=0.6\textwidth]{figures/screenshot.png}
 \end{center}
-\caption{Screenshot of the app measuring package 2. A blue outline has been drawn around the package, and a red outline has been drawn around the reference object. The resulting dimensions are $258 \times 191 \times 185$ mm. The real dimensions of the package are $260 \times 191 \times 177$ mm.}
+\caption[A screenshot of the demo application]{Screenshot of the app measuring package 2. A blue outline has been drawn around the package, and a red outline has been drawn around the reference object. The resulting dimensions are $258 \times 191 \times 185$ mm. The real dimensions of the package are $260 \times 191 \times 177$ mm.}
 \label{fig:screenshot}
 \end{figure}

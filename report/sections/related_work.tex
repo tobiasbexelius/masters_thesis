@@ -1,16 +1,14 @@
 \chapter{Related Work}
 This chapter presents an overview of recent research in the most important fields related to this thesis: single view metrology, auto-calibration, and model-based object detection.
 
-Single-view metrology allows measurements to be made from a single view, which is desired to reduce processing time, and to reduce the complexity of the system.
+Single-view metrology allows measurements to be made from a single view, which is what this thesis aims to do.
 
-Auto-calibration allows measurements to be made without having to calibrate the camera offline.
+Auto-calibration allows measurements to be made without having to calibrate the camera in advance (offline).
 This will be done through vanishing point calibration.
 Vanishing point calibration is often not considered to be auto-calibration as it requires special structure in the scene to work. 
 However, since it can be performed automatically in this case where it is known that such structure will exist, it is described here nevertheless.
 
-Model-based object detection is used, since it is easy to model a cuboid with edge data.
-
-Some of the presented research papers are too advanced to be used in this thesis, but they are presented to show what could have been done, had there been more time.
+Model-based object detection was chosen because the well-defined shape of cuboids should make them easy to model.
 
 \section{Single view metrology}
 Single view metrology refers to the process of making measurements in images from a single view.
@@ -20,12 +18,12 @@ For example, it is well established that planes can be rectified so that euclide
 That is done by calculating a planar homography, using four image-world point correspondences of points in the plane.
 Planar homographies are described further in section \ref{planar-homographies}.
 
-It has been shown that other properties of the plane can be used instead of just point correspondances, such as known angles, length ratios in the plane, vanishing points, and vanishing lines \cite{liebowitz1998metric} \cite{criminisi2000single}.
+It has been shown that other properties of the plane can be used instead of just point correspondences, such as known angles, length ratios in the plane, vanishing points, and vanishing lines \cite{liebowitz1998metric} \cite{criminisi2000single}.
 
 Another potentially useful result in this area is presented in \cite{huang2004new}, where it is shown that measurements can also be made in planes perpendicular to the reference plane, provided that the camera is at least partially calibrated.
 
 \section{Auto-calibration} \label{related_work:vanishing_point_calibration} 
-As stated in section \ref{introduction:requirements} it is important that the calibration of the internal parameters of the camera is performed automatically, if the resulting application is to be convenient to use.
+As stated earlier, it is important that the calibration of the internal parameters of the camera is performed automatically, if the resulting application is to be convenient to use.
 Preferably, it should be done without the user's knowledge, while the application is running.
 This can be achieved through auto-calibration, which is the process of determining the internal camera parameters directly from a set of uncalibrated images.
 This is done by imposing constraints on the internal parameters by automatically detecting corresponding points or other connections between multiple images. 
@@ -34,8 +32,7 @@ As it will be shown in section \ref{camera-calibration}, it is possible to impos
 This is done using the method presented in \cite[p. 195-226]{hartley-zisserman}, which uses three orthogonal vanishing points in a single view.
 
 Several other methods for vanishing points calibration exist.
-
-For example multi-view solutions such as in for example \cite{caprile1990using}, where two views are used along with a special cube which acts as a calibration object.
+For example multi-view solutions such as in \cite{caprile1990using}, where two views are used along with a special cube which acts as a calibration object.
 The cube has parallel lines drawn on its surfaces, which helps produce accurate vanishing points.
 This procedure first determines the intrinsic parameters of each camera using the vanishing points formed by the cube, similarly to the method used here.
 Then, the extrinsic parameters of the cameras are calculated in a second step.

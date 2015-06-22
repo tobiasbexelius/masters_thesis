@@ -11,7 +11,7 @@ This section begins with an overview of the system, followed by a more in-depth 
 This section provides an overview of the different components that were necessary to measure packages automatically.
 A flowchart which describes the process is shown in figure \ref{fig:flowchart}.
 On the topmost level in the flowchart are the two components which have been described earlier: detection and measuring. 
-The detection component uses an image as input, and and outputs the positions of the corners of the reference object and package.
+The detection component uses an image as input, and outputs the positions of the corners of the reference object and package.
 The measuring component takes the corner positions as input, and outputs the dimensions of the package.
 
 The different steps of the detection component and their respective purpose are summarised below:
@@ -27,7 +27,7 @@ After detection, the measuring takes place, using the detected corner points. Th
 	\item \textbf{Estimate a planar homography.} A planar homography is calculated between the image plane and the top plane of the package, using the known location and size of the reference object.
 	\item \textbf{Calculate world coordinates of top corners.} Using the homography, the world coordinates of the top corners of the package can be calculated, since they lie in the same plane as the reference object.
 	\item \textbf{Calculate length and width.} The length and width of the package are calculated with the euclidean distance between the top corners.
-	\item \textbf{Calculate vanishing points.} Vanishing points are calculated using the intersections between edges of the package as shown in figure \ref{fig:vanishing_points}.
+	\item \textbf{Estimate vanishing points.} Vanishing points are estimated using the intersections between edges of the package as shown in figure \ref{fig:vanishing_points}.
 	\item \textbf{Estimate intrinsic parameters.} The intrinsic parameters are calculated by imposing constraints on the image of the absolute conic as described in section \ref{background:vanishing_point_calibration}. The vanishing points and the planar homography are used to do this.
 	\item \textbf{Estimate camera pose.} Using the intrinsic parameters and the planar homography, the camera pose is estimated, as described in section \ref{camera-pose}.
 	\item \textbf{Calculate height.} Finally, when the intrinsic matrix $K$ and the extrinsic matrix $[R|t]$ are known, the height can be calculated using an equation system derived from equation \ref{eq:projection3}. This is made possible by the fact that a top corner shares $X$ and $Y$ coordinates with each bottom corner. 
@@ -37,7 +37,7 @@ After detection, the measuring takes place, using the detected corner points. Th
 \begin{center}
 \includegraphics[width=1.0\textwidth]{figures/flowchart.png}
 \end{center}
-\caption{A flowchart which illustrates the workflow of the program.}
+\caption[A flowchart illustrating the workflow of the program]{A flowchart which illustrates the workflow of the program.}
 \label{fig:flowchart}
 \end{figure}
 
@@ -71,12 +71,12 @@ The outline of Canny's algorithm is as follows:
 % TODO skriva något om contour analysis?  \cite{suzuki} 
 % TODO do this!!! ^--- very important pruning step
 \subsection{Line detection} \label{method:line_detection}%TODO tempus korrekt? % TODO add image? of sinusoids and each step.
-Since the package consists of a set of lines, and and the edge image is difficult to interpret as it is, it seems like a good idea to find the lines in the image.
+Since the package consists of a set of lines, and the edge image is difficult to interpret as it is, it seems like a good idea to find the lines in the image.
 This was done with the Hough transform \cite{illingworth1988survey}.
 The Hough transform can be used to detect many shapes.
 The idea behind the Hough transform for line detection is as follows:
 \begin{enumerate}
-	\item In polar coordinates, $(r, \theta)$, a line is represented as: $$y = -\frac{\cos \theta}{\sin \theta} x + \frac{r}{\sin \theta}$$ This can be rewritten as: $r = x \cos \theta + y \sin \theta$. 
+	\item In polar coordinates, $(r, \theta)$, a line is represented as: $$y = -\frac{\cos \theta}{\sin \theta} x + \frac{r}{\sin \theta}.$$ This can be rewritten as: $r = x \cos \theta + y \sin \theta$. 
 	\item Every possible line passing through the point $(x,y)$ forms a sinusoid in the $\theta - r$ plane. We can calculate the sinusoid for every point of interest (each edge pixel).
 	\item The sinusoids of two image points will intersect in the $\theta - r$ plane, in a point which represents a line between the two image points. If multiple sinusoids intersect in the same point, the same number of image points lie in a line.
 	\item The more sinusoids intersect at a point $p$ in the $\theta - r$ plane, the more likely it is that the line represented by $p$ is truly a line in the image. Given a threshold $t$, the Hough transform declares that there is a defined line by $(r, \theta)$ in the image, if the number of intersections in the is $\theta - r$ plane greater than $t$.
@@ -87,7 +87,8 @@ This algorithm yields the end points of detected line segments in the image.
 That is better than the edge image, since some irrelevant edges are removed, and the representation is more convenient.
 
 \subsection{Package detection} \label{method:package_detection}
-The algorithm used to detect the package was based on a ranking scheme, where multiple hypothesis about where the package were created, and then scored. 
+The algorithm used to detect the package was based on a ranking scheme.
+Multiple hypothesis about the location of the package were created, and then scored. 
 The candidate with the highest score was chosen as the assumed package. 
 
 A fundamental property of cuboids was exploited by the algorithm: they consist of parallel line segments of equal length. 
@@ -136,7 +137,7 @@ The reason behind that order was that the reference object was placed on top of 
 
 As described in \ref{planar-homographies} the world coordinate system can be defined to have its origin in one of the corners of the reference object.
 Since the physical size of the reference object is known, the position of the corners of the reference object is known in both image and world coordinates.
-With the four point correspondences, a planar homography could be calculated, which could then be used to map any point in the image its corresponding point in the plane.
+With the four point correspondences, a planar homography could be calculated, which could then be used to map any point in the image to its corresponding point in the plane.
 Using the homography, the positions of the four top corners of the package could then be calculated. 
 Finally, the width and the depth were calculated by calculating the euclidean distance between the world coordinates of the corners.
 
@@ -166,7 +167,7 @@ Equation \ref{eq:projection3} was transformed to the following over-determined s
 \begin{pmatrix}
 X(p_{11}-up_{31}) + Y(p_{12}-up_{32})+p_{14}-u \\
 X(p_{21}-vp_{31}) + Y(p_{22}-vp_{32})+p_{24}-v
-\end{pmatrix}
+\end{pmatrix}.
 \end{equation}
 This was solved as a least-squares problem using Single Value Decomposition (SVD).
 Since two pairs of upper-lower corners which share $X$ and $Y$ coordinates were known, two least-squares solutions of $Z$ could be obtained.
@@ -206,7 +207,7 @@ The detection algorithm and measuring algorithm were tested both in isolation, a
 
 The detection algorithm was tested by comparing the resulting corner points against ground truth positions of the reference object and package corners, which had been extracted manually in each image.
 
-The measuring algorithm was tested by using the ground truth positions as input, and comparing the resulting measurements against the ground truth dimensions of the package.
+The measuring algorithm was tested by using the ground truth positions as input, and comparing the resulting measurements against the manually measured ground truth dimensions of the package.
 Measurements were made with both calibration methods:, online vanishing point calibration, and offline calibration with Zhang's method. 
 
 Finally, the overall ability of the system was tested by running the whole algorithm and comparing the result with the ground truth dimensions of the package. 
