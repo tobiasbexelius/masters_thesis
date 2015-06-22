@@ -33,6 +33,9 @@ Regarding the variations in success rate connected to distance and height, it is
 As height increases, less clutter is seen in the background, and more of the floor.
 As distance increases, there is room for more clutter in the background.
 When there is more clutter, it is more difficult to distinguish what is truly relevant in the image, and it is more likely that there are too many lines.
+The increase in number of line segments is the bigger of the two challenges.
+
+
 
 %The scoring function was also not always good enough.
 %In some cases there was another hexagon with opposing edges more parallel and with more similar length than the package.
@@ -77,9 +80,11 @@ The vanishing point calibration method was also more vulnerable to errors in the
 %These problem occur when using detected corner points as well as when using the marked corners, since the marked corners also have some error.
 %On average, the accepted solutions have the same error when using detected corner points and marked corners. % TODO förtydliga hur marked corners går till i metod
 \section{Online testing} % TODO measure average processing time properly and show in results?
-Online testing showed that the used method works well on a smartphone as well.
+Online testing showed that the used method works well when used in its intended environment.
+
 With a processing time of about 300 ms on the resolution $800 \times 450$, it is not yet quite fast enough to deliver a good user experience when used in real-time, at least not using the created demo application.
 Unless one was very careful to hold the camera still, the overlay would move off the edges of the package, since the rate at which the overlay is updated is much slower than the rate at which new camera frames are displayed.
+
 However, the algorithm could, in its current state, provide satisfying results in a non-real time application.
 Such an application could for example let the user take one, or a few snapshots, process the snapshots, and display the result in a still image, instead of drawing the overlay on the live camera feed.
 
@@ -101,6 +106,10 @@ One can use thresholding techniques to automatically determine good thresholds t
 This can be done in conjunction with Canny edge detection, as shown in \cite{wang2005fast} and \cite{liu2004automated}.
 This would also improve the chances of the algorithm working in different environments.
 
+Another improvement is to use the currently unused information about the inner contours of the package.
+Currently, only the outline of the package is used, but if the inner contours were to be used as well, it could be easier to detect the package.
+Using the inner contours could also improve the accuracy of measuring, since that would add more edges for vanishing point detection, and more edges to measure.
+
 Alternatively, a completely different approach could be used for object detection, such as the one presented in "Localizing 3D cuboids in single-view images" as mentioned in section \ref{related_work:object_detection}.
 This method can handle different poses well, occlusion, and clutter.
 However, it is unclear if this method is feasible to use, given the processing time constraints.
@@ -119,7 +128,7 @@ The algorithm could successfully measure the package in $51\%$ of all images in 
 However, the algorithm could handle some of the camera poses much better than others.
 If only a subset of the camera poses were chosen, a success rate of $92\%$ was achieved instead.
 The images in the subset were those where three faces of the package could be seen, those taken from the two closer of the distances (1 and 1.5 metres), and those taken from the two of the higher heights (1.2 and 1.5, or 1.5 and 1.8 metres).
-The difference in performance largely depended on implementation details, but problems such as increased clutter and infinite vanishing points occurred in the poorly performing positions, also factored in.
+The difference in performance partly depended on implementation details, but problems such as increased clutter and infinite vanishing points occurred in the poorly performing positions, also factored in.
 
 A version of the algorithm which used calibrated views was also implemented, to determine how much performance needed to be sacrificed to gain the convenience of not having to go through the calibration procedure.
 The success rates when testing the measuring algorithm in isolation was $81\%$ for uncalibrated views, and $93\%$ for calibrated views.

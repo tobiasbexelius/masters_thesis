@@ -88,7 +88,15 @@ As previously described the application continuously sends image frames from the
 When the algorithm has finished, an overlay with the detected corner points and measurements are drawn on top of the camera feed.
 With processing times of around 300 milliseconds the overlay would easily get misplaced in between frames if one was not careful to hold the camera still. 
 
-The online testing was not performed in a very formal manner, since the purpose was only to confirm that it is feasible to run the algorithm on a modern smartphone, not to accurately measure processing times.
+The online testing was not performed in a very formal manner, since the purpose was only to confirm that it is feasible to run the algorithm on a modern smartphone, not to accurately measure processing times or behaviour.
+
+However, it was observed that the application worked better when observing three faces of the package, as well as when standing close and holding the camera high, as shown by the results.
+
+Another observation was that it was very important that the reference object laid flat on the package.
+It if got slightly bent, for example because the surface of the package was not flat, large errors were quickly introduced.
+
+An attempt was made to measure a highly textured package.
+It seemed that the algorithm did have more problems than usual to detect the package, but it was still manageable.
 
 \begin{figure}
 \begin{center}

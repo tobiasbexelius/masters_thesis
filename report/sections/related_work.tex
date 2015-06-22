@@ -19,8 +19,11 @@ That is done by calculating a planar homography, using four image-world point co
 Planar homographies are described further in section \ref{planar-homographies}.
 
 It has been shown that other properties of the plane can be used instead of just point correspondences, such as known angles, length ratios in the plane, vanishing points, and vanishing lines \cite{liebowitz1998metric} \cite{criminisi2000single}.
+Unlike those methods, this thesis assumes that four point correspondences are known, from the corners of the reference object.
+However, these results are still of interest since it might be possible to increase the accuracy of the homography, for example by adding information from the known vanishing points.
 
 Another potentially useful result in this area is presented in \cite{huang2004new}, where it is shown that measurements can also be made in planes perpendicular to the reference plane, provided that the camera is at least partially calibrated.
+This method would have been interesting to investigate, had there been more time, since it could potentially eliminate the need for calibration.
 
 \section{Auto-calibration} \label{related_work:vanishing_point_calibration} 
 As stated earlier, it is important that the calibration of the internal parameters of the camera is performed automatically, if the resulting application is to be convenient to use.
@@ -36,31 +39,49 @@ For example multi-view solutions such as in \cite{caprile1990using}, where two v
 The cube has parallel lines drawn on its surfaces, which helps produce accurate vanishing points.
 This procedure first determines the intrinsic parameters of each camera using the vanishing points formed by the cube, similarly to the method used here.
 Then, the extrinsic parameters of the cameras are calculated in a second step.
+As opposed to \cite{caprile1990using}, we do not have the luxury of having parallel lines drawn on the surface of the cuboid, which helps to increase the accuracy of the location of the vanishing points.
+Instead, only three parallel edges in each direction can be used to calibrate.
 
 There are also methods which aim to extract vanishing points automatically from any structured scene, without and special object in it \cite{cipolla1999camera} \cite{grammatikopoulos2007automatic}.
 The only requirement is that there are vanishing points to find.
 Luckily, vanishing points are common in man-made environments, both indoors and outdoors.
+These methods much more advanced methods than what is needed here, since it is known that all three vanishing points originate from a single cuboid.
 
 Some recent methods to perform auto-calibration, specifically designed for smartphones, use the orientation sensors of the phone in conjunction with images.
 Most, if not all, modern  smartphones are equipped with gyros, accelerometers, and compasses, which can be used to determine its orientation.
 In \cite{jia2014online} a method is presented to calibrate a smartphone camera and gyroscope simultaneously online, and to synchronise the camera and gyroscope data.
 Synchronisation of camera and motion sensors enables computer vision and augmented reality applications to detect when the camera rotates.
+These methods are very useful for computer vision applications for smartphones in general, but they are unnecessary here since vanishing point calibration is deemed to be a better, and simpler option in this case.
 
 \section{Model-based object detection} \label{related_work:object_detection}
+Model-based object-detectors use a predefined model of the object one wishes to detect.
+Detection is accomplished by finding similarities between the features in the image, and those of the model \cite{pope1994model}.
+There are however great variations in what a feature is, and how they are matched.
+There are two main strategies: local and global approaches.
+Global approaches attempt to model whole images at once, while local approaches breaks the image down into features such as edges, which can be analysed locally.
+Global approaches can be a good choice if the environment can be controlled so that the object can be perfectly separated from the background.
+That is not the case in this thesis.
+
+A common approach is to let the model consist of smaller parts, which are easier to detect.
+The detector can then reason about the relative positions of the parts to determine whether the object is present or not \cite{chin1986model}.
+
 The problem of detecting a package in an image is an object-class detection problem.
 The goal is not to detect one specific item with known appearance, but rather a family of different object that belong to the same class.
 In this case the class is cuboid packages (and white papers).
-
 This is in general an extremely hard problem to solve for arbitrary objects, and suggested solutions to it are very complex.
+
 One notable example is presented in \cite{yan20073d}. The idea is to construct a 3D model of an object in the class one wishes to detect.
 This 3D model is created using a homographic framework from  multiple 2D views of the object.
 A 2D image can then be tested against the 3D model by matching features between the image and the model. 
 When testing against the PASCAL VOC dataset, a standard dataset for object classification and detection algorithms, the presented algorithm achieved an average precision (i.e. the rate at which selected items are relevant) of 0.144 and 0.182 for two classes of objects (horses and motorcycles).
 That may not sound very impressive, but it should be noted that the PASCAL VOC challenge dataset is made to be difficult and the objects appear in a great variety of poses, scales, clutter, occlusion and otherwise poor conditions \cite{everingham2010pascal}.
+This example is far too advanced for this thesis, but was brought up to give some interesting context.
 
-More closely related to this thesis is the paper "Localizing 3D cuboids in single-view images", where the authors focus on the more delimited task of detecting rectangular cuboids in uncalibrated single-view images \cite{xiaolocalizing}.
+More closely related to this thesis is the paper "Localizing 3D cuboids in single-view images", where the authors focus on the more delimited task of detecting rectangular cuboids in uncalibrated single-view images, which is exactly the same as we try to do \cite{xiaolocalizing}.
 Edge and corner information is used create a model which is trained using Support Vector Machines.
 The method shows promising results and can handle different viewpoints, aspect ratio, scale, and occlusion.
 Several others try to reason about man-made environments by detecting cuboid structures, for example: \cite{hedau2010thinking}, \cite{hedau2012recovering}, \cite{gupta2010estimating}, \cite{del2012bayesian}.
 
-In this thesis, a simpler approach is used, because the detector does not have to deal with clutter or occlusion, because of the assumptions made in section \ref{introduction:delimitations}.
+In this thesis, a simpler approach is used, because the detector does not have to deal with clutter or occlusion, because of the assumptions made in section \ref{introduction:delimitations}. Unlike the methods presented above, we will not use a model trained with a machine learning approach. The more advanced methods for cuboid detection above would however have been interesting to investigate, had there been more time.
+
+As mentioned earlier, a model-based approach was chosen because cuboids are easy to model - for example, the outline of a cuboid has six corners, and for each pair of corners, there should be another pair of corners with roughly the same distance between them and the same slope.
